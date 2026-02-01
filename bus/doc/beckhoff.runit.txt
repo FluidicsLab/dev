@@ -1,4 +1,0 @@
- no name        alias       rev   power          vld   state
-000 EK1100      EK1100        18   2000   2000   True  00010001
-001 EL7041-0052 EL7041        16   1860   -140   True  00000001
-002 EL2008      EL2008        18   1750   -110   True  00010001
