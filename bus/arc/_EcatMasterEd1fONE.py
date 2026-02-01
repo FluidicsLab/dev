@@ -12,9 +12,12 @@ class EcatMasterEd1fONE(EcatMaster):
         rc = super().configED1F(pos, slave)
 
         if rc:
+
+            EcatLogger.debug(f"    ** init HiwinMotionController @ {pos}")
+            
             self._hiwinMotionController[pos] = HiwinMotionController(pos, slave, self.ProcessLock)
             self.SeverityController.register(f"ED1F.{pos}", self._hiwinMotionController[pos].severityFunc)
-            EcatLogger.debug(f"    ** init HiwinMotionController @ {pos}")
+            
         
         EcatLogger.debug(f"    -- done")
         
