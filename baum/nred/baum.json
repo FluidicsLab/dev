@@ -1,0 +1,736 @@
+[
+    {
+        "id": "31c5b2d3071d9553",
+        "type": "tab",
+        "label": "baum",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "7eb338f467cf1870",
+        "type": "status",
+        "z": "31c5b2d3071d9553",
+        "name": "10009",
+        "scope": [
+            "8af13f43f7c5a4e9"
+        ],
+        "x": 110,
+        "y": 80,
+        "wires": [
+            [
+                "dacc5efe1abd13b2"
+            ]
+        ]
+    },
+    {
+        "id": "260a8721fe20dfcf",
+        "type": "ui_button",
+        "z": "31c5b2d3071d9553",
+        "name": "btn(con,*)",
+        "group": "d7542f822c4ccf3c",
+        "order": 7,
+        "width": "1",
+        "height": "1",
+        "passthru": false,
+        "label": "",
+        "tooltip": "{{connection.tooltip}}",
+        "color": "",
+        "bgcolor": "{{connection.background}}",
+        "className": "",
+        "icon": "{{connection.icon}}",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "connect",
+        "topicType": "str",
+        "x": 100,
+        "y": 220,
+        "wires": [
+            [
+                "3d39658e7d07d037"
+            ]
+        ]
+    },
+    {
+        "id": "dacc5efe1abd13b2",
+        "type": "function",
+        "z": "31c5b2d3071d9553",
+        "name": "f(con,ux)",
+        "func": "\nvar device = flow.get(\"device\");\n\nmsg.payload = msg.status.text;\n\nvar connected = msg.status.text != 'node-red:common.status.disconnected';\ndevice.connected = connected;\n\nif (!connected) {\n    msg.connection = {\n        background: '#c90000',\n        icon: 'cast',\n        tooltip: 'disconnected'\n    };\n    var step = flow.get(\"step\");\n    if (step.initialized) {\n        step.initialized = false;\n        flow.set(\"step\", step);\n    }\n} else {\n    msg.connection = {\n        background: '#006400',\n        icon: 'cast_connected',\n        tooltip: 'connected'\n    };\n}\n\nnode.status({ fill: \"gray\", shape: \"ring\", text: \"\" + msg.connection.tooltip });\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 100,
+        "y": 160,
+        "wires": [
+            [
+                "260a8721fe20dfcf"
+            ]
+        ]
+    },
+    {
+        "id": "8af13f43f7c5a4e9",
+        "type": "mqtt in",
+        "z": "31c5b2d3071d9553",
+        "name": "10009",
+        "topic": "",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "4cdae6de2bfd43c4",
+        "nl": false,
+        "rap": true,
+        "rh": "2",
+        "inputs": 1,
+        "x": 250,
+        "y": 120,
+        "wires": [
+            [
+                "ae6b2706d6a677d4",
+                "6c53f5c915704684",
+                "1373c440239f2cb6"
+            ]
+        ]
+    },
+    {
+        "id": "3d39658e7d07d037",
+        "type": "function",
+        "z": "31c5b2d3071d9553",
+        "name": "f(con,*)",
+        "func": "\nvar device = flow.get(\"device\");\n\nvar out = [];\nvar topic = \"/hot/ecat/baum/out\";\n\nif (!device.connected) {\n    out = [[\n        {\n            action: \"connect\"\n        },\n        {\n            action: \"subscribe\",\n            topic: topic\n        }\n    ]];\n} else {\n    out = [[\n        {\n            action: \"unsubscribe\",\n            topic: topic\n        },\n        {\n            action: \"disconnect\"\n        }\n    ]];\n}\n\n\nreturn out;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 100,
+        "y": 120,
+        "wires": [
+            [
+                "8af13f43f7c5a4e9",
+                "1373c440239f2cb6"
+            ]
+        ]
+    },
+    {
+        "id": "7dcd88b70946c87c",
+        "type": "inject",
+        "z": "31c5b2d3071d9553",
+        "name": "start",
+        "props": [
+            {
+                "p": "status.text",
+                "v": "node-red:common.status.connected",
+                "vt": "str"
+            },
+            {
+                "p": "initialize",
+                "v": "true",
+                "vt": "bool"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 110,
+        "y": 40,
+        "wires": [
+            [
+                "dacc5efe1abd13b2",
+                "8b6dde918fd83586"
+            ]
+        ]
+    },
+    {
+        "id": "be3cf691da7a5dc8",
+        "type": "ui_slider",
+        "z": "31c5b2d3071d9553",
+        "name": "ctrl(s)",
+        "label": "",
+        "tooltip": "focus step",
+        "group": "93f7b9ff768f724c",
+        "order": 1,
+        "width": "6",
+        "height": 1,
+        "passthru": true,
+        "outs": "all",
+        "topic": "step",
+        "topicType": "str",
+        "min": "0",
+        "max": "8000",
+        "step": "1",
+        "className": "",
+        "x": 110,
+        "y": 340,
+        "wires": [
+            [
+                "fb6e878e81b06774"
+            ]
+        ]
+    },
+    {
+        "id": "19f5087614c3e9b0",
+        "type": "function",
+        "z": "31c5b2d3071d9553",
+        "name": "map(s)",
+        "func": "\nvar step = flow.get(\"default\").step;\nvar value = (msg.payload*step.base).toFixed(step.decimals);\nmsg.payload = value;\n\nstep = flow.get(\"step\");\nstep.value = msg.payload;\nflow.set(\"step\",step);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 340,
+        "wires": [
+            [
+                "8a0ac6a8511969a9"
+            ]
+        ]
+    },
+    {
+        "id": "8a0ac6a8511969a9",
+        "type": "ui_text",
+        "z": "31c5b2d3071d9553",
+        "group": "93f7b9ff768f724c",
+        "order": 2,
+        "width": 2,
+        "height": 1,
+        "name": "label(s)",
+        "label": "",
+        "format": "{{msg.payload}}",
+        "layout": "row-right",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 560,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "fb6e878e81b06774",
+        "type": "rbe",
+        "z": "31c5b2d3071d9553",
+        "name": "",
+        "func": "rbe",
+        "gap": "",
+        "start": "",
+        "inout": "out",
+        "septopics": true,
+        "property": "payload",
+        "topi": "topic",
+        "x": 250,
+        "y": 340,
+        "wires": [
+            [
+                "19f5087614c3e9b0",
+                "c66b2f55a57d9363"
+            ]
+        ]
+    },
+    {
+        "id": "3f6b7bd9c71c0448",
+        "type": "mqtt out",
+        "z": "31c5b2d3071d9553",
+        "name": "10009",
+        "topic": "/hot/ecat/baum/in",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "4cdae6de2bfd43c4",
+        "x": 550,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "ae6b2706d6a677d4",
+        "type": "function",
+        "z": "31c5b2d3071d9553",
+        "name": "setup",
+        "func": "\nvar step = flow.get(\"step\");\nvar blur = flow.get(\"blur\");\n\nif (msg.topic == \"/hot/ecat/baum/out\") {\n    \n    step.value = parseInt(msg.payload.step);\n    blur.value = parseFloat(msg.payload.blur);\n    \n    node.status({ fill: \"gray\", shape: \"ring\", text: \"\" + step.value + \",\" + blur.value});\n}\n\nvar out = [\n    {\n        topic: \"step\",\n        payload: step\n    },\n    {\n        topic: \"blur\",\n        payload: blur\n    },\n    {\n        initialize: !step.initialized\n    }\n];\n\nstep.initialized = true;\n\nflow.set(\"step\", step);\nflow.set(\"blur\", blur);\n\nflow.set(\"valid\", true);\n\nreturn out;",
+        "outputs": 3,
+        "noerr": 0,
+        "initialize": "\nflow.set(\"default\", {\n    \n    \"step\": {\n        \"value\": 0,\n        \"base\": 1,\n        \"unit\": \"\",\n        \"decimals\": 0,\n        \"range\": {\n            \"low\": 0,\n            \"high\": 8000\n        },\n        \"initialized\": false\n    },\n\n    \"blur\": {\n        \"value\": 0,\n        \"base\": 1,\n        \"unit\": \"&#x03b4;\",\n        \"decimals\": 6,\n        \"initialized\": false\n    },\n    \n});\n\nflow.set(\"device\", {\n    \"connected\": false,\n    \"name\": \"\"\n});\n\nflow.set(\"step\", flow.get(\"default\").step);\nflow.set(\"blur\", flow.get(\"default\").blur);\n",
+        "finalize": "",
+        "libs": [],
+        "x": 390,
+        "y": 120,
+        "wires": [
+            [],
+            [
+                "88574ef7eefaab81"
+            ],
+            [
+                "8b6dde918fd83586"
+            ]
+        ]
+    },
+    {
+        "id": "54f391f92b1c9350",
+        "type": "ui_button",
+        "z": "31c5b2d3071d9553",
+        "name": "s(-30)",
+        "group": "93f7b9ff768f724c",
+        "order": 3,
+        "width": "1",
+        "height": "1",
+        "passthru": false,
+        "label": "",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "replay_30",
+        "payload": "-30",
+        "payloadType": "num",
+        "topic": "s_replay",
+        "topicType": "str",
+        "x": 110,
+        "y": 400,
+        "wires": [
+            [
+                "cb23b87e773cac8e"
+            ]
+        ]
+    },
+    {
+        "id": "c43f97448bbfd3ef",
+        "type": "ui_button",
+        "z": "31c5b2d3071d9553",
+        "name": "s(30)",
+        "group": "93f7b9ff768f724c",
+        "order": 4,
+        "width": "1",
+        "height": "1",
+        "passthru": false,
+        "label": "",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "forward_30",
+        "payload": "30",
+        "payloadType": "num",
+        "topic": "s_forward",
+        "topicType": "str",
+        "x": 110,
+        "y": 440,
+        "wires": [
+            [
+                "cb23b87e773cac8e"
+            ]
+        ]
+    },
+    {
+        "id": "cb23b87e773cac8e",
+        "type": "function",
+        "z": "31c5b2d3071d9553",
+        "name": "f(s)",
+        "func": "\nvar out = {};\n\nif (msg.topic == \"s_replay\" || msg.topic == \"s_forward\") {\n\n    var step = flow.get(\"step\")        \n    var value =  parseInt(step.value) + msg.payload;  \n\n    value = Math.min(step.range.high, Math.max(step.range.low, value));\n\n    out.topic = \"step\";\n    out.payload = value;\n\n    step.value = value;\n    flow.set(\"step\", step);\n}\n\nreturn out;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 250,
+        "y": 420,
+        "wires": [
+            [
+                "be3cf691da7a5dc8"
+            ]
+        ]
+    },
+    {
+        "id": "1373c440239f2cb6",
+        "type": "debug",
+        "z": "31c5b2d3071d9553",
+        "name": "raw",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 430,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "eae8aead37e7f2dd",
+        "type": "ui_text",
+        "z": "31c5b2d3071d9553",
+        "group": "bbf35fc141c13791",
+        "order": 3,
+        "width": "2",
+        "height": "1",
+        "name": "unit(b)",
+        "label": "",
+        "format": "{{msg.payload.unit}}",
+        "layout": "row-left",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 550,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "883d83f8a2db3994",
+        "type": "ui_text",
+        "z": "31c5b2d3071d9553",
+        "group": "bbf35fc141c13791",
+        "order": 2,
+        "width": "3",
+        "height": 1,
+        "name": "b",
+        "label": "",
+        "format": "{{msg.payload.value}}",
+        "layout": "row-right",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 550,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "88574ef7eefaab81",
+        "type": "function",
+        "z": "31c5b2d3071d9553",
+        "name": "map(b)",
+        "func": "\nvar value = msg.payload.value;\n\nvar f = flow.get(\"default\").blur.decimals*10;\nvalue = (Math.round(value * f)/f).toFixed(flow.get(\"default\").blur.decimals);\n\nmsg.payload = {\n    \"value\": value,\n    \"unit\": msg.payload.unit\n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 220,
+        "wires": [
+            [
+                "883d83f8a2db3994",
+                "eae8aead37e7f2dd"
+            ]
+        ]
+    },
+    {
+        "id": "362129e28b8aeb41",
+        "type": "ui_template",
+        "z": "31c5b2d3071d9553",
+        "group": "16f3f0fd0296671f",
+        "name": "image",
+        "order": 1,
+        "width": "10",
+        "height": "10",
+        "format": "<div align=\"center\" valign=\"middle\" style=\"\">\n    <div>\n        <img src=\"data:image/jpeg;base64,{{msg.payload.thumb}}\" width=\"480\"/>\n    </div>\n    <div align=\"center\">\n        <code>{{msg.payload.name}}, ({{msg.payload.region.x}},{{msg.payload.region.y}});{{msg.payload.region.width}};{{msg.payload.region.height}}), {{msg.payload.decimation}}, {{msg.payload.modified}}</code>\n    </div>\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 550,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6c53f5c915704684",
+        "type": "change",
+        "z": "31c5b2d3071d9553",
+        "name": "map(thumb)",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload.modified",
+                "pt": "msg",
+                "to": "$fromMillis(msg.payload.modified/1e6)\t",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "payload.thumb",
+                "pt": "msg",
+                "to": "payload.image.thumb",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "payload.shape",
+                "pt": "msg",
+                "to": "payload.image.shape",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "payload.decimation",
+                "pt": "msg",
+                "to": "payload.decimation.value[0]",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 390,
+        "y": 540,
+        "wires": [
+            [
+                "362129e28b8aeb41"
+            ]
+        ]
+    },
+    {
+        "id": "8b6dde918fd83586",
+        "type": "function",
+        "z": "31c5b2d3071d9553",
+        "name": "init(s)",
+        "func": "\nif (msg.initialize) {\n    msg.topic = \"step\";\n    msg.payload = flow.get(\"step\").value;\n} else {\n    msg = {};\n}\n\nnode.status({fill:\"gray\",shape:\"ring\",text:\"\"+msg.payload});\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 110,
+        "y": 280,
+        "wires": [
+            [
+                "be3cf691da7a5dc8"
+            ]
+        ]
+    },
+    {
+        "id": "c66b2f55a57d9363",
+        "type": "function",
+        "z": "31c5b2d3071d9553",
+        "name": "data(s)",
+        "func": "\nmsg.payload = {\"step\": msg.payload };\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 380,
+        "wires": [
+            [
+                "3f6b7bd9c71c0448"
+            ]
+        ]
+    },
+    {
+        "id": "5a0fde3a57b330b2",
+        "type": "ui_button",
+        "z": "31c5b2d3071d9553",
+        "name": "store",
+        "group": "d923f4ea294a6d6e",
+        "order": 2,
+        "width": "1",
+        "height": "1",
+        "passthru": false,
+        "label": "",
+        "tooltip": "store actual view on server",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "save",
+        "payload": "{\"store\":true}",
+        "payloadType": "json",
+        "topic": "",
+        "topicType": "str",
+        "x": 110,
+        "y": 480,
+        "wires": [
+            [
+                "3f6b7bd9c71c0448"
+            ]
+        ]
+    },
+    {
+        "id": "4710743cca070331",
+        "type": "ui_button",
+        "z": "31c5b2d3071d9553",
+        "name": "st&st",
+        "group": "d923f4ea294a6d6e",
+        "order": 2,
+        "width": "1",
+        "height": "1",
+        "passthru": false,
+        "label": "",
+        "tooltip": "step next and store actual view on server",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "autorenew",
+        "payload": "{\"store\":true}",
+        "payloadType": "json",
+        "topic": "",
+        "topicType": "str",
+        "x": 110,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "22d5c7664564d241",
+        "type": "loop",
+        "z": "31c5b2d3071d9553",
+        "name": "",
+        "kind": "cond",
+        "count": "",
+        "initial": "1",
+        "step": "1",
+        "condition": "",
+        "conditionType": "js",
+        "when": "before",
+        "enumeration": "enum",
+        "enumerationType": "msg",
+        "limit": "",
+        "loopPayload": "loop-val",
+        "finalPayload": "final-count",
+        "x": 320,
+        "y": 620,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "002949a06a17fdb2",
+        "type": "ui_spacer",
+        "z": "31c5b2d3071d9553",
+        "name": "spacer",
+        "group": "d7542f822c4ccf3c",
+        "order": 1,
+        "width": "9",
+        "height": "1"
+    },
+    {
+        "id": "c50ba2376035dc4e",
+        "type": "ui_spacer",
+        "z": "31c5b2d3071d9553",
+        "name": "spacer",
+        "group": "bbf35fc141c13791",
+        "order": 1,
+        "width": "5",
+        "height": "1"
+    },
+    {
+        "id": "a831a2937e6ae7d8",
+        "type": "ui_spacer",
+        "z": "31c5b2d3071d9553",
+        "name": "spacer",
+        "group": "d923f4ea294a6d6e",
+        "order": 1,
+        "width": "8",
+        "height": "1"
+    },
+    {
+        "id": "d7542f822c4ccf3c",
+        "type": "ui_group",
+        "name": "status",
+        "tab": "325d3e027628ec1f",
+        "order": 5,
+        "disp": false,
+        "width": "10",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "4cdae6de2bfd43c4",
+        "type": "mqtt-broker",
+        "name": "localhost:10009",
+        "broker": "localhost",
+        "port": "10009",
+        "clientid": "",
+        "autoConnect": false,
+        "usetls": false,
+        "protocolVersion": "5",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "93f7b9ff768f724c",
+        "type": "ui_group",
+        "name": "step",
+        "tab": "325d3e027628ec1f",
+        "order": 1,
+        "disp": false,
+        "width": "10",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "bbf35fc141c13791",
+        "type": "ui_group",
+        "name": "label",
+        "tab": "325d3e027628ec1f",
+        "order": 2,
+        "disp": false,
+        "width": "10",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "16f3f0fd0296671f",
+        "type": "ui_group",
+        "name": "preview",
+        "tab": "325d3e027628ec1f",
+        "order": 3,
+        "disp": false,
+        "width": "10",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "d923f4ea294a6d6e",
+        "type": "ui_group",
+        "name": "menu",
+        "tab": "325d3e027628ec1f",
+        "order": 4,
+        "disp": false,
+        "width": "10",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "325d3e027628ec1f",
+        "type": "ui_tab",
+        "name": "baum",
+        "icon": "linked_camera",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    }
+]

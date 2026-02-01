@@ -1,0 +1,51 @@
+{	
+	"ctl": {
+		"id": "006",
+		"item": [-1, -1],
+		"step": [-1, -1],
+		"len": [0, 0],
+		"enabled": [false, false],
+		"modified": null,
+		"continuous": -1,
+		"times": 0,
+		"key": "balance",
+		"title": "balance",
+		"version": "2025.10(16)",
+		"author": "fluidXlab.com",
+		"index": 3,
+		"active": true,
+		"param": { 
+			"stroke": {
+				"setpoint": [true, true],
+				"title": "stroke(s) to balance"
+			},
+			"mode": "balance"
+		}		
+	},
+	"items": {
+		"0": {
+			"name": ["balance stroke", "balance stroke"],
+			"valve": [[0, 1],[0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, null],
+			"value": [[1500, 5], [1500, 5]],
+			"unit": ["µl/min", "µl/min"],
+			"domain": [["rate","volume"],["rate","volume"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "1"
+		},
+		"1": {
+			"name": ["balance stroke", "balance stroke"],
+			"valve": [[0, 1],[0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, null],
+			"value": [[-1500, 5], [-1500, 5]],
+			"unit": ["µl/min", "µl/min"],
+			"domain": [["rate","volume"],["rate","volume"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": null
+		}
+	}
+}

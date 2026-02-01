@@ -1,0 +1,44 @@
+{	
+	"ctl": {
+		"id": "004",
+		"item": [-1, -1],
+		"step": [-1, -1],
+		"len": [0, 0],
+		"enabled": [false, false],
+		"modified": null,
+		"continuous": -1,
+		"key": "refill",
+		"title": "refill",
+		"version": "2024.10(06)",
+		"author": "fluidXlab.com",
+		"index": 3,
+		"active": true,
+		"param": { }		
+	},
+	"items": {
+		"0": {
+			"name": ["empty stroke", "empty stroke"],
+			"valve": [[0, 1],[0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, null],
+			"value": [[2500, 0], [2500, 0]],
+			"unit": ["µl/min", "µl/min"],
+			"domain": [["rate","volume"],["rate","volume"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "1"
+		},
+		"1": {
+			"name": ["refill stroke", "refill stroke"],
+			"valve": [[0, 1], [0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, null],
+			"value": [[-2500, 7.5], [-2500, 7.5]],
+			"unit": ["µl/min", "µl/min"],
+			"domain": [["rate","volume"],["rate","volume"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": null
+		}
+	}
+}

@@ -1,0 +1,99 @@
+{
+    "enabled": 1,
+    "version": "20251205",
+    
+    "config": {
+        
+        "control": {
+            "item": "SEVERITY",
+            "channel": 16,
+            "initial": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            "reset": 0,
+            "ignore": 1
+        },
+
+        "subscription": {
+
+            "ED1F": { 
+
+                "0": { "topic": [ "p", "d" ], "channel": [0], "severity": [0] },
+                "1": { "topic": [ "p", "d" ], "channel": [1], "severity": [1] }
+
+            },
+
+            "EL2502": { 
+
+                "6": { "topic": [ "T" ], "channel": [0,1], "severity": [8,9] }
+
+            }
+
+        },
+
+        "digits": {
+            "p": 3,
+            "T": 2,
+            "d": 6,
+            "b": 0,
+            "t": 0
+        }
+
+    },
+
+    "EK1100": {
+        "0": {
+            "cpu": {
+                "p": { "low": 0.0, "high": 100.0, "def": null, "topic": "p", "channel": [ 0,1, 8,9 ] }
+            }
+        }
+    },
+
+    "EL6021": { 
+
+        "1": { 
+            "11": { 
+                "p": { "low": -1.0, "high": 710.0, "def": null, "topic": "p", "channel": [0] }, 
+                "T": { "low": 10.0, "high": 40.0, "def": null, "topic": "T", "channel": [0] } 
+            },
+            "12": { 
+                "p": { "low": -1.0, "high": 710.0, "def": null, "topic": "p", "channel": [1] }, 
+                "T": { "low": 10.0, "high": 40, "def": null, "topic": "T", "channel": [1] } 
+            }            
+        } 
+        
+    },
+    
+    "EL3124": {
+
+        "2": {
+            "0": { "d": { "low": 3.65, "high": 10.25, "def": 0.0, "topic": "d", "channel": [0] } },
+            "1": { "d": { "low": 3.65, "high": 10.25, "def": 0.0, "topic": "d", "channel": [1] } }
+        }
+
+    },
+    
+    "EL3314": {
+
+        "7": {
+            "0": { "T": { "low": 100.0, "high": 1300.0, "def": 13720.0, "topic": "T", "channel": [8] } },
+            "1": { "T": { "low": 100.0, "high": 1300.0, "def": 13720.0, "topic": "T", "channel": [9] } }
+        }
+
+    },
+
+    "EL3164": {
+
+        "5": {
+            "1": { 
+                "p": { "low": 1.8, "high": 4.0, "def": null, "topic": "p", "channel": [ 0,1 ] }, 
+                "T": { "low": 1.8, "high": 4.0, "def": null, "topic": "T", "channel": [ 8,9 ] } 
+            }
+        }
+
+    },
+
+    "ED1F": { },
+    "EL2502": { },
+    "EM3702": { },
+    "SEVERITY": { }
+
+}

@@ -1,0 +1,57 @@
+0000;AL.NON;no warning or error
+FFFF;AL.UKN;unknown warning or error
+FF04;AL.024;System alarm 1
+FF05;AL.025;System alarm 2
+FF06;AL.030;Main circuit detector error
+FF07;AL.040;Parameter setting error
+FF0B;AL.050;Combination error
+FF0C;AL.070;Motor type change detected
+FF0E;AL.0b0;Invalid Servo ON command alarm
+FF0F;AL.100;Over current detected
+FF10;AL.320;Regenerative overload
+FF11;AL.400;Over voltage
+FF12;AL.410;Under voltage
+FF13;AL.510;Over speed
+FF14;AL.511;Encoder output pulse overspeed
+FF18;AL.710;Instantaneous overload
+FF19;AL.720;Continuous overload
+FF1E;AL.7A2;Internal overheat error 2 (power board)
+FF21;AL.800;Data backup error
+FF22;AL.810;Battery error
+FF23;AL.820;Encoder communication error
+FF24;AL.830;Encoder data error
+FF25;AL.840;Encoder crc error
+FF26;AL.850;Encoder counting error
+FF27;AL.860;Write data fail error
+FF28;AL.870;Encoder over heat error
+FF29;AL.880;Encoder sensor phase error (AqB)
+FF2A;AL.890;ESC ALM - Incremental encoder cable not connected
+FF2B;AL.8A0;ESC ALM - CH1 ESC side error
+FF2C;AL.8b0;ESC ALM - CH1 Encoder side error
+FF2D;AL.8C0;ESC ALM - CH2 ESC side error
+FF2E;AL.8d0;ESC ALM - CH2 Encoder side error
+FF2F;AL.8E0;Digital encoder cable not connected
+FF30;AL.8F0;ESC ALM - Internal fault
+FF31;AL.861;Motor overheated
+FF32;AL.b10;Speed reference A/D error
+FF34;AL.b20;Torque reference A/D error
+FF35;AL.b33;Current detection error
+FF36;AL.C10;Servomotor out of control
+FF37;AL.C20;Phase detection error
+FF38;AL.C21;Polarity sensor error (Hall sensor)
+FF3A;AL.C50;Polarity detection failure
+FF3B;AL.C51;Overtravel detected during polarity detection
+FF3C;AL.C52;Polarity detection not completed
+FF3E;AL.d00;Position error too big
+FF41;AL.d10;Hybrid deviation error (motor to load)
+FF42;AL.Eb0;Safety function alarm
+FF43;AL.Eb1;Safety function signal input timing error
+FF44;AL.Eb2;Safety function self-check error
+FF45;AL.F10;Power supply line open phase
+FF46;AL.F50;Servomotor main circuit cable disconnection (motor maybe disconnected)
+FF47;AL.FA0;Power supply for encoder error (5V card fail)
+FF48;AL.FB0;FieldBus Hardware Fault
+FF49;AL.FB1;FieldBus Communication Fault
+FF4A;AL.FC0;Group Communication Fault
+FF4C;AL.891;Incremental encoder signal error
+FF4D;AL.FB2;Fieldbus communication setup error

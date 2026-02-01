@@ -1,0 +1,9 @@
+ no name           alias     rev   power         vld   state
+000 ED1F CoE Drive ED1F       16      0      0   False 00000001
+001 ED1F CoE Drive ED1F       16      0      0   False 00000001
+002 ED1F CoE Drive ED1F       16      0      0   False 00000001
+003 ED1F CoE Drive ED1F       16      0      0   False 00000001
+004 ED1F CoE Drive ED1F       16      0      0   False 00000001
+005 ED1F CoE Drive ED1F       16      0      0   False 00000001
+006 ED1F CoE Drive ED1F       16      0      0   False 00000001
+007 ED1F CoE Drive ED1F       16      0      0   False 00000001

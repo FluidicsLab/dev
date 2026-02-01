@@ -1,0 +1,51 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'>
+
+<defs>
+<marker id="arrow" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto">
+    <path d="M 0 0 L 5 2.5 L 0 5 z" fill="#c90000" />
+</marker>
+</defs>
+
+<style>
+svg { background-color:#333333; }
+.hot-circle { stroke-width:0; fill:#f5f5f5; }
+.hot-axis-x { stroke:#c90000; stroke-width:100; stroke-linecap:round; }
+.hot-axis-y { stroke:#008600; stroke-width:100; stroke-linecap:round; }
+.hot-axis-z { stroke:#639db9; stroke-width:100; stroke-linecap:round; }
+.hot-path { stroke:#666666; stroke-width:4; stroke-linecap:round; fill:#202020; }
+.hot-symbol { stroke:#c90000; stroke-width:20; stroke-linecap:round; fill:#c90000; }
+</style>
+
+<g transform="rotate(180 200 200) translate(20 -20)">
+
+    <g>
+
+        <!-- x -->
+        <line x1='200' y1='200' x2='200' y2='350' class='hot-axis-x'/>
+        <circle cx='200' cy='350' r='45' class='hot-circle'/>
+
+        <g>
+            <line x1='170' y1='350' x2='230' y2='350' class='hot-symbol'/>
+        </g>
+
+        <!-- y -->
+        <line x1='50' y1='200' x2='200' y2='200' class='hot-axis-y'/>
+        <circle cx='50' cy='200' r='45' class='hot-circle'/>
+
+        <g>
+            <line x1='20' y1='200' x2='80' y2='200' class='hot-symbol'/>
+        </g>
+        
+         <!-- z -->
+        <line x1='200' y1='200' x2='275' y2='125' class='hot-axis-z'/>
+        <circle cx='275' cy='125' r='45' class='hot-circle'/>
+
+        <g> 
+            <line x1='245' y1='125' x2='305' y2='125' class='hot-symbol'/>
+        </g>
+        
+    </g>    
+
+</g>
+
+</svg>

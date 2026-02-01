@@ -1,0 +1,132 @@
+{
+	"ctl": {
+		"id": "002",
+		"item": [-1, -1],
+		"step": [-1, -1],
+		"len": [0, 0],
+		"enabled": [false, false],
+		"modified": null,
+		"continuous": 2,
+		"times": 0,
+		"key": "pressure",
+		"title": "pressure",
+		"version": "2024.12(30)",
+		"author": "fluidXlab.com",
+		"index": 1,
+		"active": true,
+		"param": {
+			
+			"pressure": {
+				"setpoint": [240, 240],
+				"title": "constant pressure to deliver",
+				"unit": "bar"
+			},	
+
+			"volume": {
+				"setpoint": 2000,
+				"title": "volume to deliver",
+				"unit": "µl"
+			},
+			
+			"mode": "pressure"
+		}
+	},
+	"items": {		
+		"0": {
+			"name": ["refill", "refill"],
+			"valve": [[0, 1], [0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, null],
+			"value": [[-2500, 7], [-2500, 7]],			
+			"unit": ["µl/min", "µl/min"],
+			"domain": [["rate","volume"],["rate","volume"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "1"
+		},
+		"1": {
+			"name": ["inject", "hold"],
+			"valve": [[1, 0],[0, 0]],
+			"mode": ["pressure", "pressure"],
+			"channel": [null, 0],
+			"value": [[240, 6.5], [null, null]],			
+			"unit": ["bar/µl", "bar/s"],
+			"domain": [["pressure","volume"],["pressure","time"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "2"
+		},
+		"2": {
+			"name": ["change", "change"],
+			"valve": [[0, 0], [0, 0]],
+			"mode": ["valve", "valve"],
+			"channel": [null, null],
+			"value": [[], []],
+			"unit": ["", ""],
+			"domain": [[null, null], [null, null]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "3"
+		},
+		"3": {
+			"name": ["refill", "inject"],
+			"valve": [[0, 1], [1, 0]],
+			"mode": ["rate", "pressure"],
+			"channel": [null, null],
+			"value": [[-2500, 7], [240, 6.5]],
+			"unit": ["µl/min", "bar/µl"],
+			"domain": [["rate","volume"],["pressure","volume"]],
+			"pending": [false, true],
+			"enabled": [true, true],
+			"goto": "4"
+		},
+		"4": {
+			"name": ["hold", "inject"],
+			"valve": [[0, 0], [1, 0]],
+			"mode": ["pressure", "pressure"],
+			"channel": [1, null],
+			"value": [[null, null], [240, 6.5]],			
+			"unit": ["bar/s", "bar/µl"],
+			"domain": [["pressure","time"],["pressure","volume"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "5"
+		},
+		"5": {
+			"name": ["change", "change"],
+			"valve": [[0, 0], [0, 0]],
+			"mode": ["valve", "valve"],
+			"channel": [null, null],
+			"value": [[], []],
+			"unit": ["", ""],
+			"domain": [[null, null], [null, null]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "6"
+		},
+		"6": {
+			"name": ["inject", "refill"],
+			"valve": [[1, 0], [0, 1]],
+			"mode": ["pressure", "rate"],
+			"channel": [null, null],
+			"value": [[240, 6.5], [-2500, 7]],
+			"unit": ["bar/µl", "µl/min"],
+			"domain": [["pressure","volume"],["rate","volume"]],
+			"pending": [true, false],
+			"enabled": [true, true],
+			"goto": "7"
+		},
+		"7": {
+			"name": ["inject", "hold"],
+			"valve": [[1, 0],[0, 0]],
+			"mode": ["pressure", "pressure"],
+			"channel": [null, 0],
+			"value": [[240, 6.5], [null, null]],
+			"unit": ["bar/µl", "bar/s"],
+			"domain": [["pressure","volume"],["pressure","time"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": null
+		}
+	}
+}

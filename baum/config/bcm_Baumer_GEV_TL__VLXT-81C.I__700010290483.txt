@@ -1,0 +1,19 @@
+BaumerCMv1
+Camera Model:Baumer_GEV_TL__VLXT-81C.I__700010290483
+Rotation:0
+Saturation:1
+GainAll=10
+GainBlue=1
+GainGreenBlue=1
+GainGreenRed=1
+GainRed=1
+Matrix:3x3
+1
+0
+0
+0
+1
+0
+0
+0
+1

@@ -1,0 +1,166 @@
+{	
+	"ctl": {
+		"id": "003",
+		"item": [-1, -1],
+		"step": [-1, -1],
+		"len": [0, 0],
+		"enabled": [false, false],
+		"modified": null,
+		"continuous": -1,
+		"key": "purge",
+		"title": "purge",
+		"version": "2025.12(08)",
+		"author": "fluidXlab.com",
+		"index": 2,
+		"active": true,
+		"param": { 
+
+			"stroke": {
+				"setpoint": [true, true],
+				"title": "stroke(s) to purge"
+			},
+
+			"exaggeration": {
+				"setpoint": 5,
+				"title": "exaggeration to pressurize",
+				"unit": "%"
+			},
+
+			"mode": "purge"
+		}		
+	},
+	"items": {
+		"0": {
+			"name": ["remove air", "remove air"],
+			"valve": [[0, 1], [0, 1]],
+			"mode": ["valve", "valve"],
+			"channel": [null, null],
+			"value": [[], []],
+			"unit": ["", ""],
+			"domain": [[null, null], [null, null]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "1"
+		},
+		"1": {
+			"name": ["empty stroke", "empty stroke"],
+			"valve": [[0, 1],[0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, null],
+			"value": [[2000, 1.2], [2000, 1.2]],
+			"unit": ["µl", "µl"],
+			"domain": [["rate","volume"],["rate","volume"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "2"
+		},
+		"2": {
+			"name": ["refill stroke", "refill stroke"],
+			"valve": [[0, 1], [0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, null],
+			"value": [[-2000, 7.8], [-2000, 7.8]],
+			"unit": ["µl", "µl"],
+			"domain": [["rate","volume"],["rate","volume"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "3"
+		},
+		"3": {
+			"name": ["empty stroke", "empty stroke"],
+			"valve": [[0, 1],[0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, null],
+			"value": [[2000, 1.2], [2000, 1.2]],
+			"unit": ["µl", "µl"],
+			"domain": [["rate","volume"],["rate","volume"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "4"
+		},
+		"4": {
+			"name": ["refill stroke", "refill stroke"],
+			"valve": [[0, 1], [0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, null],
+			"value": [[-2000, 7.8], [-2000, 7.8]],
+			"unit": ["µl", "µl"],
+			"domain": [["rate","volume"],["rate","volume"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "5"
+		},
+		"5": {
+			"name": ["100bar 5sec", "100bar 5sec"],
+			"valve": [[0, 0], [0, 0]],
+			"mode": ["pressure", "pressure"],
+			"channel": [null, null],
+			"value": [[100, 5], [100, 5]],
+			"unit": ["bar;s", "bar;s"],
+			"domain": [["pressure","time"],["pressure","time"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "6"
+		},
+		"6": {
+			"name": ["remove air", "remove air"],
+			"valve": [[0, 1], [0, 1]],
+			"mode": ["valve", "valve"],
+			"channel": [null, null],
+			"value": [[], []],
+			"unit": ["", ""],
+			"domain": [[null, null], [null, null]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "7"
+		},
+		"7": {
+			"name": ["200bar 10sec", "200bar 10sec"],
+			"valve": [[0, 0], [0, 0]],
+			"mode": ["pressure", "pressure"],
+			"channel": [null, null],
+			"value": [[200, 10], [200, 10]],
+			"unit": ["bar;s", "bar;s"],
+			"domain": [["pressure","time"],["pressure","time"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "8"
+		},
+		"8": {
+			"name": ["100bar 5sec", "100bar 5sec"],
+			"valve": [[0, 0], [0, 0]],
+			"mode": ["pressure", "pressure"],
+			"channel": [null, null],
+			"value": [[100, 5], [100, 5]],
+			"unit": ["bar;s", "bar;s"],
+			"domain": [["pressure","time"],["pressure","time"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "9"
+		},		
+		"9": {
+			"name": ["remove air", "remove air"],
+			"valve": [[0, 1], [0, 1]],
+			"mode": ["valve", "valve"],
+			"channel": [null, null],
+			"value": [[], []],
+			"unit": ["", ""],
+			"domain": [[null, null], [null, null]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": "10"
+		},
+		"10": {
+			"name": ["refill stroke", "refill stroke"],
+			"valve": [[0, 1], [0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, null],
+			"value": [[-2500, 7.5], [-2500, 7.5]],
+			"unit": ["µl", "µl"],
+			"domain": [["rate","volume"],["rate","volume"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": null
+		}
+	}
+}

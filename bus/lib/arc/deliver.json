@@ -1,0 +1,75 @@
+{
+	"ctl": {
+		"item": [-1, -1],
+		"step": [-1, -1],
+		"len": [0, 0],
+		"enabled": [false, false],
+		"modified": [0, 0],
+		"continuous": true,
+		"key": "deliver.rate",
+		"title": "deliver (rate)",
+		"version": "2024.07(16)",
+		"author": "fluidXlab.com",
+		"index": 1,
+		"param": {
+			"rate": {
+				"setpoint": 1000,
+				"sign": 1,
+				"title": "flow rate in µl/min to deliver"
+			},
+			"mode": "rate"
+		}
+	},
+	"items": {		
+		"0": {
+			"name": ["refill", "refill"],
+			"valve": [[0, 1], [0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, null],
+			"value": [[-2500, 8], [-2500, 8]],
+			"unit": ["µl", "µl"],
+			"pending": [true, true],
+			"goto": "1"
+		},
+		"1": {
+			"name": ["inject", "hold"],
+			"valve": [[1, 0],[0, 0]],
+			"mode": ["rate", "pressure"],
+			"channel": [null, 0],
+			"value": [[1000, 1], [null, 1]],
+			"unit": ["ml", "bar"],
+			"pending": [false, true],
+			"goto": "2"
+		},
+		"2": {
+			"name": ["refill", "inject"],
+			"valve": [[0, 1], [1, 0]],
+			"mode": ["rate", "rate"],
+			"channel": [1, null],
+			"value": [[-2500, 8], [1000, 1]],
+			"unit": ["ml", "ml"],
+			"pending": [false, false],
+			"goto": "3"
+		},
+		"3": {
+			"name": ["hold", "inject"],
+			"valve": [[0, 0], [1, 0]],
+			"mode": ["pressure", "rate"],
+			"channel": [1, null],
+			"value": [[null, 1], [1000, 1]],
+			"unit": ["bar", "ml"],
+			"pending": [true, false],
+			"goto": "4"
+		},
+		"4": {
+			"name": ["inject", "refill"],
+			"valve": [[1, 0], [0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, 0],
+			"value": [[1000, 1], [-2500, 8]],
+			"unit": ["ml", "ml"],
+			"pending": [false, true],
+			"goto": "1"
+		}		
+	}
+}

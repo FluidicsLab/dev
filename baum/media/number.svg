@@ -1,0 +1,14 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'>
+
+<style>
+svg { background-color:#333333; }
+.hot-text { font: bold 70px arial; fill:#880000; }
+.hot-rect { fill: #666666; }
+</style>
+
+<g>
+<rect x='0' y='0' width="48" height="48" class="hot-rect" />
+<text x='0' y='0' dx='10' dy='50' class='hot-text'>3</text>
+</g>
+
+</svg>

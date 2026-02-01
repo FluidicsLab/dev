@@ -1,0 +1,31 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 372 172'>
+
+<style>
+svg { background-color:#333333; }
+.hot-text { font: 80% verdana; fill: #ffffff; }
+.hot-circle { stroke-width:0; fill:transparent; }
+.hot-center { stroke-width:0; fill:transparent; }
+.hot-line { stroke:#666666; stroke-width:33; stroke-linecap:round; }
+</style>
+  
+<line id='c1' x1='231' y1='86' x2='309' y2='87' class='hot-line'/>
+
+<circle id='1' cx='253' cy='32' r='16' class='hot-circle'/>
+<circle id='2' cx='197' cy='32' r='16' class='hot-circle'/>
+<circle id='3' cx='141' cy='87' r='16' class='hot-circle'/>
+<circle id='4' cx='197' cy='143' r='16' class='hot-circle'/>
+<circle id='5' cx='253' cy='143' r='16' class='hot-circle'/>
+<circle id='6' cx='309' cy='87' r='16' class='hot-circle'/>
+
+<circle id='c' cx='231' cy='86' r='16' class='hot-center'/>
+<text x="227" y="91" class="hot-text">6</text>
+
+<text x="249" y="37" class="hot-text">1</text>
+<text x="192" y="37" class="hot-text">2</text>
+<text x="137" y="93" class="hot-text">3</text>
+<text x="192" y="149" class="hot-text">4</text>
+<text x="249" y="148" class="hot-text">5</text>
+<text x="304" y="93" class="hot-text" style="visibility:hidden;">6</text>
+
+
+</svg>

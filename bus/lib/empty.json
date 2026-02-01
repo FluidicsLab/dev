@@ -1,0 +1,39 @@
+{	
+	"ctl": {
+		"id": "005",
+		"item": [-1, -1],
+		"step": [-1, -1],
+		"len": [0, 0],
+		"enabled": [false, false],
+		"modified": null,
+		"continuous": -1,
+		"times": 0,
+		"key": "empty",
+		"title": "empty",
+		"version": "2025.01(07)",
+		"author": "fluidXlab.com",
+		"index": 3,
+		"active": true,
+		"param": { 
+			"stroke": {
+				"setpoint": [true, true],
+				"title": "stroke(s) to empty"
+			},
+			"mode": "empty"
+		}		
+	},
+	"items": {
+		"0": {
+			"name": ["empty stroke", "empty stroke"],
+			"valve": [[0, 1],[0, 1]],
+			"mode": ["rate", "rate"],
+			"channel": [null, null],
+			"value": [[1500, 1], [1500, 1]],
+			"unit": ["µl/min", "µl/min"],
+			"domain": [["rate","volume"],["rate","volume"]],
+			"pending": [true, true],
+			"enabled": [true, true],
+			"goto": null
+		}
+	}
+}

@@ -1,0 +1,16 @@
+3111;AL.900;Position deviation overflow
+3114;AL.910;Overload
+3190;AL.923;Internal fan stop
+3210;AL.930;Encoder battery malfunction
+3310;AL.941;Change of parameters and functions with save and restart requirement
+3510;AL.971;Undervoltage
+3910;AL.9A0;Overtravel detected when servo ON (P-OT or N-OT signal is received.)
+4110;AL.9A1;P-OT signal is received.
+5110;AL.9A2;N-OT signal is received.
+3112;AL.9F0;Servo voltage too big
+3113;AL.943;Fieldbus synchronous cycle time warning
+3115;AL.944;System warning
+3119;AL.945;Torque limit warning
+3121;AL.946;Encoder communication warning
+3131;AL.947;Multi-motion malfunction warning
+3151;AL.924;I2T

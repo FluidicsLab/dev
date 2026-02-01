@@ -1,0 +1,47 @@
+{
+
+    "version": "0.2.0",
+    
+    "configurations": [
+
+        {
+            "name": "DEV-drive",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "_EcatMaster.py",
+            "console": "integratedTerminal",
+            "args": ["_EcatSettingsDEV"],
+            "justMyCode": false
+        },
+        {
+            "name": "DEV-broker",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "./util/drive.broker.py",
+            "console": "integratedTerminal",
+            "args": [""],
+            "justMyCode": false
+        },
+
+        {
+            "name": "ONE-Ecat-Master-drive",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "_EcatMaster.py",
+            "console": "integratedTerminal",
+            "args": ["_EcatSettingsEd1fONE"],
+            "justMyCode": false
+        },
+
+        {
+            "name": "ONE-Ecat-Master-bus",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "_EcatMaster.py",
+            "console": "integratedTerminal",
+            "args": ["_EcatSettingsBusONE"],
+            "justMyCode": false
+        }
+
+    ]
+}

@@ -1,0 +1,33 @@
+{
+	"ctl": {
+		"item": [-1, -1],
+		"step": [-1, -1],
+		"len": [0, 0],
+		"enabled": [false, false],
+		"modified": [0, 0],
+		"continuous": false,
+		"version": "15.07.2024",
+		"author": "fluidXlab.com",
+		"index": 2,
+		"param": {
+			"rate": {
+				"setpoint": 100,
+				"sign": -1,
+				"title": "flow rate in µl/min to receive"
+			},
+			"mode": "rate"
+		}
+	},
+	"items": {		
+		"0": {
+			"name": ["remove air", "remove air"],
+			"valve": [[1, 0], [1, 0]],
+			"mode": ["valve", "valve"],
+			"channel": [null, null],
+			"value": [[], []],
+			"unit": ["", ""],
+			"pending": [true, true],
+			"goto": null
+		}
+	}
+}

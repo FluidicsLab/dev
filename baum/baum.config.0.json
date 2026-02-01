@@ -1,0 +1,19 @@
+{
+    "ApertureStep": 32,
+    "Blur": 1,
+    "ExposureTime": 250000.0,
+    "Flip": 0,
+    "FocusStep": 0,
+    "Gain": 1.0,
+    "Gamma": 1.0,
+    "PixelFormat": 153,
+    "Rotation": [
+        0,
+        0.5,
+        0.5
+    ],
+    "SharpeningFactor": 5,
+    "SharpeningMode": 3,
+    "SharpeningThreshold": 5,
+    "_filename": "C:\\Develop\\py\\FluidicsLab\\Drafts\\baum\\baum.config.0.json"
+}

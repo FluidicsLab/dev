@@ -1,0 +1,17 @@
+{
+    "ExposureTime": 8835.0,
+    "Flip": 99,
+    "FocusStep": 0,
+    "Gain": 5.01171875,
+    "Gamma": 1.0,
+    "PixelFormat": 153,
+    "Rotation": [
+        270,
+        0.5,
+        0.5
+    ],
+    "SharpeningFactor": 5,
+    "SharpeningMode": 1,
+    "SharpeningThreshold": 5,
+    "_filename": "C:\\Develop\\py\\FluidicsLab\\Drafts\\baum\\baum.config.1.json"
+}
