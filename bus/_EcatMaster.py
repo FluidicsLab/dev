@@ -1,5 +1,6 @@
 
 from doctest import debug
+from socket import timeout
 from numpy import indices, int32
 import pysoem
 import time, datetime
@@ -56,14 +57,18 @@ from _BeckhoffMotionController import AM8111MotionController
 
 TIMEOUT_RECEIVE = 4_000
 TIMEOUT_FPWR = 4_000
+TIMEOUT_STATE_CHECK = 50_000
+
+TIMEOUT_MASTER_STATE = 2.0      # s
 
 DELAY_ALIVE_LOOP = 0.5
 DELAY_INPUT_LOOP = 0.1
 DELAY_OUTPUT_LOOP = 0.1
 
 DELAY_PROCESS_LOOP  = 0.01      # 0.01
-DELAY_TOGGLE_LOOP   = 1.0       # 
 DELAY_CHECK_LOOP    = 0.1       # 0.01
+
+
 
 VERBOSE = 1
 
@@ -84,13 +89,6 @@ class EcatMaster(EcatObject):
             self._processLock = Lock()
         return self._processLock
     ProcessLock: Lock = property(fget=_get_processLock)
-
-    _toggleLock: Lock = None
-    def _get_toggleLock(self): 
-        if self._toggleLock is None:
-            self._toggleLock = Lock()
-        return self._toggleLock
-    ToggleLock: Lock = property(fget=_get_toggleLock)
 
     _wkc = 0
     _template = '_EcatLayout'
@@ -170,10 +168,12 @@ class EcatMaster(EcatObject):
     
     """    
     def _set_state(self, value):
+        
         EcatLogger.debug(f'--- set state')
+        
         self.Master.state = value
         wkc = self.Master.write_state() 
-        state = self.Master.state_check(value, timeout=2_000_000)  
+        state = self.Master.state_check(value, timeout=TIMEOUT_STATE_CHECK)
         EcatLogger.debug(f'    {wkc:03d} {EcatStates.desc(value)} ~ {EcatStates.desc(state)}')        
     def _get_state(self): 
         return self.Master.state    
@@ -938,39 +938,43 @@ class EcatMaster(EcatObject):
         self.Master.write_state()
             
     def writeMasterState(self, state=pysoem.OP_STATE):
+
+        """
+        ethercat master write state in the state machine
+
+        :param self: 
+        :param state: pysoem given state
+        """
+
+        current_ = EcatStates.desc(self.Master.state_check(pysoem.SAFEOP_STATE, TIMEOUT_STATE_CHECK), desc=True)
+        demand_ = EcatStates.desc(state, desc=True)
     
-        EcatLogger.debug(f"    + switch to {EcatStates.desc(state, desc=True)} from {EcatStates.desc(self.Master.state_check(pysoem.SAFEOP_STATE, 50_000), desc=True)}")
+        EcatLogger.debug(f"    + switch to {demand_} from {current_}")
 
         rc = True
 
         self.Master.state = state
         self.Master.write_state()
         
-        timeout = 5.0  # seconds
+        timeout = TIMEOUT_MASTER_STATE
         start_time = time.time()
-        while self.Master.state_check(state, timeout=50_000) != state:
+        while self.Master.state_check(state, timeout=TIMEOUT_STATE_CHECK) != state:
             if time.time() - start_time > timeout:
                 rc = False
                 break
         EcatLogger.debug(f"    - done OP={rc} by {time.time() - start_time}s")
 
-        """
-        rc = False
-        k = 0
-        for _ in range(40):
-            self.Master.state_check(pysoem.OP_STATE, 50_000)
-            if self.Master.state == pysoem.OP_STATE:
-                rc = True
-                break
-            k += 1
-
-        EcatLogger.debug(f"    - done OP={rc} by {k}x50ms")
-        """
         return rc
     
     _running = False
     
     def run(self):
+
+        """
+        ethercat master main intialization and running
+        
+        :param self: 
+        """
 
         EcatLogger.debug("--- run")
 
@@ -988,7 +992,7 @@ class EcatMaster(EcatObject):
         self.config_watchdog()
         self.config_map()  
 
-        if self.Master.state_check(pysoem.SAFEOP_STATE, 500_000) != pysoem.SAFEOP_STATE:      
+        if self.Master.state_check(pysoem.SAFEOP_STATE, timeout=TIMEOUT_STATE_CHECK) != pysoem.SAFEOP_STATE:      
             EcatLogger.debug("    -- master NOT in SAFEOP_STATE")    
         else:
             EcatLogger.debug("    ++ master in SAFEOP_STATE")    
@@ -998,7 +1002,7 @@ class EcatMaster(EcatObject):
         EcatLogger.debug(f"    ++ master dc time {self.Master.dc_time}") 
 
         self._running = self.writeMasterState(pysoem.OP_STATE)
-        if self.Master.state_check(pysoem.OP_STATE, 500_000) != pysoem.OP_STATE:      
+        if self.Master.state_check(pysoem.OP_STATE, timeout=TIMEOUT_STATE_CHECK) != pysoem.OP_STATE:      
             EcatLogger.debug("    -- master NOT in OP_STATE") 
         else:
             EcatLogger.debug("    ++ master in OP_STATE") 
@@ -1010,11 +1014,9 @@ class EcatMaster(EcatObject):
         EcatLogger.debug("    + start process threading")
 
         self._processThread = Thread(target=self._processLoop)
-        self._toggleThread = Thread(target=self._toggleLoop)
         self._checkThread = Thread(target=self._checkLoop)
         
         self._processThread.start()
-        self._toggleThread.start()
         self._checkThread.start()
 
         self._inputThread = Thread(target=self._inputLoop)
@@ -1030,14 +1032,12 @@ class EcatMaster(EcatObject):
         EcatLogger.debug("    + stop process threading")
 
         self._checkEvent.set()
-        self._toggleEvent.set()
         self._processEvent.set()
 
         self._inputEvent.set()
         self._outputEvent.set()
 
         self._checkThread.join()
-        self._toggleThread.join()
         self._processThread.join()
 
         self._inputThread.join()
@@ -1603,42 +1603,6 @@ class EcatMaster(EcatObject):
             self._processEvent.wait(DELAY_PROCESS_LOOP)
 
         EcatLogger.debug("    - end process loop")
-
-    _toggleEvent = Event()
-    _toggleThread = None
-
-    def _toggleLoop(self, enabled=True):
-
-        EcatLogger.debug("    + start toggle loop")
-
-        keys = self.Indizes.__dict__.keys()
-        slaves = self.Master.slaves
-        nn = sorted(self.Layout, key=lambda n: (self.Layout[n].priority, n), reverse=False)
-
-        while not self._toggleEvent.is_set():
-
-            self.ToggleLock.acquire()
-            try:
-
-                for n in nn:
-
-                    slave = slaves[n]
-                    state = slave.state
-
-                    if (pysoem.OP_STATE & state) != state:
-                        continue
-
-                    if 'EL7201' in keys and n in self.Indizes.EL7201:
-                        # motion control
-                        if n in self._beckhoffMotionController.keys():
-                            self._beckhoffMotionController[n].toggle()
-
-            finally:
-                self.ToggleLock.release()
-
-            self._toggleEvent.wait(DELAY_TOGGLE_LOOP)
-
-        EcatLogger.debug("    - end toggle loop")    
     
     _checkEvent = Event()
     _checkThread = None
@@ -1670,7 +1634,7 @@ class EcatMaster(EcatObject):
                 if verbose:
                     EcatLogger.error(f'    {title} reconfigured')
         elif not slave.is_lost:
-            slave.state_check(pysoem.OP_STATE)
+            slave.state_check(pysoem.OP_STATE, timeout=TIMEOUT_STATE_CHECK)
             if slave.state == pysoem.NONE_STATE:
                 slave.is_lost = True
                 if verbose:

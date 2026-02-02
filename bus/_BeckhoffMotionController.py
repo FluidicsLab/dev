@@ -71,8 +71,9 @@ class AM8111PidController(object):
             if 'setpoint' in config.keys() and config['setpoint'] is not None:
                 self._setpoint = config['setpoint']
             if 'processvalue' in config.keys() and config['processvalue'] is not None:
-                self._updatable = False
-                self._processvalue = config['processvalue']
+                pass
+                #self._updatable = False
+                #self._processvalue = config['processvalue']
             if 'enabled' in config.keys() and config['enabled'] is not None:
                 self._enabled = config['enabled']
             if 'reset' in config.keys():
@@ -118,7 +119,7 @@ class AM8111PidController(object):
                     sp = scale(self._setpoint)
                     pv = scale(max(0, self._processvalue))
 
-                    err = sp - pv
+                    err = pv - sp
 
                     kp = self._params[0] * err
                     ki = self._params[1] * err * self._params[3]
@@ -493,16 +494,32 @@ class AM8111MotionController(BeckhoffMotionController):
             pass                
     TouchprobeWord = property(fget=_get_touchprobeWord, fset=_set_touchprobeWord)    
 
+    _turnbits = None
+    def _get_turnbits(self):
+        if self._turnbits is None:
+            self._turnbits = [
+                ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(0x8000,0x12)).value,
+                ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(0x8000,0x13)).value
+            ]
+        return self._turnbits
+    def _set_turnbits(self, singleturn, multiturn):
+        self.Device.sdo_write(0x8000, 0x12, bytes(ctypes.c_uint8(singleturn)))
+        self.Device.sdo_write(0x8000, 0x13, bytes(ctypes.c_uint8(multiturn)))
+        self._turnbits = None
+    Turnbits = property(fget=_get_turnbits,fset=_set_turnbits)
+
+    def debug(self):
+        EcatLogger.debug(f"    ++ debug")
+        EcatLogger.debug(f"       turn bits {self.Turnbits} {2**self.Turnbits[0]}, {2**self.Turnbits[1]}")
+
     _initialized = False
 
     def init(self, source=None): 
 
-        """
-                
+        """                
         :param self: 
         :param source: dict with keys like { terminal, address, key, low, high }
         """
-
         try:
 
             if self._controller is not None:
@@ -606,6 +623,9 @@ class AM8111MotionController(BeckhoffMotionController):
             self.Device.sdo_write(0x8010, 0x3A, bytes(ctypes.c_uint16(0x06)), ca)   # warnings
 
             _ = self.VelocityMax
+            _ = self.Turnbits
+
+            self.debug()
 
             self._initialized = True
 
@@ -637,11 +657,13 @@ class AM8111MotionController(BeckhoffMotionController):
             
             data  = {
                 'position': {
-                    'raw': buff.position
+                    'raw': buff.position,
+                    'stb': int(bin(abs(buff.position))[2:].zfill(32)[self.Turnbits[1]:].zfill(32),2),
+                    'mtb': int(bin(abs(buff.position))[2:].zfill(32)[:self.Turnbits[1]].zfill(32),2)
                 },
                 'velocity':{
                     'raw': buff.velocity,
-                    'max': self._velocityMax
+                    'max': self.VelocityMax
                 },
                 'info': {
                     'error': buff.info1,
@@ -683,12 +705,7 @@ class AM8111MotionController(BeckhoffMotionController):
             self.Device.output = bytes(data)
         finally:
             self.DeviceLock.release()        
-        
-    _toggle = True     
-    def toggle(self):
-
-        self._toggle ^= True
-
+   
     _data = None
 
     def run(self):
