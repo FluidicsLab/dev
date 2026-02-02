@@ -12,7 +12,7 @@ from _EcatObject import EcatLogger
 from _EcatSeverity import SEVERITY_VERBOSE, EcatSeverityController, SeverityLogger
 
 
-class BeckhoffPidController(object):
+class AM8111PidController(object):
 
     _scaler = SimpleNamespace(**{
         'input': { "low": 0, "high": 700 },          # bar   (pressure) 
@@ -35,9 +35,24 @@ class BeckhoffPidController(object):
     # Kp, Ki, Kd, dt
     _params = [0.5, 0.001, 0.0001, 0.1]
 
-    _updatable = False
+    _updatable = True
 
     _callback = None
+
+    _source = SimpleNamespace(**{
+        "name": None,
+        "addr": 0x00,
+        "key": None,
+        "low": 0,
+        "high": 0
+    })
+    def _set_source(self, value: dict):
+        self._source = SimpleNamespace(**value)
+        self._scaler.input["low"] = self._source.low
+        self._scaler.input["high"] = self._source.high
+    def _get_source(self):
+        return self._source
+    Source = property(fset=_set_source, fget=_get_source)
 
     def __init__(self, callback):
         super().__init__()
@@ -395,11 +410,11 @@ class AM8111MotionController(BeckhoffMotionController):
     INT32_MAX = 2_147_483_647
     INT32_MIN = -2_147_483_647
     
-    _controller: BeckhoffPidController = None
-
+    _controller: AM8111PidController = None
+    
     def __init__(self, index, device, lock, debug=False) -> None:
         super().__init__(index, device, lock, debug)
-        self._controller = BeckhoffPidController(self.controllerFunc)
+        self._controller = AM8111PidController(self.controllerFunc)
 
     def release(self):
         super().release()
@@ -480,9 +495,18 @@ class AM8111MotionController(BeckhoffMotionController):
 
     _initialized = False
 
-    def init(self): 
+    def init(self, source=None): 
+
+        """
+                
+        :param self: 
+        :param source: dict with keys like { terminal, address, key, low, high }
+        """
 
         try:
+
+            if self._controller is not None:
+                self._controller.Source = source
 
             def _set_state(state):
                 rc = True
@@ -725,12 +749,17 @@ class AM8111MotionController(BeckhoffMotionController):
         return rc
     
     def callback(self, *args):
-        if self._controller is not None and self._controller._updatable:
-            addr = 0x0b
-            if addr in args[0]['value']['value'].keys():
-                data = args[0]['value']['value'][addr]
-                if 'p' in data.keys():                    
-                    self._controller.update(data['p'])                    
+        if self._controller is not None and self._controller._updatable and self._controller.Source.name is not None:
+            name = f"{args[0]['name']}.{args[0]['index']}"
+            if name == self._controller.Source.name:
+                addr = self._controller.Source.addr
+                key = self._controller.Source.key
+                value = args[0]['value']['value']
+                if value:
+                    if addr in value.keys():
+                        data = value[addr]
+                        if key in data.keys():                    
+                            self._controller.update(data[key])                    
 
     def controllerFunc(self, value):
         self._lock.acquire()

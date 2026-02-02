@@ -186,7 +186,7 @@ class EcatMasterDEV(EcatMaster):
             if self.isSlot("drive", (1, pos)):
 
                 self._beckhoffMotionController[pos] = AM8111MotionController(pos, slave, self.ProcessLock)
-                self._beckhoffMotionController[pos].init()
+                self._beckhoffMotionController[pos].init({ "name": "EL6021.3", "addr": 0x0B, "key": "p", "low": 0, "high": 700 })
                 self.SeverityController.register(f"EL7201.{pos}", self._beckhoffMotionController[pos].severityFunc)
 
                 self.CallbackController.register(f"EL7201.{pos}", "EL6021.3", self._beckhoffMotionController[pos].callback)
