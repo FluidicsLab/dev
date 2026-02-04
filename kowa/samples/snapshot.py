@@ -66,7 +66,7 @@ def demo() -> typing.Optional[int]:
                 camera.setPacketResend(1)
 
                 camera.setFeatureInteger("GevSCPD", 500)
-                camera.setFeatureInteger("ExposureTime", 5000)
+                camera.setFeatureInteger("ExposureTime", 2000)
 
                 # test maximum achievable packet size
                 max_packet_size = camera.testFindMaxPacketSize()
@@ -87,7 +87,8 @@ def demo() -> typing.Optional[int]:
                     return 2
 
                 image_buffer = (ctypes.c_uint8*img_size)()
-                dsize=(width*360//height, 360) # (w,h) to 360p
+                df = 2880
+                dsize=(width*df//height, df) # (w,h) to df pixel
 
                 logger.info("Start acquisiton")
                 with camera.acquisitionStart(0):
@@ -118,7 +119,8 @@ def demo() -> typing.Optional[int]:
                             logger.error("%s", ex.missing_returned_value)
                         else:
                             grabbed_img = np.ctypeslib.as_array(image_buffer).reshape(height,width)
-                            display_img = cv2.resize(grabbed_img, dsize=dsize,
+                            color_img = cv2.cvtColor(grabbed_img, cv2.COLOR_BayerBG2BGR)
+                            display_img = cv2.resize(color_img, dsize=dsize,
                                                      interpolation=cv2.INTER_AREA)
                             cv2.imshow("frame", display_img)
                             key = cv2.waitKey(1)

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>readme_1st_windows_en</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="./css/kop-pandoc-style.css">
+  <link rel="stylesheet" href="./css/printing.css">
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <div class="md2html-container">
+<p>Kowa GigE SDK<br />
+for Windows</p>
+<h1 data-number="1" id="overview"><span
+class="header-section-number">1</span> Overview</h1>
+<p>Kowa GigE SDK is Software Development Kit for GigE camera supplied by
+Kowa Optronics Co., Ltd. It contains the Driver software, Library,
+Sample Code, Viewer Software, Setting Tools and Manuals needed to use
+the Kowa Optronics Co., Ltd camera on Windows.</p>
+<h1 data-number="2" id="supporting-os"><span
+class="header-section-number">2</span> Supporting OS</h1>
+<ul>
+<li>Windows 10 (64bit), Windows 11 (64bit)</li>
+</ul>
+<h1 data-number="3" id="install-and-usage"><span
+class="header-section-number">3</span> Install And Usage</h1>
+<ul>
+<li><p>SDK and Library</p>
+<p>Run setup.exe to install SDK, library, sample programs and
+tools.</p></li>
+<li><p>Sample Program</p>
+<ul>
+<li>CPP_ConsoleDemo_Windows(C++ sample code)
+<ul>
+<li>This is a Console Demo written in C++ that can be run in
+VisualStudio 2019 or later.</li>
+</ul></li>
+<li>CS_ConsoleDemo_Windows(C# sample code)
+<ul>
+<li>This is a Console Demo written in C# that can be run in VisualStudio
+2019 or later.</li>
+</ul></li>
+<li>CS_GigeCameraCtrlSample(C# sample code)
+<ul>
+<li>This is a GUI Demo written in C# that can be run for Windows Form on
+VisualStudio 2019 or later.</li>
+</ul></li>
+<li>CPP_RemoteFocusConsoleDemo_Windows(C++ sample code)
+<ul>
+<li>This is a Console Demo for RemoteFocus Control in C++ that can be
+run in VisualStudio 2019 or later.</li>
+<li>This sample code uses opencv. Please set the environment variable
+‘OPENCV_DIR’.</li>
+</ul></li>
+</ul></li>
+<li><p>Tools</p>
+<ul>
+<li>Kowa GigE Vision Viewer
+<ul>
+<li>Run “KowaGigEVisionViewer.exe” to execute Kowa GigE Vision
+Viewer.</li>
+</ul></li>
+<li>IPConfigTool
+<ul>
+<li>Run “IPConfigTool.exe” to execute IPConfigTool.</li>
+<li>See “IPConfigtool_gui_Manual_en.pdf” for details on how to use
+IPConfigTool.</li>
+</ul></li>
+</ul></li>
+<li><p>Python Wrapper</p>
+<ul>
+<li><p>Install the <code>kge-*.whl</code> wheel package to your python
+runtime. The wheel package located in
+<code>%KOWA_GEV_ROOT%\Wrappers\Python\dist</code>
+(<code>C:\Program Files\Kowa\Optronics\Wrappers\Python\dist</code>).</p>
+<p>Execute <code>import kge</code> from python to you can use this
+module that . On the command line, <code>python -m kge</code> will run
+the demo script. Opencv and Numpy are required to run the demo
+script.</p>
+<p>Please refer to sample code to learn about the steps involved in
+acquiring images from the camera and how to access the camera. Sample
+code can be found in /Wrapper/Python/samples. See
+“Documents/KowaGigESDK_python” for more details about API
+commands.</p></li>
+</ul></li>
+</ul>
+<h1 data-number="4" id="requirement"><span
+class="header-section-number">4</span> Requirement</h1>
+<ul>
+<li>Python 3.9 or later (If you want to use with Python-Wrapper)</li>
+<li>OpenCV 4.5.1 or later (Required only demo script running)</li>
+<li>NumPy 1.19.5 or later (Required only demo script running)</li>
+</ul>
+<h1 data-number="5" id="license"><span
+class="header-section-number">5</span> License</h1>
+<p>Library uses the following 3rd party software packages.</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Package</th>
+<th style="text-align: left;">License</th>
+<th style="text-align: left;">URL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Mathparser</td>
+<td style="text-align: left;">LGPL</td>
+<td style="text-align: left;">http://kirya.narod.ru/mathparser.html</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">libxml2</td>
+<td style="text-align: left;">MIT</td>
+<td style="text-align: left;">http://www.xmlsoft.org</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">libxslt</td>
+<td style="text-align: left;">MIT</td>
+<td style="text-align: left;">http://www.xmlsoft.org</td>
+</tr>
+</tbody>
+</table>
+  </div>
+</body>
+</html>

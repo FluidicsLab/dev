@@ -1,0 +1,776 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Kowa.GigEVision</name>
+    </assembly>
+    <members>
+        <member name="T:Kowa.GigEVision.ApiAdapters.ActionAcknowledgeCallback">
+             <summary>
+            
+             </summary>
+             <param name="camera"></param>
+             <param name="fromip"></param>
+             <param name="error"></param>
+             <returns>
+                 0: continue to wait acknowledge.
+                 1: decontinue to waiting, and instantly return.
+             </returns>
+        </member>
+        <member name="T:Kowa.GigEVision.ApiAdapters.CameraNumber">
+            <summary>下位ライブラリで利用されるカメラ識別値</summary>
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.CameraNumber.#ctor(System.Byte)">
+            <summary/>
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.CameraNumber.ToString">
+            <inheritdoc cref="M:System.Object.ToString"/>
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.CameraNumber.op_Equality(Kowa.GigEVision.ApiAdapters.CameraNumber,Kowa.GigEVision.ApiAdapters.CameraNumber)">
+            
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.CameraNumber.op_Inequality(Kowa.GigEVision.ApiAdapters.CameraNumber,Kowa.GigEVision.ApiAdapters.CameraNumber)">
+            
+        </member>
+        <member name="T:Kowa.GigEVision.ApiAdapters.InetAddressV4">
+            <summary>
+            IPアドレスを表現する4byte構造体。
+            <see cref="T:System.String"/>型と暗黙的に相互変換できる。
+            </summary>
+        </member>
+        <member name="P:Kowa.GigEVision.ApiAdapters.InetAddressV4.NetworkByteOrderValue">
+            <summary>
+            ネットワークバイトオーダー(ビッグエンディアン)での<see cref="T:System.UInt32"/>表現。
+            </summary>
+        </member>
+        <member name="P:Kowa.GigEVision.ApiAdapters.InetAddressV4.HostByteOrderValue">
+            <summary>
+            ホストバイトオーダーでの<see cref="T:System.UInt32"/>表現。
+            </summary>
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.InetAddressV4.op_Implicit(System.String)~Kowa.GigEVision.ApiAdapters.InetAddressV4">
+            <summary><see cref="T:System.String"/>型からの暗黙的な変換</summary>
+            <param name="addr">IPアドレスを表現する文字列</param>
+            <exception cref="T:System.ArgumentException"/>
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.InetAddressV4.op_Implicit(Kowa.GigEVision.ApiAdapters.InetAddressV4)~System.String">
+            <summary><see cref="T:System.String"/>型への暗黙的な変換</summary>
+            <param name="addr"></param>
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.InetAddressV4.ToString">
+            <inheritdoc cref="M:System.Object.ToString"/>
+        </member>
+        <member name="T:Kowa.GigEVision.ApiAdapters.InetAddrV4HostByteOrder">
+            <summary>
+            一部のAPIがNetworkByteOrderではなく、
+            HostByteOrderで引数を要求している。
+            
+            </summary>
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.InetAddrV4HostByteOrder.op_Implicit(Kowa.GigEVision.ApiAdapters.InetAddressV4)~Kowa.GigEVision.ApiAdapters.InetAddrV4HostByteOrder">
+            <summary/>
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.InetAddrV4HostByteOrder.op_Implicit(System.String)~Kowa.GigEVision.ApiAdapters.InetAddrV4HostByteOrder">
+            <summary/>
+        </member>
+        <member name="T:Kowa.GigEVision.ApiAdapters.MacAddr">
+            <summary>
+            MACアドレスを表現する6byte構造体。
+            <see cref="T:System.String"/>型と暗黙的に相互変換できる。
+            </summary>
+        </member>
+        <member name="P:Kowa.GigEVision.ApiAdapters.MacAddr.Value">
+            <summary><c>":"</c>区切りのMACアドレス表現</summary>
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.MacAddr.op_Implicit(System.String)~Kowa.GigEVision.ApiAdapters.MacAddr">
+            <summary><see cref="T:System.String"/>型からの暗黙的な変換</summary>
+            <param name="addr">MACアドレスを表現する文字列</param>
+            <exception cref="T:System.ArgumentException"/>
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.MacAddr.op_Implicit(Kowa.GigEVision.ApiAdapters.MacAddr)~System.String">
+            <summary><see cref="T:System.String"/>型への暗黙的な変換</summary>
+            <param name="addr"></param>
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.MacAddr.ToString">
+            <inheritdoc cref="M:System.Object.ToString"/>
+        </member>
+        <member name="T:Kowa.GigEVision.ApiAdapters.FeatureList">
+            <summary>
+            <see cref="T:Kowa.GigEVision.FeatureListElement"/>を列挙するアダプタ構造体
+            </summary>
+        </member>
+        <member name="M:Kowa.GigEVision.ApiAdapters.FeatureList.GetEnumerator">
+            <inheritdoc cref="M:System.Collections.Generic.IEnumerable`1.GetEnumerator"/>
+        </member>
+        <member name="T:Kowa.GigEVision.ApiAdapters.Utf8String">
+            <summary>
+            UTF8として入出力するべき文字列。
+            この構造体はアンマネージリソースを含むため、
+            確実に<see cref="M:Kowa.GigEVision.ApiAdapters.Utf8String.Dispose"/>を呼ぶ必要がある(そのためintenralにしてある)。
+            </summary>
+            <remarks>
+            <para>
+            解説:
+            C#/.NET では <see cref="T:System.Char"/>は16bitであり、
+            <see cref="T:System.String"/>はLengthを持つ
+            (つまりnull終端されてなくてもよい)16bit文字の配列である。
+            文字コードはUnicode(UTF-16LE)である。
+            </para>
+            <para>
+            C言語での常識では<see cref="T:System.Char"/>は8bitであり、
+            <see cref="T:System.String"/>null終端された8bit文字の配列である。
+            </para>
+            <para>
+            これらを単にポインタだけのやり取りをすると破綻するので、
+            .NET Runtimeは <see cref="T:System.Runtime.InteropServices.DllImportAttribute"/>
+            の関数を呼ぶ際にいい感じの変換をかける。
+            この変換は ANSI であり、UTF8への変換する選択肢はない。
+            C#での変換を経由したうえで<see cref="T:System.IntPtr"/>として渡すことで確実に制御する。
+            
+            C言語側から文字列を受け取る<see cref="T:System.Text.StringBuilder"/>も同様である。
+            </para>
+            </remarks>
+        </member>
+        <member name="T:Kowa.GigEVision.Camera">
+            <summary>
+            カメラ操作関連の関数。
+            </summary>
+            <remarks>
+            各関数は、暗黙的に<see cref="T:Kowa.GigEVision.GevException"/>の例外を投げる可能性がある。
+            </remarks>
+        </member>
+        <member name="F:Kowa.GigEVision.Camera._opened_table">
+            <summary>
+            開いているカメラのindex正引き。
+            </summary>
+            <remarks>
+            ユーザーがCameraオブジェクトをすべて手放したときに
+            weak-referenceではない場合に参照が解放されない。
+            Closeせずに参照を失うユーザーも悪いが。
+            </remarks>
+        </member>
+        <member name="P:Kowa.GigEVision.Camera.NativeIdentify">
+            <inheritdoc cref="T:Kowa.GigEVision.ApiAdapters.CameraNumber"/>
+        </member>
+        <member name="P:Kowa.GigEVision.Camera.Connection">
+            <summary>通信時のソケット情報</summary>
+        </member>
+        <member name="P:Kowa.GigEVision.Camera._is_legacy_compatible">
+            <summary>
+            レガシー互換か。true なら Dispose 時に GEVClose しない。
+            </summary>
+        </member>
+        <member name="P:Kowa.GigEVision.Camera.IsDisposed">
+            <summary>このオブジェクトがすでに破棄されたか</summary>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.Finalize">
+            <summary/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.Dispose">
+            <summary/>
+        </member>
+        <member name="P:Kowa.GigEVision.Camera.ValidatedNumber">
+            <summary>
+            <see cref="F:Kowa.GigEVision.Camera._disposed" />ではないことを確認しつつカメラ番号を返す
+            </summary>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.#ctor(Kowa.GigEVision.Connection,Kowa.GigEVision.ApiAdapters.ErrorCallback,System.Boolean,Kowa.GigEVision.OpenMode)">
+            <summary>
+            GiE Vision カメラへ接続する。
+            </summary>
+            <param name="con">接続対象と、通信ソケットの設定</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.#ctor(Kowa.GigEVision.DeviceParameter,Kowa.GigEVision.ApiAdapters.ErrorCallback,System.Boolean,Kowa.GigEVision.OpenMode)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.#ctor(Kowa.GigEVision.Connection,Kowa.GigEVision.ApiAdapters.ErrorCallback,System.Boolean,Kowa.GigEVision.OpenMode)"/>
+            <param name="dev">接続対象</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.#ctor(Kowa.GigEVision.ApiAdapters.CameraNumber,Kowa.GigEVision.Connection)">
+            <summary>
+            カメラオブジェクトを作成する。
+            この関数は、旧 "KowaGigEVisionLib.cs" との相互運用のためだけに存在する。
+            </summary>
+            <remarks>
+            example. <code>
+            KowaGigEVisionLib.Discovery(out var dis, null, 100, false);
+            byte cam_nr = 1;
+            ThinWrapper.KowaGigEVisionLib.GEVInit(cam_nr, ...);
+            Camera c = new Camera(new CameraNumber(cam_nr), dis[0]);
+            </code>
+            </remarks>
+            <param name="camno"><c>GEVInit</c>によって初期化されたカメラ番号(<c>cam_nr</c>)</param>
+            <param name="con">接続対象と、通信ソケットの設定</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.#ctor(Kowa.GigEVision.ApiAdapters.CameraNumber,Kowa.GigEVision.DeviceParameter)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.#ctor(Kowa.GigEVision.ApiAdapters.CameraNumber,Kowa.GigEVision.Connection)"/>
+            <param name="dev">接続対象</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.Close">
+            <summary>カメラとの接続を切断し、関連するリソースを破棄する</summary>
+            <exception cref="T:System.ObjectDisposedException"></exception>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.InitXml">
+            <summary>
+            カメラが持つXMLを取得し、変数機能を有効にする。
+            </summary>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.InitFilterDriver">
+            <summary>
+            フィルタードライバを利用するモードに切り替える。
+            </summary>
+            <returns>
+            <see cref="M:System.IDisposable.Dispose"/>時に
+            <see cref="M:Kowa.GigEVision.Camera.CloseFilterDriver"/>を呼ぶオブジェクト。
+            <see cref="M:Kowa.GigEVision.Camera.CloseFilterDriver"/>を別管理で呼ぶなら、
+            この返り値は無視してもよい。
+            </returns>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.CloseFilterDriver">
+            <summary>フィルタードライバーの利用を終了する</summary>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.OpenStreamChannel(Kowa.GigEVision.ApiAdapters.InetAddressV4,System.UInt16,Kowa.GigEVision.ApiAdapters.InetAddressV4)">
+            <summary>
+            GVSP(Gige Vision Stream Channel)のUDP通信ポートを作成する。
+            </summary>
+            <param name="ip">(このPCの)待ち受けIPアドレス</param>
+            <param name="port">(このPCの)待ち受けポート</param>
+            <param name="multicast">マルチキャスト時の待ち受けIPアドレス。
+            "0.0.0.0"なら無効で、1対1通信のモードとする。</param>
+            <returns>
+            <see cref="M:System.IDisposable.Dispose"/>時に
+            <see cref="M:Kowa.GigEVision.Camera.CloseStreamChannel"/>を呼ぶオブジェクト。
+            <see cref="M:Kowa.GigEVision.Camera.CloseStreamChannel"/>を別管理で呼ぶなら、
+            この返り値は無視してもよい。
+            </returns>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.OpenStreamChannel(Kowa.GigEVision.ApiAdapters.InetAddressV4)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.OpenStreamChannel(Kowa.GigEVision.ApiAdapters.InetAddressV4,System.UInt16,Kowa.GigEVision.ApiAdapters.InetAddressV4)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.OpenStreamChannel">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.OpenStreamChannel(Kowa.GigEVision.ApiAdapters.InetAddressV4,System.UInt16,Kowa.GigEVision.ApiAdapters.InetAddressV4)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.CloseStreamChannel">
+            <summary>GVSP用のUDPポートを閉じる</summary>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetPacketResend(System.Boolean)">
+            <summary>PacketResendの有効/無効を切り替える</summary>
+            <param name="enable"></param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetPacketResend">
+            <summary>PacketResendの有効/無効の状態を取得する</summary>
+            <returns/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetChannelParameter">
+            <summary>通信時の設定を取得する</summary>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetChannelParameter(Kowa.GigEVision.ChannelParameter@)">
+            <summary>通信時の設定を変更する</summary>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.IssueActionCommandUnicast(Kowa.GigEVision.ActionKeys@,System.UInt64)">
+            <summary>ActionCommand を 1対1 通信で発行する</summary>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)">
+            <summary>Integer型のfeatureを設定する</summary>
+            <param name="featurename">機能名</param>
+            <param name="value">設定する値</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int32)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int16)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue(System.String,System.SByte)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue(System.String,System.UInt64)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue(System.String,System.UInt32)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue(System.String,System.UInt16)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Byte)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Single)">
+            <summary>Float型のfeatureを設定する</summary>
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Double)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Single)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Boolean)">
+            <summary>Boolean型のfeatureを設定する</summary>
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue(System.String,System.String)">
+            <summary>String型かEnumeration型のfeatureを設定する</summary>
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.SetValue``1(System.String,``0)">
+            <summary>Integer型のfeatureを設定する</summary>
+            <remarks>Enumeration型の機能を利用する場合、
+            <see cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.String)"/>を使うか、
+            ユーザー側でenum定義してこの関数を使う。
+            </remarks>
+            <typeparam name="TEnum">ユーザー定義のenum型</typeparam>
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.Execute(System.String)">
+            <summary>Command型のfeatureを実行する</summary>
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.Int64)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)">
+            <summary>Integer型のfeatureを取得する</summary>
+            <param name="featurename">機能名</param>
+            <param name="value">出力値</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int32@)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int16@)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue(System.String,System.SByte@)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue(System.String,System.UInt64@)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue(System.String,System.UInt32@)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue(System.String,System.UInt16@)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Byte@)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Single@)">
+            <summary>Float型のfeatureを取得する</summary>
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Double@)">
+            <summary>Float型のfeatureを取得する</summary>
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Boolean@)">
+            <summary>Boolean型のfeatureを取得する</summary>
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue(System.String,System.String@)">
+            <summary>String型かEnumeration型のfeatureを取得する</summary>
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetValue``1(System.String,``0@)">
+            <summary>Integer型のfeatureを設定する</summary>
+            <remarks>Enumeration型の機能を利用する場合、
+            <see cref="M:Kowa.GigEVision.Camera.SetValue(System.String,System.String)"/>を使うか、
+            ユーザー側でenum定義してこの関数を使う。
+            </remarks>
+            <typeparam name="TEnum">ユーザー定義のenum型</typeparam>
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetValue(System.String,System.Int64@)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetFeatureEnumerationNames(System.String)">
+            <summary>Enumeration型の候補を返す</summary>
+            <param name="featurename">機能名</param>
+            <returns></returns>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetFeatureDisplayName(System.String)">
+            <summary>featureのUI表示名を返す</summary>
+            <param name="featurename">機能名</param>
+            <returns><see langword="null"/>: 表示名が未定義の場合</returns>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetFeatureTooltip(System.String)">
+            <summary>featureのUI表示用のヒントを返す</summary>
+            <param name="featurename">機能名</param>
+            <returns><see langword="null"/>: ヒントが未定義の場合</returns>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetFeatureUnit(System.String)">
+            <summary>
+            featureが持つ単位を返す。
+            例: "us", "Byte", など
+            </summary>
+            <param name="featurename">機能名</param>
+            <returns><see langword="null"/>: 単位が未定義の場合</returns>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetFeatureList">
+            <summary>feature一覧を返す</summary>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetFeatureParameter(System.String)">
+            <summary>
+            featureの詳細情報を返す。
+            <see cref="T:Kowa.GigEVision.FeatureType"/>,
+            <see cref="T:Kowa.GigEVision.Representation"/>,
+            最小値, 最大値, レジスタアドレス, など...
+            </summary>
+            <param name="featurename">機能名</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetFeatureParameter(Kowa.GigEVision.FeatureListElement)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetFeatureDisplayName(System.String)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetXmlFile">
+            <summary>
+            カメラに登録されたXMLを取得する。
+            </summary>
+            <returns>
+            取得したXML。
+            多くの場合、CRLF改行の0終端されていないbyte列。
+            </returns>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.AcquisitionStart(System.Int32)">
+            <summary>画像取得を開始する</summary>
+            <param name="number_images_to_acquire">
+            画像取得枚数。
+            0:無制限。
+            1-:指定枚数。
+            </param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.AcquisitionStop">
+            <summary>画像取得を停止する</summary>
+            <returns>
+            <see cref="M:System.IDisposable.Dispose"/>時に
+            <see cref="M:Kowa.GigEVision.Camera.CloseFilterDriver"/>を呼ぶオブジェクト。
+            <see cref="M:Kowa.GigEVision.Camera.CloseFilterDriver"/>を別管理で呼ぶなら、
+            この返り値は無視してもよい。
+            </returns>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetMemorySize">
+            <summary>画像取得に必要なバッファサイズを返す</summary>
+            <returns></returns>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetImageBuffer(System.Byte[])">
+            <summary>
+            画像を取得する。
+            </summary>
+            <remarks>
+            画像が未着の場合、取得できるまでブロックする。
+            <see cref="M:Kowa.GigEVision.Camera.SetChannelParameter(Kowa.GigEVision.ChannelParameter@)"/>で設定した
+            <see cref="F:Kowa.GigEVision.ChannelParameter.StreamImageWaitTimeout"/>時間で
+            <see cref="T:Kowa.GigEVision.GevException"/>を投げる。
+            </remarks>
+            <param name="image_buffer">
+            画像データコピー先バッファ。
+            必要なバッファサイズは<see cref="M:Kowa.GigEVision.Camera.GetMemorySize"/>で取得できる。
+            
+            </param>
+            <returns>
+            画像を補足するメタデータ。
+            <see cref="T:Kowa.GigEVision.GrabException"/>が投げられた際は、
+            <see cref="P:Kowa.GigEVision.GrabException.ImageHeader"/>により取得できる。
+            </returns>
+            <exception cref="T:Kowa.GigEVision.GrabException"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.GetImageBuffer(System.IntPtr)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.GetImageBuffer(System.Byte[])"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.WriteRegister(System.UInt32,System.UInt32[])">
+            <summary>カメラレジスタへ値を書き込む</summary>
+            <param name="regaddr">カメラのレジスタアドレス</param>
+            <param name="values">書き込む値</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.WriteRegister(System.UInt32,System.UInt32)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.WriteRegister(System.UInt32,System.UInt32[])"/>
+            <param name="value">書き込む値</param>
+            <param name="regaddr">カメラのレジスタアドレス</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.ReadRegister(System.UInt32,System.Int32)">
+            <summary>カメラレジスタから値を読み込む</summary>
+            <param name="regaddr">カメラのレジスタアドレス</param>
+            <param name="count">読み込む値の数</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.ReadRegister(System.UInt32)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.ReadRegister(System.UInt32,System.Int32)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.WriteMemory(System.UInt32,System.Byte[])">
+            <summary>カメラメモリへデータを書き込む</summary>
+            <param name="memaddr">カメラのメモリアドレス</param>
+            <param name="values">書き込むデータ</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.ReadMemory(System.UInt32,System.Int32)">
+            <summary>カメラメモリからデータを読み込む</summary>
+            <param name="memaddr">カメラのメモリアドレス</param>
+            <param name="count">読み込むデータ長</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.UInt16Limit(System.Int64,System.UInt16)">
+            <summary>
+            <see cref="T:System.Int64"/>型を<see cref="T:System.UInt16"/>にキャストする。
+            <see cref="T:System.UInt16"/>の最大値以上は切り捨て。
+            <see cref="T:System.UInt16"/>の最小値以下 or 0 なら
+            <paramref name="zeroreplace"/>に置き換える。
+            </summary>
+        </member>
+        <member name="M:Kowa.GigEVision.Camera.TestFindMaxPacketSize">
+            <summary>
+            GVSP(Gige Vision Stream Channel)でのパケット受信をテストし、
+            受信できた最大パケットサイズを返す。
+            </summary>
+        </member>
+        <member name="E:Kowa.GigEVision.Camera.AcquisitionCallback">
+            <summary>
+            撮影完了時に設定した関数を呼ぶ。
+            </summary>
+        </member>
+        <member name="T:Kowa.GigEVision.OpenMode">
+            <summary>カメラのオープン方法の指定</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.OpenMode.Open">
+            <summary>マルチキャストのリスナーモード</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.OpenMode.Exclusive">
+            <summary>カメラのコントロール権限を取得する。
+            他者からの<see cref="F:Kowa.GigEVision.OpenMode.Open"/>を拒否する</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.OpenMode.Control">
+            <summary>カメラのコントロール権限を取得する</summary>
+        </member>
+        <member name="T:Kowa.GigEVision.AccessMode">
+            <summary>レジスタアクセスのRead/Write指定</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.AccessMode.ReadOnly">
+            <summary/>
+        </member>
+        <member name="F:Kowa.GigEVision.AccessMode.ReadWrite">
+            <summary/>
+        </member>
+        <member name="F:Kowa.GigEVision.AccessMode.WriteOnly">
+            <summary/>
+        </member>
+        <member name="T:Kowa.GigEVision.FeatureType">
+            <summary>カメラ機能の設定型</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.FeatureType.Category">
+            <summary>
+            大項目。
+            これ自体は機能ではなく、子要素に複数の機能を持つ。
+            </summary>
+        </member>
+        <member name="F:Kowa.GigEVision.FeatureType.Integer">
+            <summary>整数型</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.FeatureType.Float">
+            <summary>浮動小数点型</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.FeatureType.String">
+            <summary>0終端 文字列型</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.FeatureType.Enumeration">
+            <summary>
+            列挙型。
+            候補は<see cref="M:Kowa.GigEVision.Camera.GetFeatureEnumerationNames(System.String)"/>で取得できる。
+            </summary>
+        </member>
+        <member name="F:Kowa.GigEVision.FeatureType.Command">
+            <summary>
+            実行型。
+            </summary>
+        </member>
+        <member name="F:Kowa.GigEVision.FeatureType.Boolean">
+            <summary>論理型</summary>
+        </member>
+        <member name="T:Kowa.GigEVision.Visibility">
+            <summary>
+            UI向けの可視レベル。
+            利用者の知識レベルに合わせて表示項目の絞り込みをする。
+            </summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Visibility.Invisible">
+            <summary>非表示機能。
+            UIとして表示しないだけなので、利用に制限はない。
+            </summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Visibility.Beginner">
+            <summary>初心者向け</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Visibility.Expert">
+            <summary>上級者向け</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Visibility.Guru">
+            <summary>達人向け</summary>
+        </member>
+        <member name="T:Kowa.GigEVision.Representation">
+            <summary>
+            GUI上の表示方法
+            </summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Representation.Linear">
+            <summary>スライダーバー</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Representation.Logarithmic">
+            <summary>対数表記のスライダーバー</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Representation.Boolean">
+            <summary>チェックボックス</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Representation.PureNumber">
+            <summary>数値表記</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Representation.HexNumber">
+            <summary>16進数表記</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Representation.Undefined">
+            <summary>
+            内部利用として定義。
+            <see cref="T:Kowa.GigEVision.FeatureType"/>のデフォルト値へリダイレクトされるべき
+            </summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Representation.IpV4Address">
+            <summary>
+            IPv4 Address表記。<c>"192.168.1.12"</c>のように表記する。
+            </summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Representation.MacAddress">
+            <summary>
+            Mac Address表記。<c>"00:05:5c:bc:61:4e"</c>のように表記する。
+            </summary>
+        </member>
+        <member name="T:Kowa.GigEVision.GevException">
+            <summary>
+            このライブラリの操作失敗時のエラーを表現する例外クラス
+            </summary>
+        </member>
+        <member name="P:Kowa.GigEVision.GevException.ErrorCode">
+            <inheritdoc cref="T:Kowa.GigEVision.GevStatus"/>
+        </member>
+        <member name="M:Kowa.GigEVision.GevException.Activate(Kowa.GigEVision.GevStatus)">
+            <summary>
+            エラーコードに応じた例外型を生成する。
+            </summary>
+            <returns>
+            <see langword="null"/>: 成功時なので例外を投げるべきではない
+            </returns>
+        </member>
+        <member name="P:Kowa.GigEVision.GrabException.ImageHeader">
+            <summary>取得に失敗した画像の統計情報</summary>
+        </member>
+        <member name="T:Kowa.GigEVision.Extensions.ConvertNative">
+            <summary>
+            Nativeコードとの相互変換をサポート
+            </summary>
+            <remarks>
+            このクラスは<see cref="N:Kowa.GigEVision"/>の
+            拡張ライブラリ向けのユーティリティとして使えるようにするためにpublicとする。
+            </remarks>
+        </member>
+        <member name="M:Kowa.GigEVision.Extensions.ConvertNative.GetOpenedNativeCamera(Kowa.GigEVision.Camera)">
+            <summary>
+            Nativeコードで利用するカメラオブジェクトを取得する。
+            カメラが閉じられていないかのチェックを兼ねる。
+            </summary>
+            <exception cref="T:System.ObjectDisposedException"/>
+        </member>
+        <member name="P:Kowa.GigEVision.Extensions.ConvertThinWrapper.ThrowPair`1.Rethrower">
+            <summary>
+            <see cref="P:Kowa.GigEVision.Extensions.ConvertThinWrapper.ThrowPair`1.CLangFunc"/> に対応するユーザー関数が
+            <see langword="throw"/> していたら再 <see langword="throw"/> する。
+            </summary>
+        </member>
+        <member name="T:Kowa.GigEVision.Extensions.ErrorThrower">
+            <summary>
+            <see cref="T:Kowa.GigEVision.GevStatus"/>を例外として投げる
+            </summary>
+            <remarks>
+            このクラスは<see cref="N:Kowa.GigEVision"/>の
+            拡張ライブラリ向けのユーティリティとして使えるようにするためにpublicとする。
+            </remarks>
+        </member>
+        <member name="M:Kowa.GigEVision.Extensions.ErrorThrower.ThrowIfError(Kowa.GigEVision.GevStatus)">
+            <summary>
+            <paramref name="ecode"/>がエラーを表す値だった場合に例外を投げる。
+            </summary>
+            <param name="ecode">エラーコード</param>
+        </member>
+        <member name="M:Kowa.GigEVision.Extensions.ErrorThrower.ThrowIfError(Kowa.GigEVision.GevStatus,Kowa.GigEVision.ImageHeader)">
+            <inheritdoc cref="M:Kowa.GigEVision.Extensions.ErrorThrower.ThrowIfError(Kowa.GigEVision.GevStatus)"/>
+            <param name="ecode"><inheritdoc cref="M:Kowa.GigEVision.Extensions.ErrorThrower.ThrowIfError(Kowa.GigEVision.GevStatus)"/></param>
+            <param name="imageHeader">取得に失敗した画像の統計情報</param>
+        </member>
+        <member name="F:Kowa.GigEVision.Initializer.NativeDll.requires_abi_version">
+            <summary>この Wrapper が必要としている KowaGigEVisionLib のバイナリ互換のバージョン</summary>
+        </member>
+        <member name="F:Kowa.GigEVision.Initializer.NativeDll.requires_version">
+            <summary>この Wrapper が必要としている KowaGigEVisionLib のバージョン</summary>
+            <remarks>
+            Wrapperのみのアプデの場合、このバージョンは据え置く必要がある。
+            </remarks>
+        </member>
+        <member name="T:Kowa.GigEVision.KowaGigEVisionLib">
+            <summary>
+            カメラ操作関連の関数。
+            </summary>
+            <remarks>
+            各関数は、暗黙的に<see cref="T:Kowa.GigEVision.GevException"/>の例外を投げる可能性がある。
+            </remarks>
+        </member>
+        <member name="M:Kowa.GigEVision.KowaGigEVisionLib.Init(Kowa.GigEVision.Connection,Kowa.GigEVision.ApiAdapters.ErrorCallback,System.Boolean,Kowa.GigEVision.OpenMode)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.#ctor(Kowa.GigEVision.Connection,Kowa.GigEVision.ApiAdapters.ErrorCallback,System.Boolean,Kowa.GigEVision.OpenMode)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.KowaGigEVisionLib.Init(Kowa.GigEVision.DeviceParameter,Kowa.GigEVision.ApiAdapters.ErrorCallback,System.Boolean,Kowa.GigEVision.OpenMode)">
+            <inheritdoc cref="M:Kowa.GigEVision.Camera.#ctor(Kowa.GigEVision.DeviceParameter,Kowa.GigEVision.ApiAdapters.ErrorCallback,System.Boolean,Kowa.GigEVision.OpenMode)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.KowaGigEVisionLib.Discovery(System.UInt32,System.Boolean)">
+            <summary>
+            ネットワーク上の GigE Vision カメラを検索結果を返す。
+            </summary>
+            <param name="timeout_ms">検索時の最大待ち時間</param>
+            <param name="ignore_subnet">
+            サブネット外のカメラも検索するか。
+            固定IPでサブネット外のIPアドレスが割り当てられているカメラを検索する場合に
+            <see langword="true"/>にする必要がある。
+            </param>
+        </member>
+        <member name="M:Kowa.GigEVision.KowaGigEVisionLib.Discovery(Kowa.GigEVision.Discovery@,Kowa.GigEVision.ApiAdapters.DiscoveryCallback,System.UInt32,System.Boolean)">
+            <inheritdoc cref="M:Kowa.GigEVision.KowaGigEVisionLib.Discovery(System.UInt32,System.Boolean)"/>
+        </member>
+        <member name="M:Kowa.GigEVision.KowaGigEVisionLib.ForceIp(Kowa.GigEVision.ApiAdapters.InetAddressV4,Kowa.GigEVision.ApiAdapters.InetAddressV4,Kowa.GigEVision.ApiAdapters.InetAddressV4,Kowa.GigEVision.ApiAdapters.MacAddr@,Kowa.GigEVision.ApiAdapters.InetAddressV4)">
+            <summary>
+            指定カメラのIPアドレスを変更する
+            </summary>
+            <remarks>
+            必要なパラメータ
+            <paramref name="subnet"/>,
+            <paramref name="gateway"/>,
+            <paramref name="mac"/>,
+            <paramref name="adapter_ip"/>,
+            は、<see cref="M:Kowa.GigEVision.KowaGigEVisionLib.Discovery(System.UInt32,System.Boolean)"/>により取得できる。
+            </remarks>
+            <param name="new_ip">新規に設定するIPアドレス</param>
+            <param name="subnet">新規に設定するサブネットマスク</param>
+            <param name="gateway">新規に設定するデフォルトゲートウェイ</param>
+            <param name="mac">対象のカメラ</param>
+            <param name="adapter_ip">このホストマシン(PC)のIPアドレス</param>
+        </member>
+        <member name="M:Kowa.GigEVision.KowaGigEVisionLib.ForceIp(Kowa.GigEVision.DeviceParameter,Kowa.GigEVision.ApiAdapters.InetAddressV4)">
+            <summary>
+            <inheritdoc cref="M:Kowa.GigEVision.KowaGigEVisionLib.ForceIp(Kowa.GigEVision.ApiAdapters.InetAddressV4,Kowa.GigEVision.ApiAdapters.InetAddressV4,Kowa.GigEVision.ApiAdapters.InetAddressV4,Kowa.GigEVision.ApiAdapters.MacAddr@,Kowa.GigEVision.ApiAdapters.InetAddressV4)"/>
+            </summary>
+            <param name="device">対象のカメラ</param>
+            <param name="new_ip">新規に設定するIPアドレス</param>
+        </member>
+        <member name="M:Kowa.GigEVision.KowaGigEVisionLib.GetErrorString(Kowa.GigEVision.GevStatus)">
+            <summary>
+            <paramref name="error_code"/>の簡易的な説明文を返す
+            </summary>
+        </member>
+        <member name="T:Kowa.GigEVision.ThinWrapper.DISCOVERY_CALLBACK_FUNC">
+            <summary>
+            
+            </summary>
+            <param name="s_cnt"></param>
+            <param name="dparam">nullable pointer of <see cref="T:Kowa.GigEVision.DeviceParameter"/></param>
+            <returns></returns>
+        </member>
+        <member name="M:Kowa.GigEVision.Utility.IndexWeakTable`1.Add(System.Int32,`0)">
+            <summary/>
+            <returns>old value(if has it)</returns>
+        </member>
+        <member name="M:Kowa.GigEVision.Utility.StringConvert.StringToAllocatedUtf8Ptr(System.String)">
+            <returns>
+            Unmanagedで確保された文字列ポインタ。
+            必要なくなった際に<see cref="M:Kowa.GigEVision.Utility.StringConvert.FreeAllocatedUtf8Ptr(System.IntPtr@)"/>
+            で明示的に開放する必要がある。
+            </returns>
+        </member>
+    </members>
+</doc>

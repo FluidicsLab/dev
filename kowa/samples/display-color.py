@@ -13,6 +13,7 @@ import kge
 logger = getLogger(__name__)
 
 def setting_logger():
+    
     import logging
     logger.setLevel(logging.DEBUG)
 

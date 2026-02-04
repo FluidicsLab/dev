@@ -1,0 +1,99 @@
+﻿#ifndef KOWAGIGEVISIONLIB_GVSP_PIX_H
+#define KOWAGIGEVISIONLIB_GVSP_PIX_H
+
+#define GVSP_PIX_MONO1P               0x01010037
+#define GVSP_PIX_MONO2P               0x01020038
+#define GVSP_PIX_MONO4P               0x01040039
+
+#define GVSP_PIX_MONO8                0x01080001
+#define GVSP_PIX_MONO8S               0x01080002
+#define GVSP_PIX_MONO10               0x01100003
+#define GVSP_PIX_MONO10_PACKED        0x010C0004
+#define GVSP_PIX_MONO12               0x01100005
+#define GVSP_PIX_MONO12_PACKED        0x010C0006
+#define GVSP_PIX_MONO14               0x01100025
+#define GVSP_PIX_MONO16               0x01100007
+#define GVSP_PIX_BAYGR8               0x01080008
+#define GVSP_PIX_BAYRG8               0x01080009
+#define GVSP_PIX_BAYGB8               0x0108000A
+#define GVSP_PIX_BAYBG8               0x0108000B
+#define GVSP_PIX_BAYGR10              0x0110000C
+#define GVSP_PIX_BAYRG10              0x0110000D
+#define GVSP_PIX_BAYGB10              0x0110000E
+#define GVSP_PIX_BAYBG10              0x0110000F
+#define GVSP_PIX_BAYGR12              0x01100010
+#define GVSP_PIX_BAYRG12              0x01100011
+#define GVSP_PIX_BAYGB12              0x01100012
+#define GVSP_PIX_BAYBG12              0x01100013
+#define GVSP_PIX_BAYGR10_PACKED       0x010C0026
+#define GVSP_PIX_BAYRG10_PACKED       0x010C0027
+#define GVSP_PIX_BAYGB10_PACKED       0x010C0028
+#define GVSP_PIX_BAYBG10_PACKED       0x010C0029
+#define GVSP_PIX_BAYGR12_PACKED       0x010C002A
+#define GVSP_PIX_BAYRG12_PACKED       0x010C002B
+#define GVSP_PIX_BAYGB12_PACKED       0x010C002C
+#define GVSP_PIX_BAYBG12_PACKED       0x010C002D
+#define GVSP_PIX_BAYGR16_PACKED       0x0110002E
+#define GVSP_PIX_BAYRG16_PACKED       0x0110002F
+#define GVSP_PIX_BAYGB16_PACKED       0x01100030
+#define GVSP_PIX_BAYBG16_PACKED       0x01100031
+#define GVSP_PIX_RGB8                 0x02180014
+
+#define GVSP_PIX_BGR8                 0x02180015
+#define GVSP_PIX_RGBA8                0x02200016
+#define GVSP_PIX_BGRA8                0x02200017
+#define GVSP_PIX_RGB10                0x02300018
+#define GVSP_PIX_BGR10                0x02300019
+#define GVSP_PIX_RGB12                0x0230001A
+#define GVSP_PIX_BGR12                0x0230001B
+
+
+#define GVSP_PIX_RGB10V1_PACKED       0x0220001C
+#define GVSP_PIX_RGB12V1_PACKED       0x02240034
+#define GVSP_PIX_YUV411_8_UYYVYY      0x020C001E
+#define GVSP_PIX_YUV422_8_UYVY        0x0210001F
+#define GVSP_PIX_YUV422_8             0x02100032
+#define GVSP_PIX_YUV8_UYV             0x02180020
+
+#define GVSP_PIX_YCBCR_8_CBYCR        0x0218003A
+
+#define GVSP_PIX_YCBCR422_8           0x0210003B
+
+#define GVSP_PIX_YCBCR422_8_CBYCRY    0x02100043
+
+#define GVSP_PIX_YCBCR411_8_CBYYCRYY  0x020C003C
+
+#define GVSP_PIX_YCbCr601_8_CbYCr     0x0218003D
+#define GVSP_PIX_YCbCr601_422_8       0x0218003E
+#define GVSP_PIX_YCbCr601_422_8_CbYCrY    0x02100044
+#define GVSP_PIX_YCbCr601_422_8_CbYYCrYY  0x020C003F
+
+
+#define GVSP_PIX_YCBCR709_8_CBYCR         0x02180040
+#define GVSP_PIX_YCbCr709_422_8           0x02100041
+#define GVSP_PIX_YCbCr709_422_8_CbYCrY    0x02100045
+#define GVSP_PIX_YCbCr709_422_8_CbYYCrYY  0x020C0042
+
+#define GVSP_PIX_RGB8_PLANAR          0x02180021
+#define GVSP_PIX_RGB10_PLANAR         0x02300022
+#define GVSP_PIX_RGB12_PLANAR         0x02300023
+#define GVSP_PIX_RGB16_PLANAR         0x02300024
+
+#define GVSP_PIX_R8                  0x010800C9
+#define GVSP_PIX_R10                 0x010A00CA
+#define GVSP_PIX_R12                 0x010C00CB
+#define GVSP_PIX_R16                 0x011000CC
+#define GVSP_PIX_G8                  0x010800CD
+#define GVSP_PIX_G10                 0x010A00CE
+#define GVSP_PIX_G12                 0x010C00CF
+#define GVSP_PIX_G16                 0x011000D0
+#define GVSP_PIX_B8                  0x010800D1
+#define GVSP_PIX_B10                 0x010A00D2
+#define GVSP_PIX_B12                 0x010C00D3
+#define GVSP_PIX_B16                 0x011000D4
+
+#define GVSP_PIX_EFFECTIVE_PIXEL_SIZE_MASK  0x00FF0000
+#define GVSP_PIX_EFFECTIVE_PIXEL_SIZE_SHIFT 16
+#define GVSP_PIX_PIXEL_SIZE(X) ((X & GVSP_PIX_EFFECTIVE_PIXEL_SIZE_MASK) >> GVSP_PIX_EFFECTIVE_PIXEL_SIZE_SHIFT)
+
+#endif//KOWAGIGEVISIONLIB_GVSP_PIX_H

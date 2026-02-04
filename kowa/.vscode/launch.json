@@ -5,18 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "00-baum",
+            "name": "KOWA-DEVICE",
             "type": "debugpy",
             "request": "launch",
-            "program": "baum.3.py",
+            "program": "kowa.0.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },
         {
-            "name": "00-broker",
+            "name": "KOWA-BROKER",
             "type": "debugpy",
             "request": "launch",
-            "program": "baum.broker.py",
+            "program": "kowa.broker.py",
             "console": "integratedTerminal",
             "justMyCode": true
         }
