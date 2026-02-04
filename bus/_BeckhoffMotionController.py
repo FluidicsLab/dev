@@ -26,7 +26,11 @@ class AM8111PidController(object):
 
     _processvalue = 0
     _setpoint = 0
+
     _enabled = False
+    def _get_enabled(self):
+        return self._enabled
+    Enabled = property(fget=_get_enabled)
 
     _error = 0.0
     _demand = 0.0
@@ -109,7 +113,13 @@ class AM8111PidController(object):
         def unscale(value):
             return self._scaler.output['low'] + (self._scaler.output['high'] - self._scaler.output['low']) * value
 
+        enabled = False
+
         while not self._exit.is_set():
+
+            if enabled and not self._enabled:
+                if self._callback is not None:
+                    self._callback(0)
 
             if self._enabled:
 
@@ -144,6 +154,8 @@ class AM8111PidController(object):
                     self._lock.release()
 
             self._exit.wait(0.25)
+
+            enabled = self._enabled
 
 
 class AM8111Profile:
@@ -379,6 +391,9 @@ class BeckhoffMotionController(object):
 
 class AM8111MotionController(BeckhoffMotionController):
 
+    TIMEOUT_SLAVE_STATE = 5.0
+    TIMEOUT_STATE_CHECK = 50_000
+
     SHIFT_TIME = 250_000        # ns
     CYCLE_TIME = 10_000_000     # ns
   
@@ -396,10 +411,9 @@ class AM8111MotionController(BeckhoffMotionController):
             ('position', ctypes.c_int32),   # 1A00
             ('status', ctypes.c_uint16),    # 1A01
             ('velocity', ctypes.c_int32),   # 1A02
-
+            ('torque', ctypes.c_int16),     # 1A03
             ('info1', ctypes.c_uint16),     # 1A04
             ('info2', ctypes.c_uint16),     # 1A05
-
             ('touchprobe', ctypes.c_uint16),# 1A07
             ('tp1pos', ctypes.c_uint32),    # 1A08
             ('tp1neg', ctypes.c_uint32),    # 1A09
@@ -421,6 +435,23 @@ class AM8111MotionController(BeckhoffMotionController):
         super().release()
         if self._controller is not None:
             self._controller.release()
+
+    _torqueConfig = None       # feature, constant, mA
+    def _get_torqueConfig(self):
+        try:
+            if self._torqueConfig is None:                
+                self._torqueConfig = [
+                    # feature index
+                    ctypes.c_uint32.from_buffer_copy(self.Device.sdo_read(0x8010, 0x54)).value,
+                    # torque constant
+                    ctypes.c_uint32.from_buffer_copy(self.Device.sdo_read(0x8011, 0x16)).value,
+                    # rated current
+                    ctypes.c_uint32.from_buffer_copy(self.Device.sdo_read(0x8011, 0x12)).value
+                ]
+        except Exception as ex:
+            pass
+        return self._torqueConfig
+    TorqueConfig = property(fget=_get_torqueConfig)            
 
     _velocityMax = None # inc/s
     def _get_velocityMax(self):
@@ -502,9 +533,9 @@ class AM8111MotionController(BeckhoffMotionController):
                 ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(0x8000,0x13)).value
             ]
         return self._turnbits
-    def _set_turnbits(self, singleturn, multiturn):
-        self.Device.sdo_write(0x8000, 0x12, bytes(ctypes.c_uint8(singleturn)))
-        self.Device.sdo_write(0x8000, 0x13, bytes(ctypes.c_uint8(multiturn)))
+    def _set_turnbits(self, value):
+        self.Device.sdo_write(0x8000, 0x12, bytes(ctypes.c_uint8(value[0])))
+        self.Device.sdo_write(0x8000, 0x13, bytes(ctypes.c_uint8(value[1])))
         self._turnbits = None
     Turnbits = property(fget=_get_turnbits,fset=_set_turnbits)
 
@@ -514,22 +545,26 @@ class AM8111MotionController(BeckhoffMotionController):
 
     _initialized = False
 
-    def init(self, source=None): 
-
+    def initEx(self, source=None): 
         """                
         :param self: 
         :param source: dict with keys like { terminal, address, key, low, high }
         """
-        try:
+        if self._controller is not None:
+            self._controller.Source = source
 
-            if self._controller is not None:
-                self._controller.Source = source
+    def init(self): 
+
+        """                
+        :param self: 
+        """
+        try:
 
             def _set_state(state):
                 rc = True
-                timeout = 5.0  # seconds
+                timeout = AM8111MotionController.TIMEOUT_SLAVE_STATE
                 start_time = time.time()
-                while self.Device.state_check(state, timeout=50_000) != state:
+                while self.Device.state_check(state, timeout=AM8111MotionController.TIMEOUT_STATE_CHECK) != state:
                     if time.time() - start_time > timeout:
                         rc = False
                         break
@@ -564,9 +599,10 @@ class AM8111MotionController(BeckhoffMotionController):
                 0x1A00, # position
                 0x1A01, # status word
                 0x1A02, # velocity
+                0x1A03, # torque
                 # info data
                 0x1A04, # info 1 (errors)
-                0x1A05, # info 2 (warnings)
+                0x1A05, # info 2 (warnings)                
                 # touch probe
                 0x1A07, # status
                 0x1A08, # ch 1 pos position
@@ -622,7 +658,10 @@ class AM8111MotionController(BeckhoffMotionController):
             self.Device.sdo_write(0x8010, 0x39, bytes(ctypes.c_uint16(0x05)), ca)   # errors
             self.Device.sdo_write(0x8010, 0x3A, bytes(ctypes.c_uint16(0x06)), ca)   # warnings
 
+            _ = self.TorqueConfig
+
             _ = self.VelocityMax
+            self.Turnbits = [17, 15]
             _ = self.Turnbits
 
             self.debug()
@@ -649,21 +688,44 @@ class AM8111MotionController(BeckhoffMotionController):
    
     def input(self):
 
+        def split_(value, bits):            
+            value = bin(value)[2:].zfill(32)
+            return [int(value[:bits].zfill(32),2), int(value[bits:].zfill(32),2)]
+        
+        def position_(value):
+            return AM8111MotionController.UINT32_MAX + value if value < 0 else value
+
+        def torque_(value, config):
+            rc = 0
+            if 0 == config[0]:
+                rc = (value / 1000) * (config[2] / np.sqrt(2)) * config[1]
+            else:
+                rc = (value / 1000) * (config[2]) * config[1]
+            return rc
+
         # pdo read
         try:
 
             buff =  AM8111MotionController.TxMap.from_buffer_copy(self.Device.input)
-            status = bin(buff.status)[2:].zfill(16)      
+            status = bin(buff.status)[2:].zfill(16)  
+
+            bits = self.Turnbits[1]
+
+            position = position_(buff.position)
+            torque = torque_(buff.torque, self.TorqueConfig)
             
             data  = {
                 'position': {
-                    'raw': buff.position,
-                    'stb': int(bin(abs(buff.position))[2:].zfill(32)[self.Turnbits[1]:].zfill(32),2),
-                    'mtb': int(bin(abs(buff.position))[2:].zfill(32)[:self.Turnbits[1]].zfill(32),2)
+                    'raw': position,
+                    'value': split_(position, bits)
                 },
                 'velocity':{
                     'raw': buff.velocity,
                     'max': self.VelocityMax
+                },
+                'torque': {
+                    'raw': buff.torque,
+                    'value': torque
                 },
                 'info': {
                     'error': buff.info1,
@@ -677,12 +739,24 @@ class AM8111MotionController(BeckhoffMotionController):
                         'text': AM8111Profile.__info__(buff.touchprobe, 't')
                     },
                     'probe1': {
-                        'pos': buff.tp1pos,
-                        'neg': buff.tp1neg
+                        'positive': {
+                            'raw': buff.tp1pos,
+                            'value': split_(buff.tp1pos, bits)
+                        },
+                        'negative': {
+                            'raw': buff.tp1neg,
+                            'value': split_(buff.tp1neg, bits)
+                        }
                     },
                     'probe2': {
-                        'pos': buff.tp2pos,
-                        'neg': buff.tp2neg
+                        'positive': {
+                            'raw': buff.tp2pos,
+                            'value': split_(buff.tp2pos, bits)
+                        },
+                        'negative': {
+                            'raw': buff.tp2neg,
+                            'value': split_(buff.tp2neg, bits)
+                        }
                     }
                 },
                 'status': {
@@ -737,8 +811,11 @@ class AM8111MotionController(BeckhoffMotionController):
 
                 # pid controller
                 if 'control' in self._data.keys() and self._data['control'] is not None:
-                    if self._controller is not None:                    
-                        self._controller.config(self._data['control'])
+                    if self._controller is not None: 
+                        enabled = self._controller.Enabled
+                        self._controller.config(self._data['control'])   
+                        if enabled and not self._controller.Enabled:
+                            self.Velocity = 0
                     self._data['control'] = None
 
         except Exception as ex:
@@ -782,9 +859,9 @@ class AM8111MotionController(BeckhoffMotionController):
         self._lock.acquire()
         try:  
             EcatLogger.debug(f"    ++ update velocity {math.floor(value)} inc/s")
-            self._data = {
+            self._data.update({
                 'velocity': math.floor(value)
-            }
+            })
         finally:
             self._lock.release()
             
@@ -795,5 +872,6 @@ class AM8111MotionController(BeckhoffMotionController):
         self._severity = value        
         if not self.isValid():            
             self._data = { 
-                'control': AM8111Profile.FAULT_RESET
+                'command': AM8111Profile.FAULT_RESET,
+                'velocity': 0
             }                

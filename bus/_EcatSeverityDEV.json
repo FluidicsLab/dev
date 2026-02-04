@@ -14,7 +14,7 @@
 
         "subscription": {
 
-            "EL7102": { 
+            "EL7201": { 
 
                 "1": { "topic": [ "p", "d" ], "channel": [0], "severity": [0] }
 
@@ -42,9 +42,9 @@
 
     "EL6021": { 
 
-        "1": { 
+        "3": { 
             "11": { 
-                "p": { "low": -1.0, "high": 710.0, "def": null, "topic": "p", "channel": [0] }, 
+                "p": { "low": -0.9, "high": 710.0, "def": null, "topic": "p", "channel": [0] }, 
                 "T": { "low": 10.0, "high": 40.0, "def": null, "topic": "T", "channel": [0] } 
             }            
         } 
@@ -52,7 +52,7 @@
 
     "EL3124": {
 
-        "2": {
+        "4": {
             "0": { "d": { "low": 3.65, "high": 10.25, "def": 0.0, "topic": "d", "channel": [0] } }      
         }
 
