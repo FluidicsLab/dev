@@ -1,6 +1,7 @@
-
 import os
 import sys
+
+from lxml import etree
 
 import datetime
 import ctypes
@@ -62,7 +63,112 @@ KowaLogger.addHandler(ch)
 TIMEOUT_DISCOVERY = 1_000   
 CAMERA_INDEX = 0 
 
+class KowaConfig:
+
+    _items = {}
+
+    def __str__(self):
+        for key in self._items.keys():
+            for mode in self._items[key].keys():
+                KowaLogger.debug(f"{key}({mode}) {self._items[key][mode]}")
+        return ""
+
+    def update(self, key, mode, name, attr):        
+        if key not in self._items.keys():
+            self._items[key] = {}  
+        if mode not in self._items[key].keys():
+            self._items[key][mode] = []
+        self._items[key][mode].append(( name, attr ))
+
+    def parse(self, filename):
+
+        tree = etree.parse(filename)
+        if tree is not None:
+            
+            root = tree.getroot()
+
+            for cat in root.xpath("./Group/Category[1]"):
+                
+                key = cat.get('Name')
+
+                ifeat = cat.xpath(f"../Integer")
+                ffeat = cat.xpath(f"../Float")
+                efeat = cat.xpath(f"../Enumeration")
+                sfeat = cat.xpath(f"../StringReg")
+                bfeat = cat.xpath(f"../Boolean")
+
+                if len(ifeat) > 0:
+                    for feat in ifeat:
+                        name = feat.get('Name')
+                        attr = {}
+                        self.update(key, 'integer', name, attr)
+                if len(ffeat) > 0:
+                    for feat in ffeat:
+                        name = feat.get('Name')
+                        attr = None
+                        self.update(key, 'float', name, attr)
+                if len(efeat) > 0:
+                    for feat in efeat:
+                        name = feat.get('Name')
+                        attr = { 'keys': feat.xpath('EnumEntry/@Name'), 'values': feat.xpath('EnumEntry/Value/text()') }
+                        self.update(key, 'enumeration', name, attr)
+                if len(sfeat) > 0:        
+                    for feat in sfeat:
+                        name = feat.get('Name')
+                        attr = None
+                        self.update(key, 'string', name, attr)
+                if len(bfeat) > 0:
+                    for feat in bfeat:
+                        name = feat.get('Name')
+                        attr = None
+                        self.update(key, 'boolean', name, attr)
+
+    def debug(self, camera, modes):
+
+        for key in self._items.keys():
+            for mode in self._items[key].keys():
+
+                try:
+
+                    if mode == "integer" and mode in modes:
+                        for feat in self._items[key][mode]:
+                            name = feat[0]
+                            KowaLogger.debug(f"{key:25s} {name:32s} {camera.getFeatureInteger(name)}")
+
+                    if mode == "float" and mode in modes:
+                        for feat in self._items[key][mode]:
+                            name = feat[0]
+                            KowaLogger.debug(f"{key:25s} {name:32s} {camera.getFeatureFloat(name)}")
+
+                    if mode == "boolean" and mode in modes:
+                        for feat in self._items[key][mode]:
+                            name = feat[0]
+                            KowaLogger.debug(f"{key:25s} {name:32s} {camera.getFeatureBoolean(name)}")
+
+                    if mode == "string" and mode in modes:
+                        for feat in self._items[key][mode]:
+                            name = feat[0]
+                            KowaLogger.debug(f"{key:25s} {name:32s} {camera.getFeatureString(name)}")
+
+                    if mode == "enumeration" and mode in modes:
+                        for feat in self._items[key][mode]:
+                            name = feat[0]
+                            KowaLogger.debug(f"{key:25s} {name:32s} {camera.getFeatureEnumeration(name)}")
+
+                except Exception as ex:
+
+                    KowaLogger.error(f"{key:25s} {name:32s} ")
+
+
+
 class KowaDevice(object):
+
+    _config: KowaConfig = None
+    def _get_config(self):
+        if self._config is None:
+            self._config = KowaConfig()
+        return self._config
+    Config = property(fget=_get_config)
 
     def __init__(self):
         pass
@@ -78,15 +184,20 @@ class KowaDevice(object):
 
         if discovery.Count == 1:
 
-            self._camera = kge.initEx(connection=discovery[CAMERA_INDEX], 
-                                      save_xml=1, 
-                                      open_mode=kge.Access.exclusive)
-            self._camera.initFilterDriver()
-            self._camera.openStreamChannel()
+            try:
 
-            self._camera.setDetailedLog(32)
+                self._camera = kge.initEx(connection=discovery[CAMERA_INDEX], 
+                                        save_xml=1, 
+                                        open_mode=kge.Access.exclusive)
+                self._camera.initFilterDriver()
+                self._camera.openStreamChannel()
 
-            self.debug(self._camera)
+                self._camera.setDetailedLog(32)
+
+                self.debug(self._camera)
+
+            except Exception as ex:
+                KowaLogger.error(ex)
 
     def shutdown(self):
         if self._camera is not None and not self._camera.closed:
@@ -96,39 +207,37 @@ class KowaDevice(object):
         self._camera = None
 
     def debug(self, camera):
+        
+        KowaLogger.debug("--------------------------")
 
-        # status 0=ok, 1=timeout, 2=access denied; eval 0=ok, 1=expired, 2=evaluation
-        KowaLogger.debug(f"connection status {camera.getConnectionStatus()}")
-        #
-        KowaLogger.debug(f"filter driver     {camera.getFilterDriverVersion()}")
-        # timeout ms for connection checking
-        KowaLogger.debug(f"heart beat rate   {camera.getHeartbeatRate()}")
-        # test max packet size
-        KowaLogger.debug(f"max packet size   {camera.testFindMaxPacketSize()}")
+        KowaLogger.debug(f"dll abi version           {kge.getDllAbiVersion()}")
+        KowaLogger.debug(f"dll version               {kge.getDllVersion()}")
+        
+        KowaLogger.debug(f"max packet size           {camera.testFindMaxPacketSize()}")
 
-        KowaLogger.debug(f"---------int")
+        KowaLogger.debug(f"connection status         {camera.getConnectionStatus()}")       # status 0=ok, 1=timeout, 2=access denied; eval 0=ok, 1=expired, 2=evaluation
+        KowaLogger.debug(f"filter driver             {camera.getFilterDriverVersion()}")        
+        KowaLogger.debug(f"heart beat rate           {camera.getHeartbeatRate()}")          # timeout ms for connection checking  
+        KowaLogger.debug(f"ring buffer count         {camera.getBufferCount()}")
+        KowaLogger.debug(f"fps                       {camera.getImageFPS()}")
 
-        for name in ["GevSCPD","ExposureTime",
-                     "Width","Height","OffsetX","OffsetY",
-                     "BinningType","BinningDivider","HorizontalSubsampling","VerticalSubsampling",
-                     "AcquisitionMode","AcquisitionFrameCount","AcquisitionFrameRate",
-                     "PayloadSize"]:
-            KowaLogger.debug(f"{name:25s} {camera.getFeatureInteger(name)}")
+        
 
-        KowaLogger.debug(f"---------hex")
+        config_filename = "config/kowa.xml"
+        #with open(config_filename, "wb") as f:
+        #    f.write(camera.getXmlFile())
 
-        for name in ["PixelFormat"]:
-            KowaLogger.debug(f"{name:25s} {hex(camera.getFeatureInteger(name))}")
-
-        KowaLogger.debug(f"---------flo")
-
-        for name in ["SensorWidth","SensorHeight"]:
-            KowaLogger.debug(f"{name:25s} {camera.getFeatureFloat(name)}")
-
-        # 
-
-        with open("config/kow.xml", "wb") as f:
-            f.write(camera.getXmlFile())
+        self.Config.parse(config_filename)
+        KowaLogger.debug("--------------------------integer")
+        self.Config.debug(camera, ['integer'])
+        KowaLogger.debug("--------------------------float")
+        self.Config.debug(camera, ['float'])
+        KowaLogger.debug("--------------------------boolean")
+        self.Config.debug(camera, ['boolean'])
+        KowaLogger.debug("--------------------------string")
+        self.Config.debug(camera, ['string'])
+        KowaLogger.debug("--------------------------enumeration")
+        self.Config.debug(camera, ['enumeration'])
         
     def run() -> typing.Optional[int]:
 
@@ -241,6 +350,6 @@ if __name__ == "__main__":
     device = KowaDevice()
     device.startup()
 
-    input("<ENTER>")
+    #input("<ENTER>")
 
     device.shutdown()

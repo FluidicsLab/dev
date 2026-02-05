@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RegisterDescription
-	xmlns="http://www.genicam.org/GenApi/Version_1_1"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.genicam.org/GenApi/Version_1_1 ../../GenApi/GenApiSchema_Version_1_1.xsd"
 	ModelName="KC800GC4_KC1200GC4"
 	VendorName="KowaOptronics"
 	MajorVersion="1"
@@ -3092,42 +3089,6 @@
 		</Integer>
 		<IntReg Name="GevCurrentDefaultGatewayReg">
 			<Address>0x0044</Address>
-			<Length>4</Length>
-			<AccessMode>RO</AccessMode>
-			<pPort>Device</pPort>
-			<Sign>Unsigned</Sign>
-			<Endianess>BigEndian</Endianess>
-		</IntReg>
-
-		<Enumeration Name="GevIPConfigurationStatus" NameSpace="Standard">
-			<ToolTip>Reports the current IP configuration status.</ToolTip>
-			<Description>Reports the current IP configuration status.</Description>
-			<DisplayName>GevIPConfigurationStatus</DisplayName>
-			<Visibility>Beginner</Visibility>
-			<EnumEntry Name="None">
-				<DisplayName>None</DisplayName>
-				<Value>0</Value>
-			</EnumEntry>
-			<EnumEntry Name="PersistentIP">
-				<DisplayName>PersistentIP</DisplayName>
-				<Value>1</Value>
-			</EnumEntry>
-			<EnumEntry Name="DHCP">
-				<DisplayName>DHCP</DisplayName>
-				<Value>2</Value>
-			</EnumEntry>
-			<EnumEntry Name="LLA">
-				<DisplayName>LLA</DisplayName>
-				<Value>3</Value>
-			</EnumEntry>
-			<EnumEntry Name="ForceIP">
-				<DisplayName>ForceIP</DisplayName>
-				<Value>4</Value>
-			</EnumEntry>
-			<pValue>GevIPConfigurationStatusReg</pValue>
-		</Enumeration>
-		<IntReg Name="GevIPConfigurationStatusReg">
-			<Address>0xdeadbeef</Address>
 			<Length>4</Length>
 			<AccessMode>RO</AccessMode>
 			<pPort>Device</pPort>
