@@ -2,6 +2,7 @@
 import ctypes, time, struct
 from types import SimpleNamespace
 
+from narwhals import UInt32
 import pysoem
 import numpy as np
 from threading import Lock, Event, Thread
@@ -402,6 +403,7 @@ class AM8111MotionController(BeckhoffMotionController):
         _fields_ = [
            ('control', ctypes.c_uint16),    # 1600
            ('velocity', ctypes.c_int32),    # 1601
+           ('position', ctypes.c_int32),    # 1602
            ('touchprobe', ctypes.c_uint16)  # 1607
         ]
 
@@ -453,18 +455,18 @@ class AM8111MotionController(BeckhoffMotionController):
         return self._torqueConfig
     TorqueConfig = property(fget=_get_torqueConfig)            
 
-    _velocityMax = None # inc/s
-    def _get_velocityMax(self):
+    _velocityLimit = None # inc/s
+    def _get_velocityLimit(self):
         try:
-            if self._velocityMax is None:
+            if self._velocityLimit is None:
                 # velocity encoder resolution * motor speed limitation / 60s
                 ver = ctypes.c_uint32.from_buffer_copy(self.Device.sdo_read(0x9010, 0x14)).value
                 msl = ctypes.c_uint32.from_buffer_copy(self.Device.sdo_read(0x8011, 0x1B)).value
-                self._velocityMax = np.int32(ver * msl / 60)
+                self._velocityLimit = np.int32(ver * msl / 60)
         except Exception as ex:
             pass
-        return self._velocityMax
-    VelocityMax = property(fget=_get_velocityMax)
+        return self._velocityLimit
+    VelocityLimit = property(fget=_get_velocityLimit)
 
     def _get_velocity(self):
         try:
@@ -476,13 +478,36 @@ class AM8111MotionController(BeckhoffMotionController):
         try:
             out = AM8111MotionController.RxMap()
             out.control = ctypes.c_uint16(int(self.ControlWord,2))
-            out.velocity = max(-self.VelocityMax, min(self.VelocityMax, ctypes.c_int32(value)))
+            out.velocity = max(-self.VelocityLimit, min(self.VelocityLimit, ctypes.c_int32(value)))
+            out.position = self.Position
             out.touchprobe = ctypes.c_uint16(int(self.TouchprobeWord,2))
             self.write(out)            
         except Exception as ex:            
             pass
     Velocity = property(fset=_set_velocity,fget=_get_velocity)
-        
+
+    def _get_positionLimit(self):
+        return AM8111MotionController.UINT32_MAX
+    PositionLimit = property(fget=_get_positionLimit)
+
+    def _get_position(self):
+        try:
+            buff = AM8111MotionController.TxMap.from_buffer_copy(self.Device.input)                
+            return buff.position
+        except Exception as ex:
+            return None
+    def _set_position(self, value):
+        try:
+            out = AM8111MotionController.RxMap()
+            out.control = ctypes.c_uint16(int(self.ControlWord,2))
+            out.velocity = self.Velocity
+            self.position = max(0, min(self.PositionLimit, ctypes.c_uint32(value)))
+            out.touchprobe = ctypes.c_uint16(int(self.TouchprobeWord,2))
+            self.write(out)            
+        except Exception as ex:            
+            pass
+    Position = property(fset=_set_position,fget=_get_position)
+
     def _get_statusWord(self):
         try:
             buff = AM8111MotionController.TxMap.from_buffer_copy(self.Device.input)                
@@ -502,6 +527,7 @@ class AM8111MotionController(BeckhoffMotionController):
             out = AM8111MotionController.RxMap()
             out.control = ctypes.c_uint16(int(value,2))
             out.velocity = ctypes.c_int32(0)
+            out.position = self.Position
             out.touchprobe = ctypes.c_uint16(0)
             self.write(out)            
         except Exception as ex:
@@ -519,6 +545,7 @@ class AM8111MotionController(BeckhoffMotionController):
             out = AM8111MotionController.RxMap()
             out.control = ctypes.c_uint16(int(self.ControlWord,2))
             out.velocity = self.Velocity
+            out.position = self.Position
             out.touchprobe = ctypes.c_uint16(int(value,2))
             self.write(out)            
         except Exception as ex:
@@ -584,8 +611,9 @@ class AM8111MotionController(BeckhoffMotionController):
             values = [
                 0x1600, # control word
                 0x1601, # velocity
+                0x1602, # position
                 # touch probe
-                0x1607  # control word
+                0x1607  # touch probe control word
                 ]
             self.Device.sdo_write(addr, 0, bytes(ctypes.c_uint8(0)))
             for i,value in enumerate(values): 
@@ -660,7 +688,7 @@ class AM8111MotionController(BeckhoffMotionController):
 
             _ = self.TorqueConfig
 
-            _ = self.VelocityMax
+            _ = self.VelocityLimit
             self.Turnbits = [17, 15]
             _ = self.Turnbits
 
@@ -685,23 +713,44 @@ class AM8111MotionController(BeckhoffMotionController):
             EcatLogger.debug(f"    -- Exception {ex}")  
 
         return self._initialized
-   
-    def input(self):
+    
 
-        def split_(value, bits):            
-            value = bin(value)[2:].zfill(32)
-            return [int(value[:bits].zfill(32),2), int(value[bits:].zfill(32),2)]
+    class PositionEx:
+
+        UINT32_MAX = 4_294_967_295
+        UINT32_BIT = 32
+
+        @staticmethod
+        def split(value, bits):            
+            value = bin(value)[2:].zfill(AM8111MotionController.PositionEx.UINT32_BIT)
+            return [
+                int(value[:bits].zfill(AM8111MotionController.PositionEx.UINT32_BIT),2), 
+                int(value[bits:].zfill(AM8111MotionController.PositionEx.UINT32_BIT),2)
+                ]
         
-        def position_(value):
-            return AM8111MotionController.UINT32_MAX + value if value < 0 else value
+        @staticmethod
+        def merge(value, bits):
+            return AM8111MotionController.PositionEx.value(int("".join([
+                bin(value[0])[2:].zfill(bits), 
+                bin(value[1])[2:].zfill(AM8111MotionController.PositionEx.UINT32_BIT-bits)
+                ]), 2))
 
-        def torque_(value, config):
+        @staticmethod
+        def value(value):
+            return AM8111MotionController.PositionEx.UINT32_MAX + value if value < 0 else value
+        
+    class TorqueEx:
+
+        @staticmethod
+        def value(value, config):
             rc = 0
             if 0 == config[0]:
                 rc = (value / 1000) * (config[2] / np.sqrt(2)) * config[1]
             else:
                 rc = (value / 1000) * (config[2]) * config[1]
             return rc
+
+    def input(self):
 
         # pdo read
         try:
@@ -711,17 +760,17 @@ class AM8111MotionController(BeckhoffMotionController):
 
             bits = self.Turnbits[1]
 
-            position = position_(buff.position)
-            torque = torque_(buff.torque, self.TorqueConfig)
+            position = AM8111MotionController.PositionEx.value(buff.position)
+            torque = AM8111MotionController.TorqueEx.value(buff.torque, self.TorqueConfig)
             
             data  = {
                 'position': {
                     'raw': position,
-                    'value': split_(position, bits)
+                    'value': AM8111MotionController.PositionEx.split(position, bits)
                 },
                 'velocity':{
                     'raw': buff.velocity,
-                    'max': self.VelocityMax
+                    'limit': self.VelocityLimit
                 },
                 'torque': {
                     'raw': buff.torque,
@@ -804,6 +853,10 @@ class AM8111MotionController(BeckhoffMotionController):
                 if 'velocity' in self._data.keys() and self._data['velocity'] is not None:                    
                     self.Velocity = self._data['velocity']
                     self._data['velocity'] = None
+
+                if 'position' in self._data.keys() and self._data['position'] is not None:                    
+                    self.Position = self._data['position']
+                    self._data['position'] = None
 
                 if 'touchprobe' in self._data.keys() and self._data['touchprobe'] is not None:                    
                     self.TouchprobeWord = self._data['touchprobe']
