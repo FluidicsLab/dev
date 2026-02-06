@@ -54,7 +54,7 @@ class EcatMasterDEV(EcatMaster):
                             for target in targets:
                                 severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_PRESSURE
                                 
-                                SeverityLogger.debug(f"    6021.{target} {addr} {key} {value[addr][key]}")
+                                SeverityLogger.debug(f"6021.{target} {addr} {key} {value[addr][key]}")
 
                 key = "T"
                 targets = config[f"{addr}"][key]["channel"]            
@@ -66,7 +66,7 @@ class EcatMasterDEV(EcatMaster):
                             for target in targets:
                                 severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_TEMPERATURE
                                 
-                                SeverityLogger.debug(f"    6021.{target} {addr} {key} {value[addr][key]}")                                
+                                SeverityLogger.debug(f"6021.{target} {addr} {key} {value[addr][key]}")                                
 
                 key = "t"
                 if key in list(config[f"{addr}"].keys()):
@@ -80,7 +80,7 @@ class EcatMasterDEV(EcatMaster):
                                 for target in targets:
                                     severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_TIME
                                     
-                                    SeverityLogger.debug(f"    6021.{target} {addr} {key} {value[addr][key]}")  
+                                    SeverityLogger.debug(f"6021.{target} {addr} {key} {value[addr][key]}")  
 
         return severity
 
@@ -101,7 +101,7 @@ class EcatMasterDEV(EcatMaster):
                         for target in targets:
                             severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_DISTANCE
 
-                            SeverityLogger.debug(f"    3124.{target} {addr} {key} {value[addr]}")                            
+                            SeverityLogger.debug(f"3124.{target} {addr} {key} {value[addr]}")                            
 
         return severity
 
@@ -122,7 +122,7 @@ class EcatMasterDEV(EcatMaster):
                         for target in targets:
                             severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_SYSTEM
 
-                            SeverityLogger.debug(f"    1100.{target} {addr} {key} {value[addr][key]}")                               
+                            SeverityLogger.debug(f"1100.{target} {addr} {key} {value[addr][key]}")                               
 
         return severity          
 
@@ -169,9 +169,9 @@ class EcatMasterDEV(EcatMaster):
 
                 self._beckhoffCouplerController[pos] = BeckhoffCouplerController(pos, slave, self.ProcessLock)           
                 self.SeverityController.register(f"EK1100.{pos}")
-                EcatLogger.debug(f"    ** init BeckhoffCouplerController @ {pos}")
+                EcatLogger.debug(f"** init BeckhoffCouplerController @ {pos}")
             
-        EcatLogger.debug(f"    -- done with {rc}")
+        EcatLogger.debug(f"-- done with {rc}")
 
         return rc    
 
@@ -186,7 +186,7 @@ class EcatMasterDEV(EcatMaster):
             if self.isSlot("drive", (1, pos)):
 
                 self._beckhoffMotionController[pos] = AM8111MotionController(pos, slave, self.ProcessLock)
-                
+
                 self._beckhoffMotionController[pos].initEx({ "name": "EL6021.3", "addr": 0x0B, "key": "p", "low": 0, "high": 700 })
                 self._beckhoffMotionController[pos].init()
 
@@ -194,9 +194,9 @@ class EcatMasterDEV(EcatMaster):
 
                 self.CallbackController.register(f"EL7201.{pos}", "EL6021.3", self._beckhoffMotionController[pos].callback)
 
-                EcatLogger.debug(f"    ** init EL7201 MotionController @ {pos}")
+                EcatLogger.debug(f"** init EL7201 MotionController @ {pos}")
         
-        EcatLogger.debug(f"    -- done with {rc}")
+        EcatLogger.debug(f"-- done with {rc}")
         
         return rc      
     
@@ -216,9 +216,9 @@ class EcatMasterDEV(EcatMaster):
                 self._kellerModbusController[pos] = KellerModbusController(pos, slave, self.ProcessLock, addr)                
                 self.SeverityController.register(f"EL6021.{slot}")
                 
-                EcatLogger.debug(f"    ** init KellerModbusController @ {addr}")
+                EcatLogger.debug(f"** init KellerModbusController @ {addr}")
 
-        EcatLogger.debug(f"    -- done")
+        EcatLogger.debug(f"-- done")
 
         return rc
     
@@ -243,7 +243,7 @@ class EcatMasterDEV(EcatMaster):
                 for i, a in enumerate([0x8000, 0x8010, 0x8020, 0x8030]):
                     slave.sdo_write(a, 0x02, bytes(ctypes.c_uint8(0)))
 
-        EcatLogger.debug(f"    -- done")
+        EcatLogger.debug(f"-- done")
 
         return rc     
     

@@ -55,21 +55,20 @@ from _BeckhoffMotionController import AM8111MotionController
 
 """
 
-TIMEOUT_RECEIVE = 4_000
-TIMEOUT_FPWR = 4_000
-TIMEOUT_STATE_CHECK = 50_000
+TIMEOUT_RECEIVE         = 4_000
+TIMEOUT_FPWR            = 4_000
+TIMEOUT_STATE_CHECK     = 50_000
 
-TIMEOUT_MASTER_STATE = 2.0      # s
-TIMEOUT_SLAVE_STATE = 5.0       # s
+TIMEOUT_MASTER_STATE    = 2.0       # s
+TIMEOUT_SLAVE_STATE     = 5.0       # s
 
-DELAY_ALIVE_LOOP = 0.5
-DELAY_INPUT_LOOP = 0.1
-DELAY_OUTPUT_LOOP = 0.1
+DELAY_RUNNING_LOOP      = 0.1
+DELAY_ALIVE_LOOP        = 0.5
+DELAY_INPUT_LOOP        = 0.1
+DELAY_OUTPUT_LOOP       = 0.1
 
-DELAY_PROCESS_LOOP  = 0.01      # 0.01
-DELAY_CHECK_LOOP    = 0.1       # 0.01
-
-
+DELAY_PROCESS_LOOP      = 0.016      # 0.01
+DELAY_CHECK_LOOP        = 0.100      # 0.01
 
 VERBOSE = 1
 
@@ -175,7 +174,7 @@ class EcatMaster(EcatObject):
         self.Master.state = value
         wkc = self.Master.write_state() 
         state = self.Master.state_check(value, timeout=TIMEOUT_STATE_CHECK)
-        EcatLogger.debug(f'    {wkc:03d} {EcatStates.desc(value)} ~ {EcatStates.desc(state)}')        
+        EcatLogger.debug(f'{wkc:03d} {EcatStates.desc(value)} ~ {EcatStates.desc(state)}')        
     def _get_state(self): 
         return self.Master.state    
     State = property(fget=_get_state,fset=_set_state)
@@ -192,14 +191,14 @@ class EcatMaster(EcatObject):
     ReadState = property(fget=_get_readState)
 
     def debugState(self):
-        EcatLogger.debug(f"    >>> debug states")
+        EcatLogger.debug(f">>> debug states")
         rs = self.ReadState[0]
-        EcatLogger.debug(f"    {'MASTER':15s} :: {rs} :: {EcatStates.desc(int(rs,2), desc=True)}")
+        EcatLogger.debug(f"{'MASTER':15s} :: {rs} :: {EcatStates.desc(int(rs,2), desc=True)}")
         for i,rs in enumerate(self.ReadState[1]):
             al_status = self.Devices[i].al_status
             al_status_desc = pysoem.al_status_code_to_string(al_status)
-            EcatLogger.debug(f"    {self.Devices[i].name:15s} :: {rs} :: {EcatStates.desc(int(rs,2), desc=True):20s} :: {hex(al_status)} :: {al_status_desc}")
-        EcatLogger.debug(f"    <<<")
+            EcatLogger.debug(f"{self.Devices[i].name:15s} :: {rs} :: {EcatStates.desc(int(rs,2), desc=True):20s} :: {hex(al_status)} :: {al_status_desc}")
+        EcatLogger.debug(f"<<<")
 
     @staticmethod
     def writeSlaveState(slave, state):
@@ -260,7 +259,7 @@ class EcatMaster(EcatObject):
             rc = self.getWatchDog(slave)
                         
         except Exception as ex:
-            EcatLogger.debug(f"   ! set watchdog failed {sm} {pd}")
+            EcatLogger.debug(f"! set watchdog failed {sm} {pd}")
         
         finally:
             return rc
@@ -312,7 +311,7 @@ class EcatMaster(EcatObject):
 
     def configEK1100(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
         
         # config by derived class
 
@@ -320,7 +319,7 @@ class EcatMaster(EcatObject):
 
     def configEL1008(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
         
         # config by derived class
 
@@ -328,7 +327,7 @@ class EcatMaster(EcatObject):
 
     def configEL1809(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
         
         # config by derived class
 
@@ -336,10 +335,10 @@ class EcatMaster(EcatObject):
 
     def configEL2809(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
         
         if (slave.state & pysoem.PREOP_STATE) != pysoem.PREOP_STATE:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
     
         # config by derived class
@@ -348,10 +347,10 @@ class EcatMaster(EcatObject):
 
     def configEL2819(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
         
         if (slave.state & pysoem.PREOP_STATE) != pysoem.PREOP_STATE:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
     
         # config by derived class
@@ -360,10 +359,10 @@ class EcatMaster(EcatObject):
 
     def configEL2008(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
         
         if (slave.state & pysoem.PREOP_STATE) != pysoem.PREOP_STATE:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
         # config by derived class
@@ -372,10 +371,10 @@ class EcatMaster(EcatObject):
 
     def configEL2068(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
         
         if (slave.state & pysoem.PREOP_STATE) != pysoem.PREOP_STATE:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
         # config by derived class
@@ -384,17 +383,22 @@ class EcatMaster(EcatObject):
 
     def configEL2022(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
         
-        EcatLogger.debug(f"    -- done")
+        if (slave.state & pysoem.PREOP_STATE) != pysoem.PREOP_STATE:
+            EcatLogger.debug(f"-- failed")
+            return False
+
+        # config by derived class
+
         return True
     
     def configEL4104(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
         
         if (slave.state & pysoem.PREOP_STATE) != pysoem.PREOP_STATE:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
         # config by derived class
@@ -403,10 +407,10 @@ class EcatMaster(EcatObject):
 
     def configEL4002(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
         
         if (slave.state & pysoem.PREOP_STATE) != pysoem.PREOP_STATE:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
         # config by derived class
@@ -415,10 +419,10 @@ class EcatMaster(EcatObject):
 
     def configEL6021(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
         for (a,o,v) in [
@@ -450,10 +454,10 @@ class EcatMaster(EcatObject):
     
     def configEL6001(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
         for (a,o,v) in [
@@ -476,62 +480,62 @@ class EcatMaster(EcatObject):
         
         if 3 == pos:
             self._gscSerialController[pos] = GscSerialController(pos, slave, self.ProcessLock)
-            EcatLogger.debug(f"    ** init GscSerialController")
+            EcatLogger.debug(f"** init GscSerialController")
         
-        EcatLogger.debug(f"    -- done")
+        EcatLogger.debug(f"-- done")
 
         return True    
 
     def configEL6080(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
                 
-        EcatLogger.debug(f"    -- done")
+        EcatLogger.debug(f"-- done")
 
         return True   
     
     def configEL6224(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
         self._ifmIOLinkController[pos] = ifmIOLinkController(pos, slave, self.ProcessLock)
         self._ifmIOLinkController[pos].PdoInput = [0x1a00]
                 
-        EcatLogger.debug(f"    -- done")
+        EcatLogger.debug(f"-- done")
 
         return True      
 
     def configEL6090(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
-        EcatLogger.debug(f"    ** init BeckhoffDisplayController")
+        EcatLogger.debug(f"** init BeckhoffDisplayController")
         self._beckhoffDisplayController[pos] = BeckhoffDisplayController(pos, slave, self.ProcessLock)
         for item in ["EL7041.3"]:
             self.CallbackController.register(BeckhoffDisplayController.CTRL[0], item, self._beckhoffDisplayController[pos].callback)
                 
-        EcatLogger.debug(f"    -- done")
+        EcatLogger.debug(f"-- done")
 
         return True        
     
     def configEL3124(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
         # config by derived class
@@ -540,10 +544,10 @@ class EcatMaster(EcatObject):
     
     def configEL3164(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
         # config by derived class
@@ -552,10 +556,10 @@ class EcatMaster(EcatObject):
     
     def configEL3314(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
         # derived class
@@ -564,10 +568,10 @@ class EcatMaster(EcatObject):
     
     def configEL3318(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False        
         
         self.setPreset(slave)
@@ -578,16 +582,16 @@ class EcatMaster(EcatObject):
         for i, a in enumerate([0x8000, 0x8010]):
             slave.sdo_write(a, 0x19, bytes(ctypes.c_uint16(t[i])))
 
-        EcatLogger.debug(f"    -- done")
+        EcatLogger.debug(f"-- done")
         
         return True    
 
     def configEL3681(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False        
         
         # config by derived class
@@ -596,10 +600,10 @@ class EcatMaster(EcatObject):
 
     def configEL7031(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
              
         """
@@ -670,10 +674,10 @@ class EcatMaster(EcatObject):
     
     def configEL7041(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
              
         # derived class
@@ -682,10 +686,10 @@ class EcatMaster(EcatObject):
     
     def configEL7201(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
                      
         # derived class
@@ -694,10 +698,10 @@ class EcatMaster(EcatObject):
     
     def configEL3751(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
         
         if pos == 21:
@@ -706,15 +710,15 @@ class EcatMaster(EcatObject):
             # RTD; none
             slave.sdo_write(0x8000, 0x14, bytes(ctypes.c_uint16(0)))
                 
-        EcatLogger.debug(f"    -- done")
+        EcatLogger.debug(f"-- done")
         return True    
     
     def configED1F(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed; slave not in PREOP state")
+            EcatLogger.debug(f"-- failed; slave not in PREOP state")
             return False        
 
         # derived class
@@ -723,7 +727,7 @@ class EcatMaster(EcatObject):
     
     def configEL2596(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
         
         if pos == 15:
             # current control
@@ -735,15 +739,15 @@ class EcatMaster(EcatObject):
         
         self._ccsLightController[pos] = CcsLightController(pos, slave, self.ProcessLock)
         
-        EcatLogger.debug(f"    -- done")
+        EcatLogger.debug(f"-- done")
         return True
            
     def configEL2502(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
         # derived class  
@@ -752,10 +756,10 @@ class EcatMaster(EcatObject):
     
     def configEM3702(self, pos, slave):
 
-        EcatLogger.debug(f"    ++ configure {pos:03d} {slave.name} {slave.state}")
+        EcatLogger.debug(f"++ configure {pos:03d} {slave.name} {slave.state}")
 
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
-            EcatLogger.debug(f"    -- failed")
+            EcatLogger.debug(f"-- failed")
             return False
 
         # derived class                
@@ -869,21 +873,21 @@ class EcatMaster(EcatObject):
         return current
 
     def config_watchdog(self):
-        EcatLogger.debug("    + config watchdog")        
+        EcatLogger.debug("+ config watchdog")        
         for i,slave in enumerate(self.Master.slaves):            
             wd = self.setWatchDog(slave, sm=self.Watchdog["sm"]*self.Watchdog["fc"], pd=self.Watchdog["pd"]*self.Watchdog["fc"])
-            EcatLogger.debug(f"    - {(i):03d} {slave.name} WD {wd}")     
-        EcatLogger.debug(f"    - done")
+            EcatLogger.debug(f"- {(i):03d} {slave.name} WD {wd}")     
+        EcatLogger.debug(f"- done")
     
     def config_mailbox(self):
-        EcatLogger.debug("    + config mailbox")  
+        EcatLogger.debug("+ config mailbox")  
         for i,slave in enumerate(self.Master.slaves):            
             slave.add_emergency_callback(self.emergency_callback)
-            EcatLogger.debug(f"    - {(i):03d} {slave.name}")     
-        EcatLogger.debug(f"    - done")
+            EcatLogger.debug(f"- {(i):03d} {slave.name}")     
+        EcatLogger.debug(f"- done")
 
     def emergency_callback(self, e: pysoem.Emergency):
-        EcatLogger.debug("    + emergency callback")
+        EcatLogger.debug("+ emergency callback")
         EcatLogger.debug(e)
 
     def send(self):        
@@ -894,11 +898,11 @@ class EcatMaster(EcatObject):
 
     def layoutCheck(self):
         
-        EcatLogger.debug(f"    + layout check by {self._template}")
+        EcatLogger.debug(f"+ layout check by {self._template}")
         try:    
 
             hh = ['no','name','alias','power',' ', 'prio', 'vld', 'state', 'rev']
-            EcatLogger.debug(f"    {hh[0]:>3} {hh[1]:<15} {hh[2]:<11} {hh[7]:>4} {hh[3]:>6} {hh[4]:>6} {hh[5]:>6}   {hh[6]:<5} {hh[7]:<8}")
+            EcatLogger.debug(f"{hh[0]:>3} {hh[1]:<15} {hh[2]:<11} {hh[7]:>4} {hh[3]:>6} {hh[4]:>6} {hh[5]:>6}   {hh[6]:<5} {hh[7]:<8}")
 
             for n,slave in enumerate(self.Master.slaves):                
                 
@@ -912,7 +916,7 @@ class EcatMaster(EcatObject):
 
                 rev = int(hex(slave.rev)[:4],16)
                 
-                EcatLogger.debug(f"    {n:03d} {slave.name:<15} {term.alias:<11} {rev:>4} {power:>6} {consumption:>6} {prio:>6}   {str(valid):<5} {state:<8}")
+                EcatLogger.debug(f"{n:03d} {slave.name:<15} {term.alias:<11} {rev:>4} {power:>6} {consumption:>6} {prio:>6}   {str(valid):<5} {state:<8}")
 
                 if (slave.name != term.name) or (slave.man != term.vendor_id) or (slave.id != term.product_code):
                     raise EcatLayoutError(f"unexpected layout at position {n} {slave.name}")
@@ -920,11 +924,11 @@ class EcatMaster(EcatObject):
                 slave.config_func = self.configFunc                
                 slave.is_lost = False
 
-            EcatLogger.debug("    - done")
+            EcatLogger.debug("- done")
 
         except Exception as ex:
-            EcatError.error(ex)
-            EcatLogger.debug("    - failed")
+            EcatLogger.error(ex)
+            EcatLogger.debug("- failed")
             return False
                    
         return True
@@ -950,7 +954,7 @@ class EcatMaster(EcatObject):
         current_ = EcatStates.desc(self.Master.state_check(pysoem.SAFEOP_STATE, TIMEOUT_STATE_CHECK), desc=True)
         demand_ = EcatStates.desc(state, desc=True)
     
-        EcatLogger.debug(f"    + switch to {demand_} from {current_}")
+        EcatLogger.debug(f"+ switch to {demand_} from {current_}")
 
         rc = True
 
@@ -963,7 +967,7 @@ class EcatMaster(EcatObject):
             if time.time() - start_time > timeout:
                 rc = False
                 break
-        EcatLogger.debug(f"    - done OP={rc} by {time.time() - start_time}s")
+        EcatLogger.debug(f"- done OP={rc} by {time.time() - start_time}s")
 
         return rc
     
@@ -982,37 +986,37 @@ class EcatMaster(EcatObject):
         if not self.layoutCheck():
             return False
         
-        EcatLogger.debug("    + start alive threading")
+        EcatLogger.debug("+ start alive threading")
 
         self._aliveThread = Thread(target=self._aliveLoop)
         self._aliveThread.start()        
 
-        EcatLogger.debug(f"    - done")
+        EcatLogger.debug(f"- done")
 
         self.config_mailbox()
         self.config_watchdog()
         self.config_map()  
 
         if self.Master.state_check(pysoem.SAFEOP_STATE, timeout=TIMEOUT_STATE_CHECK) != pysoem.SAFEOP_STATE:      
-            EcatLogger.debug("    -- master NOT in SAFEOP_STATE")    
+            EcatLogger.debug("-- master NOT in SAFEOP_STATE")    
         else:
-            EcatLogger.debug("    ++ master in SAFEOP_STATE")    
+            EcatLogger.debug("++ master in SAFEOP_STATE")    
         
         # config dc
         self.config_dc()
-        EcatLogger.debug(f"    ++ master dc time {self.Master.dc_time}") 
+        EcatLogger.debug(f"++ master dc time {self.Master.dc_time}") 
 
         self._running = self.writeMasterState(pysoem.OP_STATE)
         if self.Master.state_check(pysoem.OP_STATE, timeout=TIMEOUT_STATE_CHECK) != pysoem.OP_STATE:      
-            EcatLogger.debug("    -- master NOT in OP_STATE") 
+            EcatLogger.debug("-- master NOT in OP_STATE") 
         else:
-            EcatLogger.debug("    ++ master in OP_STATE") 
+            EcatLogger.debug("++ master in OP_STATE") 
 
         #
         #
         #
 
-        EcatLogger.debug("    + start process threading")
+        EcatLogger.debug("+ start process threading")
 
         self._processThread = Thread(target=self._processLoop)
         self._checkThread = Thread(target=self._checkLoop)
@@ -1026,11 +1030,11 @@ class EcatMaster(EcatObject):
         self._outputThread = Thread(target=self._outputLoop)
         self._outputThread.start()
         
-        EcatLogger.debug(f"    - done")
+        EcatLogger.debug(f"- done")
             
         self._runningLoop()
 
-        EcatLogger.debug("    + stop process threading")
+        EcatLogger.debug("+ stop process threading")
 
         self._checkEvent.set()
         self._processEvent.set()
@@ -1044,14 +1048,14 @@ class EcatMaster(EcatObject):
         self._inputThread.join()
         self._outputThread.join()
 
-        EcatLogger.debug(f"    - done")
+        EcatLogger.debug(f"- done")
 
         self._aliveEvent.set()
 
-        EcatLogger.debug("    + stop alive threading")
+        EcatLogger.debug("+ stop alive threading")
         self._aliveThread.join()
 
-        EcatLogger.debug(f"    - done")
+        EcatLogger.debug(f"- done")
 
         self.Master.state = pysoem.INIT_STATE
         self.Master.write_state()
@@ -1061,17 +1065,17 @@ class EcatMaster(EcatObject):
     _runningEvent = Event()    
     def _runningLoop(self):
 
-        EcatLogger.debug("    + start running loop")
+        EcatLogger.debug("+ start running loop")
 
         try:
             while not self._runningEvent.is_set():
-                self._runningEvent.wait(.1)
+                self._runningEvent.wait(DELAY_RUNNING_LOOP)
 
         except KeyboardInterrupt:
-            EcatLogger.debug('    * ctrl+c')
+            EcatLogger.info('* ctrl+c')
             self._runningEvent.set()
 
-        EcatLogger.debug("    - end running loop")
+        EcatLogger.debug("- end running loop")
     
     def aliveValues(self):
 
@@ -1106,7 +1110,7 @@ class EcatMaster(EcatObject):
     
     def _aliveLoop(self):
 
-        EcatLogger.debug(f"    + start alive loop by {self._topic}")
+        EcatLogger.debug(f"+ start alive loop by {self._topic}")
 
         while not self._aliveEvent.is_set():
 
@@ -1123,7 +1127,7 @@ class EcatMaster(EcatObject):
                         
             self._aliveEvent.wait(DELAY_ALIVE_LOOP)
 
-        EcatLogger.debug("    - end alive loop")
+        EcatLogger.debug("- end alive loop")
 
         return True
     
@@ -1149,7 +1153,7 @@ class EcatMaster(EcatObject):
 
         self.Master.in_op = True
 
-        EcatLogger.debug("    + start output loop")
+        EcatLogger.debug("+ start output loop")
 
         keys = self.Indizes.__dict__.keys()
 
@@ -1309,7 +1313,7 @@ class EcatMaster(EcatObject):
 
             self._outputEvent.wait(DELAY_OUTPUT_LOOP)
 
-        EcatLogger.debug("    - end output loop")
+        EcatLogger.debug("- end output loop")
 
     def emit(self, *args):
 
@@ -1334,7 +1338,7 @@ class EcatMaster(EcatObject):
 
     def _inputLoop(self):
 
-        EcatLogger.debug("    + start input loop")
+        EcatLogger.debug("+ start input loop")
 
         self.Master.in_op = True
                     
@@ -1576,14 +1580,14 @@ class EcatMaster(EcatObject):
 
             self._inputEvent.wait(DELAY_INPUT_LOOP)
 
-        EcatLogger.debug("    - end input loop")
+        EcatLogger.debug("- end input loop")
             
     _processEvent = Event()
     _processThread = None
 
     def _processLoop(self, enabled=True):
 
-        EcatLogger.debug("    + start process loop")
+        EcatLogger.debug("+ start process loop")
 
         while not self._processEvent.is_set():
 
@@ -1594,16 +1598,16 @@ class EcatMaster(EcatObject):
                 self._wkc = self.receive()                       
                         
                 if (self._wkc != self.Master.expected_wkc) and self._wkc != -1:
-                    EcatLogger.debug(f'    WKC {self._wkc} != {self.Master.expected_wkc} (expected)')
+                    EcatLogger.critical(f'WKC {self._wkc} != {self.Master.expected_wkc} (expected)')
                     for slave in self.Master.slaves:
-                        EcatLogger.debug(f'        {slave.name} {slave.al_status} {slave.state} {slave.is_lost}')
+                        EcatLogger.error(f'{slave.name} {slave.al_status} {slave.state} {slave.is_lost}')
 
             finally:
                 self.ProcessLock.release()
 
             self._processEvent.wait(DELAY_PROCESS_LOOP)
 
-        EcatLogger.debug("    - end process loop")
+        EcatLogger.debug("- end process loop")
     
     _checkEvent = Event()
     _checkThread = None
@@ -1618,38 +1622,35 @@ class EcatMaster(EcatObject):
         
         if state == (pysoem.SAFEOP_STATE + pysoem.STATE_ERROR):
             if verbose:
-                EcatLogger.debug(f'    {title} -> {EcatStates.desc(pysoem.SAFEOP_STATE+pysoem.STATE_ACK,desc=1)}')        
+                EcatLogger.warning(f'{title} -> {EcatStates.desc(pysoem.SAFEOP_STATE+pysoem.STATE_ACK,desc=1)}')        
             slave.state = pysoem.SAFEOP_STATE + pysoem.STATE_ACK
             slave.write_state()        
         elif slave.state == pysoem.SAFEOP_STATE:
-
             if verbose:
-                EcatLogger.debug(f'    {title} -> {EcatStates.desc(pysoem.OP_STATE,desc=1)}')
-            
+                EcatLogger.warning(f'{title} -> {EcatStates.desc(pysoem.OP_STATE,desc=1)}')            
             slave.state = pysoem.OP_STATE
             slave.write_state()
-
         elif slave.state > pysoem.NONE_STATE:
             if slave.reconfig():
                 slave.is_lost = False
                 if verbose:
-                    EcatLogger.error(f'    {title} reconfigured')
+                    EcatLogger.error(f'{title} reconfigured')
         elif not slave.is_lost:
             slave.state_check(pysoem.OP_STATE, timeout=TIMEOUT_STATE_CHECK)
             if slave.state == pysoem.NONE_STATE:
                 slave.is_lost = True
                 if verbose:
-                    EcatLogger.error(f'    {title} lost')
+                    EcatLogger.error(f'{title} lost')
         if slave.is_lost:
             if slave.state == pysoem.NONE_STATE:
                 if slave.recover():
                     slave.is_lost = False
                     if verbose:
-                        EcatLogger.error(f'    {title} recovered')
+                        EcatLogger.error(f'{title} recovered')
             else:
                 slave.is_lost = False
                 if verbose:
-                    EcatLogger.debug(f'    {title} found')
+                    EcatLogger.debug(f'{title} found')
 
     def _hasLost(self):
         for i, slave in enumerate(self.Master.slaves):
@@ -1659,7 +1660,7 @@ class EcatMaster(EcatObject):
     
     def _checkLoop(self):
 
-        EcatLogger.debug("    + start check loop")
+        EcatLogger.debug("+ start check loop")
 
         while not self._checkEvent.is_set():
             
@@ -1680,17 +1681,17 @@ class EcatMaster(EcatObject):
             
             self._checkEvent.wait(DELAY_CHECK_LOOP)
 
-        EcatLogger.debug("    - end check loop")
+        EcatLogger.debug("- end check loop")
 
     def config_map(self):
-        EcatLogger.debug("    + config map")
+        EcatLogger.debug("+ config map")
         size = -1
         try: 
             size = self.Master.config_map()
         except Exception as ex:
             EcatError.error(ex)
         finally:
-            EcatLogger.debug(f"    - done {size} < 4096")
+            EcatLogger.debug(f"- done {size} < 4096")
         return size
 
     def config_dc(self):
@@ -1701,7 +1702,7 @@ class EcatMaster(EcatObject):
         except Exception as ex:
             EcatError.error(ex)
         finally:
-            EcatLogger.debug(f"    {rc}")
+            EcatLogger.debug(f"{rc}")
         return rc
    
     def config_init(self):
@@ -1710,7 +1711,7 @@ class EcatMaster(EcatObject):
         rc = -1
         try:
             rc = self.Master.config_init()
-            EcatLogger.debug(f"    {rc:03d}")
+            EcatLogger.debug(f"{rc:03d}")
                      
         except Exception as ex:
             EcatError.error(ex)
@@ -1943,7 +1944,7 @@ def main():
     
     adapters = EcatAdapter.adapters2(config.Adapter.exclude, active=config.Adapter.active, shift='    ')     
     if len(adapters) == 0:
-        EcatLogger.debug(f"    adapter {config.Adapter.active + ' ' if config.Adapter.active is not None else ''}not found")   
+        EcatLogger.debug(f"adapter {config.Adapter.active + ' ' if config.Adapter.active is not None else ''}not found")   
         rc = -1
     EcatLogger.debug(f"    {'done' if rc == 0 else 'failed'}")
 
@@ -1954,9 +1955,9 @@ def main():
 
         EcatLogger.debug(f"--- ping relais {config.Master.ports}")   
         if not EcatBrokerController.ping(config.Master.hosts,config.Master.ports,shift='    '):
-            EcatLogger.debug(f"    relais ports not found")   
+            EcatLogger.debug(f"relais ports not found")   
             rc = -2
-        EcatLogger.debug(f"    {'done' if rc == 0 else 'failed'}")
+        EcatLogger.debug(f"     {'done' if rc == 0 else 'failed'}")
 
     if rc == 0:
 

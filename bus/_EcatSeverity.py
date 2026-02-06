@@ -7,11 +7,35 @@ from threading import Lock
 
 from _EcatObject import EcatLogger
 
-import logging
+import logging, sys
 
 SeverityLogger = logging.getLogger(__name__)
 SeverityLogger.setLevel(logging.DEBUG)
 SeverityLogger.name = "__SeverityLogger__"
+
+class SeverityLoggerFormatter(logging.Formatter):
+    _baseformat = "%(asctime)s - %(name)s - %(levelname)s %(message)s"
+    _colorreset = "\x1b[0m"
+    _formats = {
+            logging.DEBUG    : f"\x1b[02m{_baseformat}{_colorreset}",
+            logging.INFO     : f"\x1b[39m{_baseformat}{_colorreset}",
+            logging.WARNING  : f"\x1b[33m{_baseformat}{_colorreset}",
+            logging.ERROR    : f"\x1b[31;1m{_baseformat}{_colorreset}",
+            logging.CRITICAL : f"\x1b[41m{_baseformat}{_colorreset}",
+    } if sys.stderr.isatty() else {}
+    _formatters = {
+        level : logging.Formatter(fmt)
+        for level, fmt in _formats.items()
+    }
+    _default_formatter = logging.Formatter(_baseformat)
+    def format(self, record):
+        formatter = self._formatters.get(record.levelno, self._default_formatter)
+        return formatter.format(record)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(SeverityLoggerFormatter())
+SeverityLogger.addHandler(ch)
 
 SEVERITY_VERBOSE =              int('00000000', 2)
 SEVERITY_INFORMATION =          int('10000000', 2)
@@ -73,7 +97,7 @@ class EcatSeverityController:
         if source not in self._items.keys():         
             self._items[source] = callback
         if source.split('.')[0] != 'SEVERITY':
-            EcatLogger.debug(f"       register severity for {source}")    
+            EcatLogger.debug(f"+ register severity for {source}")    
 
     def unregister(self, source):
         if source not in self._items.keys():
@@ -86,19 +110,19 @@ class EcatSeverityController:
 
     def startup(self):
 
-        EcatLogger.debug("    + start severity controller")
-        EcatLogger.debug(f"      version {self._config.version} enabled {self._config.enabled} ")
+        EcatLogger.debug("+ start severity controller")
+        EcatLogger.debug(f"  version {self._config.version} enabled {self._config.enabled} ")
         
         self._severity, _ = EcatSeverityController.create_(f"{self._id}", self._size)
 
-        EcatLogger.debug("    - done")
+        EcatLogger.debug("- done")
 
     def release(self):
 
-        EcatLogger.debug("    + release severity controller")
+        EcatLogger.debug("+ release severity controller")
         self.unregisterAll()
         EcatSeverityController.release_(self._severity)
-        EcatLogger.debug("    - done")        
+        EcatLogger.debug("- done")        
 
     def push(self, name, pos, data, config):  
         
@@ -135,7 +159,8 @@ class EcatSeverityController:
     
     @staticmethod
     def isValid(values: list):
-        return np.any([(value & SEVERITY_CRITICAL != SEVERITY_CRITICAL) or (value & SEVERITY_IGNORE == SEVERITY_IGNORE) for value in values])
+        return np.any([(value & SEVERITY_CRITICAL != SEVERITY_CRITICAL) or 
+                       (value & SEVERITY_IGNORE == SEVERITY_IGNORE) for value in values])
 
     def controlFunc(self, data, config):
 

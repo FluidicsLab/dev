@@ -3,25 +3,43 @@ import pysoem
 
 from collections import namedtuple
 
-import logging
-
-logging.basicConfig(
-    level=logging.ERROR,
-    #format='%(levelname)-8s %(asctime)s %(threadName)-15s %(message)s'
-    format='%(asctime)s %(message)s'
-    #format='%(levelname)-8s %(asctime)s %(message)s'
-    )
+import logging, sys
 
 EcatLogger = logging.getLogger(__name__)
 EcatLogger.setLevel(logging.DEBUG)
 EcatLogger.name = "__EcatLogger__"
 
-def loggingFilter(record: logging.Filter):
-    if isinstance(record.msg, str):
-        return True
-    return True
+class EcatLoggerFormatter(logging.Formatter):
+    
+    _format = "%(asctime)s - %(name)s - %(levelname)s %(message)s"
+    
+    grey        = "\x1b[38;20m"
+    yellow      = "\x1b[33;20m"
+    red         = "\x1b[31;20m"
+    bold_red    = "\x1b[31;1m"
 
-EcatLogger.addFilter(loggingFilter)
+    _reset = "\x1b[0m"
+    
+    _formats = {
+            logging.DEBUG    : f"\x1b[02m{_format}{_reset}",
+            logging.INFO     : f"\x1b[39m{_format}{_reset}",
+            logging.WARNING  : f"\x1b[33m{_format}{_reset}",
+            logging.ERROR    : f"\x1b[31;1m{_format}{_reset}",
+            logging.CRITICAL : f"\x1b[41m{_format}{_reset}",
+    } if sys.stderr.isatty() else {}
+    _formatters = {
+        level : logging.Formatter(fmt)
+        for level, fmt in _formats.items()
+    }
+    _default_formatter = logging.Formatter(_format)
+    def format(self, record):
+        formatter = self._formatters.get(record.levelno, self._default_formatter)
+        return formatter.format(record)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(EcatLoggerFormatter())
+EcatLogger.addHandler(ch)
 
 
 EcatSlaveSet = namedtuple('EcatSlaveSet', 'name alias vendor_id product_code consumption power valid priority')
