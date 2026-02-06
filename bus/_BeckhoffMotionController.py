@@ -836,8 +836,8 @@ class AM8111MotionController(BeckhoffMotionController):
             data  = {
                 'mode': {
                     'raw': buff.mode,
-                    'value': self.Mode,
-                    'text': AM8111ProfileMode.__str__(self.Mode)
+                    'value': buff.mode,
+                    'text': AM8111ProfileMode.__str__(buff.mode)
                 },
                 'position': {
                     'raw': position,
@@ -1008,6 +1008,7 @@ class AM8111MotionController(BeckhoffMotionController):
         self._severity = value        
         if not self.isValid():     
             self._data = { 
-                'command': AM8111Profile.FAULT_RESET,
-                'velocity': 0
+                'mode': AM8111ProfileMode.MODE_CSV,
+                'velocity': 0,
+                'command': AM8111Profile.SHUTDOWN
             }                
