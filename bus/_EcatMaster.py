@@ -67,19 +67,18 @@ DELAY_ALIVE_LOOP        = 0.5
 DELAY_INPUT_LOOP        = 0.1
 DELAY_OUTPUT_LOOP       = 0.1
 
-DELAY_PROCESS_LOOP      = 0.016      # 0.01
+DELAY_PROCESS_LOOP      = 0.010      # 0.01
 DELAY_CHECK_LOOP        = 0.100      # 0.01
 
 VERBOSE = 1
 
 PYSOEM_VERSION = [int(v) for v in pysoem.__version__.split('.')]
 
-'''
 WATCHDOG_MP = 2498
 WATCHDOG_SM = 0.0
 WATCHDOG_PD = 0.0
 WATCHDOG_FC = 1000 # watchdog factor
-'''
+
 
 class EcatMaster(EcatObject):
 
@@ -144,7 +143,7 @@ class EcatMaster(EcatObject):
         return self._master
     Master:pysoem.Master = property(fget=_get_master)
 
-    _watchdog = { "mp": 2498, "fc": 1000.0, "sm": 0.0, "pd": 0.0 }
+    _watchdog = { "mp": WATCHDOG_MP, "fc": WATCHDOG_FC, "sm": WATCHDOG_SM, "pd": WATCHDOG_PD }
     def _get_watchdog(self):
         return self._watchdog
     Watchdog = property(fget=_get_watchdog)
@@ -875,7 +874,10 @@ class EcatMaster(EcatObject):
     def config_watchdog(self):
         EcatLogger.debug("+ config watchdog")        
         for i,slave in enumerate(self.Master.slaves):            
-            wd = self.setWatchDog(slave, sm=self.Watchdog["sm"]*self.Watchdog["fc"], pd=self.Watchdog["pd"]*self.Watchdog["fc"])
+            wd = self.setWatchDog(slave, 
+                                  sm=self.Watchdog["sm"]*self.Watchdog["fc"], 
+                                  pd=self.Watchdog["pd"]*self.Watchdog["fc"]
+                                  )
             EcatLogger.debug(f"- {(i):03d} {slave.name} WD {wd}")     
         EcatLogger.debug(f"- done")
     

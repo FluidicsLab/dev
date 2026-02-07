@@ -193,38 +193,50 @@ class AM8111ProfileMode:
 
 class AM8111ProfilePosition:
 
-    UINT32_MAX = 4_294_967_295
-    UINT32_BIT = 32
+    UINT32_MAX = 2**32 - 1
+    UINT64_MAX = 2**64 - 1
 
     @staticmethod
-    def split(value, bits):            
-        value = bin(value)[2:].zfill(AM8111ProfilePosition.UINT32_BIT)
+    def split(value, bits, range=32):            
+        value = bin(value)[2:].zfill(range)
         return [
-            int(value[:bits].zfill(AM8111ProfilePosition.UINT32_BIT),2), 
-            int(value[bits:].zfill(AM8111ProfilePosition.UINT32_BIT),2)
+            int(value[:bits].zfill(range),2), 
+            int(value[bits:].zfill(range),2)
             ]
     
     @staticmethod
-    def merge(value, bits):
+    def merge(value, bits, range=32):
         return AM8111ProfilePosition.value(int("".join([
             bin(value[0])[2:].zfill(bits), 
-            bin(value[1])[2:].zfill(AM8111ProfilePosition.UINT32_BIT-bits)
-            ]), 2))
-
+            bin(value[1])[2:].zfill(range-bits)
+            ]), 2), range)
+    
     @staticmethod
-    def value(value):
-        return AM8111ProfilePosition.UINT32_MAX + value if value < 0 else value
+    def value(value, range=32):
+        if range == 32:
+            return AM8111ProfilePosition.UINT32_MAX + value if value < 0 else value
+        else:
+            return AM8111ProfilePosition.UINT64_MAX + value if value < 0 else value
     
 
 class AM8111ProfileTorque:
 
     @staticmethod
-    def value(value, config):
+    def get(value, config):
         rc = 0
         if 0 == config[0]:
             rc = (value / 1000) * (config[2] / np.sqrt(2)) * config[1]
         else:
-            rc = (value / 1000) * (config[2]) * config[1]
+            rc = (value / 1000) * config[2] * config[1]
+        return rc    
+    
+    @staticmethod
+    def set(value, config):
+        rc = 0
+        if 0 == config[0]:
+            rc = 1000 * value  / ((config[2] / np.sqrt(2)) * config[1])
+        else:
+            rc = 1000 * value / (config[2] * config[1])
         return rc    
 
 
@@ -462,6 +474,8 @@ class AM8111MotionController(BeckhoffMotionController):
     SHIFT_TIME = 250_000        # ns
     CYCLE_TIME = 10_000_000     # ns
 
+    ENCODER_TURNBITS = [17,15]              # multiturn, singleturn; default 12,20
+    
     class RxMapEx:
         register = 0x1C12
         address = [0x1600,0x1601,
@@ -537,6 +551,24 @@ class AM8111MotionController(BeckhoffMotionController):
             pass
         return self._torqueConfig
     TorqueConfig = property(fget=_get_torqueConfig)
+
+    _torqueLimit = None 
+    def _set_torqueLimit(self, value):
+        try:
+            value = AM8111ProfileTorque.set(value, self.TorqueConfig)
+            self.Device.sdo_write(0x7010, 0x0B, bytes(ctypes.c_uint16(value)))
+        except Exception as ex:
+            EcatLogger.error(f"{ex}")
+        self._torqueLimit = None
+    def _get_torqueLimit(self):
+        if self._torqueLimit is None:
+            try:
+                value = ctypes.c_uint16.from_buffer_copy(self.Device.sdo_read(0x7010, 0x0B)).value
+                self._torqueLimit = AM8111ProfileTorque.get(value, self.TorqueConfig)
+            except Exception as ex:
+                EcatLogger.error(f"{ex}")
+        return self._torqueLimit
+    TorqueLimit = property(fget=_get_torqueLimit, fset=_set_torqueLimit)
 
     _mode = None
     def _get_mode(self):
@@ -695,7 +727,7 @@ class AM8111MotionController(BeckhoffMotionController):
     def debug(self):
         EcatLogger.debug(f"++ debug")
         EcatLogger.debug(f"   turn bits {self.Turnbits} {2**self.Turnbits[0]}, {2**self.Turnbits[1]}")
-
+        
     _initialized = False
 
     def initEx(self, source=None): 
@@ -763,12 +795,14 @@ class AM8111MotionController(BeckhoffMotionController):
             # amplifier settings
             self.Device.sdo_write(0x8010, 0x01, bytes(ctypes.c_bool(1)), ca)        # enable toggle
 
-            # current loop
-            self.Device.sdo_write(0x8010, 0x13, bytes(ctypes.c_uint16(178)), ca)    # P 0.1 V/A
+            # current controller
+            self.Device.sdo_write(0x8010, 0x13, bytes(ctypes.c_uint16(177)), ca)    # P 0.1 V/A
             self.Device.sdo_write(0x8010, 0x12, bytes(ctypes.c_uint16(5)), ca)      # I 0.1 ms Tn
-            # velocity loop
-            self.Device.sdo_write(0x8010, 0x15, bytes(ctypes.c_uint32(43)), ca)     # P mA/(rad/s)
-            self.Device.sdo_write(0x8010, 0x14, bytes(ctypes.c_uint32(150)), ca)    # I 0.1 ms Tn
+            # velocity controller
+            self.Device.sdo_write(0x8010, 0x15, bytes(ctypes.c_uint32(43)), ca)     # P mA/(rad/s)  
+            self.Device.sdo_write(0x8010, 0x14, bytes(ctypes.c_uint32(150)), ca)    # I 0.1 ms Tn   integral time
+            # position controller
+            self.Device.sdo_write(0x8010, 0x17, bytes(ctypes.c_uint32(5)), ca)    # P (rad/s)/rad
 
             # torque limitation
             self.Device.sdo_write(0x7010, 0x0B, bytes(ctypes.c_uint16(0x02)), ca)
@@ -792,9 +826,10 @@ class AM8111MotionController(BeckhoffMotionController):
             self.Device.sdo_write(0x8010, 0x3A, bytes(ctypes.c_uint16(0x06)), ca)   # warnings
 
             _ = self.TorqueConfig
+            _ = self.TorqueLimit
 
             _ = self.VelocityLimit
-            self.Turnbits = [17, 15]
+            self.Turnbits = AM8111MotionController.ENCODER_TURNBITS
             _ = self.Turnbits
 
             self.debug()
@@ -831,7 +866,7 @@ class AM8111MotionController(BeckhoffMotionController):
             bits = self.Turnbits[1]
 
             position = AM8111ProfilePosition.value(buff.position)
-            torque = AM8111ProfileTorque.value(buff.torque, self.TorqueConfig)
+            torque = AM8111ProfileTorque.get(buff.torque, self.TorqueConfig)
             
             data  = {
                 'mode': {
@@ -849,7 +884,8 @@ class AM8111MotionController(BeckhoffMotionController):
                 },
                 'torque': {
                     'raw': buff.torque,
-                    'value': torque
+                    'value': torque,
+                    'limit': self.TorqueLimit
                 },
                 'info': {
                     'error': buff.info1,
