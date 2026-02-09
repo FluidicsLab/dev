@@ -37,20 +37,22 @@ ch.setLevel(logging.DEBUG)
 ch.setFormatter(SeverityLoggerFormatter())
 SeverityLogger.addHandler(ch)
 
-SEVERITY_VERBOSE =              int('00000000', 2)
-SEVERITY_INFORMATION =          int('10000000', 2)
-SEVERITY_WARNING =              int('01000000', 2)
-SEVERITY_ERROR =                int('00100000', 2)
-SEVERITY_CRITICAL =             int('00010000', 2)
+# high 4 bits
+SEVERITY_INFORMATION =          int('10000000', 2) #8
+SEVERITY_WARNING =              int('01000000', 2) #4
+SEVERITY_ERROR =                int('00100000', 2) #2
+SEVERITY_CRITICAL =             int('00010000', 2) #1
+SEVERITY_VERBOSE =              int('00000000', 2) #0
 
-SEVERITY_REASON_PRESSURE =      int('00001000', 2) #1
-SEVERITY_REASON_DISTANCE =      int('00000100', 2) #2
-SEVERITY_REASON_TEMPERATURE =   int('00001100', 2) #3
-SEVERITY_REASON_SYSTEM =        int('00000010', 2) #4
-SEVERITY_REASON_LOCK =          int('00001010', 2) #5
+# low 4 bits
+SEVERITY_REASON_TEMPERATURE =   int('00001100', 2) #12
+SEVERITY_REASON_LOCK =          int('00001010', 2) #9
+SEVERITY_REASON_PRESSURE =      int('00001000', 2) #8
 SEVERITY_REASON_TIME =          int('00000110', 2) #6
+SEVERITY_REASON_DISTANCE =      int('00000100', 2) #4
+SEVERITY_REASON_SYSTEM =        int('00000010', 2) #2
 
-SEVERITY_IGNORE =               int('00000001', 2)
+SEVERITY_IGNORE =               int('00000001', 2) #1
 
 class EcatSeverityController:
 

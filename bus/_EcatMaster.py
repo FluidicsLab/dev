@@ -2,6 +2,7 @@
 from doctest import debug
 from socket import timeout
 from numpy import indices, int32
+from functools import reduce
 import pysoem
 import time, datetime
 from time import perf_counter_ns, perf_counter
@@ -81,6 +82,13 @@ WATCHDOG_FC = 1000 # watchdog factor
 
 
 class EcatMaster(EcatObject):
+    
+    @staticmethod    
+    def _find_(data, path):
+        try:
+            return reduce(lambda acc,i: acc[i], path.split('.'), data)
+        except:
+            return None
 
     _processLock: Lock = None
     def _get_processLock(self): 

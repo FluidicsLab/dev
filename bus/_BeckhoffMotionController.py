@@ -161,6 +161,8 @@ class AM8111PidController(object):
 
 class AM8111ProfileMode:
 
+    MODE_NONE               = 0
+
     MODE_CSP                = 8     # cyclic synchronous position
     MODE_CSV                = 9     # cyclic synchronous velocity
     MODE_CST                = 10    # cyclic synchronous torque
@@ -176,7 +178,7 @@ class AM8111ProfileMode:
     
     @staticmethod
     def valid(value):
-        return value >= AM8111ProfileMode.MODE_CSP and value <= AM8111ProfileMode.MODE_CSTCA
+        return (value >= AM8111ProfileMode.MODE_CSP and value <= AM8111ProfileMode.MODE_CSTCA) or AM8111ProfileMode.MODE_NONE == value
     
     @staticmethod
     def velocity(value):
@@ -192,9 +194,6 @@ class AM8111ProfileMode:
 
 
 class AM8111ProfilePosition:
-
-    UINT32_MAX = 2**32 - 1
-    UINT64_MAX = 2**64 - 1
 
     @staticmethod
     def split(value, bits, range=32):            
@@ -213,10 +212,21 @@ class AM8111ProfilePosition:
     
     @staticmethod
     def value(value, range=32):
-        if range == 32:
-            return AM8111ProfilePosition.UINT32_MAX + value if value < 0 else value
+        return (2**range - 1) + value if value < 0 else value
+        
+    @staticmethod
+    def compare(raw, value, bits, range=32):
+        raw = AM8111ProfilePosition.split(raw, bits, range)
+        if raw[0] < value[0]:
+            return -1
+        elif raw[0] > value[0]:
+            return +1
         else:
-            return AM8111ProfilePosition.UINT64_MAX + value if value < 0 else value
+            if raw[1] < value[1]:
+                return -1
+            elif raw[1] > value[1]:
+                return +1
+        return 0        
     
 
 class AM8111ProfileTorque:
@@ -632,6 +642,19 @@ class AM8111MotionController(BeckhoffMotionController):
         return AM8111MotionController.UINT32_MAX
     PositionLimit = property(fget=_get_positionLimit)
 
+    _positionOffset = None
+    def _get_positionOffset(self):
+        if self._positionOffset is None:
+            self._positionOffset = ctypes.c_uint32.from_buffer_copy(self.Device.sdo_read(0x8000,0x17)).value
+        return self._positionOffset
+    def _set_positionOffset(self, value):
+        try:
+            value = AM8111ProfilePosition.merge(value, AM8111MotionController.ENCODER_TURNBITS[1])
+            self.Device.sdo_write(0x8000,0x17,bytes(ctypes.c_uint32(value)))
+        except Exception as ex:
+            EcatLogger.error(f"{ex}")
+    PositionOffset = property(fget=_get_positionOffset,fset=_set_positionOffset)
+
     def _get_position(self):
         try:
             buff = AM8111MotionController.TxMap.from_buffer_copy(self.Device.input)                
@@ -725,8 +748,11 @@ class AM8111MotionController(BeckhoffMotionController):
     Turnbits = property(fget=_get_turnbits,fset=_set_turnbits)
 
     def debug(self):
+        bits = self.Turnbits
         EcatLogger.debug(f"++ debug")
-        EcatLogger.debug(f"   turn bits {self.Turnbits} {2**self.Turnbits[0]}, {2**self.Turnbits[1]}")
+        EcatLogger.debug(f"   bits      {bits} {2**bits[0]}, {2**bits[1]}")
+        EcatLogger.debug(f"   toggle    {ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(0x8010,0x01)).value}")
+        EcatLogger.debug(f"   offset    {AM8111ProfilePosition.split(self.PositionOffset, bits[1])}")
         
     _initialized = False
 
@@ -738,6 +764,31 @@ class AM8111MotionController(BeckhoffMotionController):
         if self._controller is not None:
             self._controller.Source = source
 
+    def _enablePdoAssignment(self, enable=False):
+        try:
+            if not enable:
+                # disable pdo mapping assignment
+                self.Device.sdo_write(AM8111MotionController.TxMapEx.register, 0, bytes(ctypes.c_uint8(0)))
+                self.Device.sdo_write(AM8111MotionController.RxMapEx.register, 0, bytes(ctypes.c_uint8(0))) 
+            else:
+                # enable pdo mapping assignment
+                self.Device.sdo_write(AM8111MotionController.TxMapEx.register, 0, 
+                                    bytes(ctypes.c_uint8(len(AM8111MotionController.TxMapEx.address))))
+                self.Device.sdo_write(AM8111MotionController.RxMapEx.register, 0, 
+                                    bytes(ctypes.c_uint8(len(AM8111MotionController.RxMapEx.address)))) 
+        except Exception as ex:
+            EcatLogger.error(f"{ex}")
+
+    def _set_deviceState(self, state):
+        rc = True
+        timeout = AM8111MotionController.TIMEOUT_SLAVE_STATE
+        start_time = time.time()
+        while self.Device.state_check(state, timeout=AM8111MotionController.TIMEOUT_STATE_CHECK) != state:
+            if time.time() - start_time > timeout:
+                rc = False
+                break
+        return rc
+
     def init(self): 
 
         """                
@@ -745,62 +796,69 @@ class AM8111MotionController(BeckhoffMotionController):
         """
         try:
 
-            def _set_state(state):
-                rc = True
-                timeout = AM8111MotionController.TIMEOUT_SLAVE_STATE
-                start_time = time.time()
-                while self.Device.state_check(state, timeout=AM8111MotionController.TIMEOUT_STATE_CHECK) != state:
-                    if time.time() - start_time > timeout:
-                        rc = False
-                        break
-                return rc
-
             ca = True   # complete access
 
-            if _set_state(pysoem.PREOP_STATE):
+            if self._set_deviceState(pysoem.PREOP_STATE):
                 EcatLogger.debug(f"++ PREOP_STATE reached")
             else:
                 EcatLogger.debug(f"-- PREOP_STATE NOT reached")
 
+            # amplifier settings
+            self.Device.sdo_write(0x8010, 0x01, bytes(ctypes.c_bool(True)), ca)     # enable toggle
+
+            # FB settings 0x8000            
+            self.PositionOffset = [22_900, 0]                           # 0x17 uin32
+
             # mode of operation
             self.Device.sdo_write(0x7010, 0x03, bytes(ctypes.c_uint8(self.Mode)))
 
-            # outputs; write; master-slave                  
-            addr = AM8111MotionController.RxMapEx.register            
-            self.Device.sdo_write(addr, 0, bytes(ctypes.c_uint8(0)))
-            for i,value in enumerate(AM8111MotionController.RxMapEx.address): 
-                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)))
-            num = len(AM8111MotionController.RxMapEx.address)
-            self.Device.sdo_write(addr, 0, bytes(ctypes.c_uint8(num)))
+            #
+            # PDO
+            #
+
+            self._enablePdoAssignment(False)
 
             # inputs; read; slave-master
             addr = AM8111MotionController.TxMapEx.register            
-            self.Device.sdo_write(addr, 0, bytes(ctypes.c_uint8(0)))
             for i,value in enumerate(AM8111MotionController.TxMapEx.address):
-                self.Device.sdo_write(addr, i+1, bytes(ctypes.c_uint16(value)))
-            num = len(AM8111MotionController.TxMapEx.address)
-            self.Device.sdo_write(addr, 0, bytes(ctypes.c_uint8(num)))                    
+                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)))
 
-            # startup
+            # outputs; write; master-slave  
+            addr = AM8111MotionController.RxMapEx.register            
+            for i,value in enumerate(AM8111MotionController.RxMapEx.address): 
+                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)))
+
+            self._enablePdoAssignment(True)
+            # ESM PREOP -> SAFEOP TxPDO effective
+            # ESM SAFEOP -> OP TxPDO effective
+
+            #
+            # startup AM8111
+            #
+
             self.Device.sdo_write(0x8011, 0x13, bytes(ctypes.c_uint8(3)), ca)       # motor pole pairs
-            self.Device.sdo_write(0x8011, 0x12, bytes(ctypes.c_uint32(2710)), ca)   # rated current
+            
             self.Device.sdo_write(0x8011, 0x11, bytes(ctypes.c_uint32(8600)), ca)   # max. current
+            self.Device.sdo_write(0x8011, 0x12, bytes(ctypes.c_uint32(2710)), ca)   # rated current
+            
+            self.Device.sdo_write(0x8011, 0x15, bytes(ctypes.c_int16(-90)), ca)     # commutation offset
             self.Device.sdo_write(0x8011, 0x16, bytes(ctypes.c_uint32(70)), ca)     # torque const.
-            self.Device.sdo_write(0x8011, 0x19, bytes(ctypes.c_uint16(15)), ca)     # winding inductance
             self.Device.sdo_write(0x8011, 0x18, bytes(ctypes.c_uint32(33)), ca)     # rotor moment of inertia g cm^2
-            self.Device.sdo_write(0x8011, 0x2D, bytes(ctypes.c_uint16(341)), ca)    # thermal time of motor
-            self.Device.sdo_write(0x8011, 0x15, bytes(ctypes.c_uint16(270)), ca)    # commutation offset
-            self.Device.sdo_write(0x8011, 0x1B, bytes(ctypes.c_uint32(4863)), ca)   # motor speed limitation 1/min
-
-            # amplifier settings
-            self.Device.sdo_write(0x8010, 0x01, bytes(ctypes.c_bool(1)), ca)        # enable toggle
-
+            self.Device.sdo_write(0x8011, 0x19, bytes(ctypes.c_uint16(15)), ca)     # winding inductance
+            self.Device.sdo_write(0x8011, 0x1B, bytes(ctypes.c_uint32(5406)), ca)   # motor speed limitation 1/min ~ 291_780 1/s
+            
+            self.Device.sdo_write(0x8011, 0x2B, bytes(ctypes.c_uint16(1200)), ca)   # motor temperature warn level 0.1°C
+            self.Device.sdo_write(0x8011, 0x2C, bytes(ctypes.c_uint16(1400)), ca)   # motor temperature error level 0.1°C
+            self.Device.sdo_write(0x8011, 0x2D, bytes(ctypes.c_uint16(5400)), ca)   # motor thermal time constant 0.1s
+            
             # current controller
             self.Device.sdo_write(0x8010, 0x13, bytes(ctypes.c_uint16(177)), ca)    # P 0.1 V/A
-            self.Device.sdo_write(0x8010, 0x12, bytes(ctypes.c_uint16(5)), ca)      # I 0.1 ms Tn
+            self.Device.sdo_write(0x8010, 0x12, bytes(ctypes.c_uint16(5)), ca)      # I 0.1 ms Tn   integral time
+
             # velocity controller
             self.Device.sdo_write(0x8010, 0x15, bytes(ctypes.c_uint32(43)), ca)     # P mA/(rad/s)  
             self.Device.sdo_write(0x8010, 0x14, bytes(ctypes.c_uint32(150)), ca)    # I 0.1 ms Tn   integral time
+
             # position controller
             self.Device.sdo_write(0x8010, 0x17, bytes(ctypes.c_uint32(5)), ca)    # P (rad/s)/rad
 
@@ -816,7 +874,7 @@ class AM8111MotionController(BeckhoffMotionController):
                                 sync1_cycle_time=cycle_time
                                 )
             
-            if _set_state(pysoem.SAFEOP_STATE):
+            if self._set_deviceState(pysoem.SAFEOP_STATE):
                 EcatLogger.debug(f"++ SAFEOP_STATE reached")
             else:
                 EcatLogger.debug(f"-- SAFEOP_STATE NOT reached")
@@ -828,9 +886,12 @@ class AM8111MotionController(BeckhoffMotionController):
             _ = self.TorqueConfig
             _ = self.TorqueLimit
 
-            _ = self.VelocityLimit
-            self.Turnbits = AM8111MotionController.ENCODER_TURNBITS
+            _ = self.VelocityLimit         
+
+            self.Turnbits = AM8111MotionController.ENCODER_TURNBITS     # 0x13, 0x12   
             _ = self.Turnbits
+
+            _ = self.PositionOffset
 
             self.debug()
 
@@ -854,7 +915,6 @@ class AM8111MotionController(BeckhoffMotionController):
 
         return self._initialized
     
-
     def input(self):
 
         # pdo read
@@ -876,7 +936,11 @@ class AM8111MotionController(BeckhoffMotionController):
                 },
                 'position': {
                     'raw': position,
-                    'value': AM8111ProfilePosition.split(position, bits)
+                    'value': AM8111ProfilePosition.split(position, bits),
+                    'offset': {
+                        'raw': self.PositionOffset,
+                        'value': AM8111ProfilePosition.split(self.PositionOffset, bits)
+                    }
                 },
                 'velocity':{
                     'raw': buff.velocity,
@@ -977,7 +1041,7 @@ class AM8111MotionController(BeckhoffMotionController):
                     self.Position = AM8111ProfilePosition.merge(self._data['position'], self.Turnbits[1])
                     self._data['position'] = None
 
-                if 'touchprobe' in self._data.keys() and self._data['touchprobe'] is not None:                    
+                if 'touchprobe' in self._data.keys() and self._data['touchprobe'] is not None:
                     self.TouchprobeWord = self._data['touchprobe']
                     self._data['touchprobe'] = None
 
@@ -1042,9 +1106,8 @@ class AM8111MotionController(BeckhoffMotionController):
     
     def severityFunc(self, value):
         self._severity = value        
-        if not self.isValid():     
+        if not self.isValid():
             self._data = { 
-                'mode': AM8111ProfileMode.MODE_CSV,
                 'velocity': 0,
                 'command': AM8111Profile.SHUTDOWN
             }                

@@ -1,3 +1,4 @@
+from _BeckhoffMotionController import AM8111ProfilePosition
 from _EcatMaster import EcatMaster, EcatLogger, AM8111MotionController, BeckhoffCouplerController, KellerModbusController
 from _EcatSeverity import SEVERITY_VERBOSE, SEVERITY_CRITICAL, SEVERITY_REASON_SYSTEM, \
     SEVERITY_REASON_PRESSURE, SEVERITY_REASON_TEMPERATURE, SEVERITY_REASON_TIME, SEVERITY_REASON_DISTANCE, \
@@ -88,23 +89,42 @@ class EcatMasterDEV(EcatMaster):
 
     def severityEL3124(self, source, data, current, config: dict):
         severity = current.copy()
-        value = data['value']['value']
-        if value:
+        if EcatMaster._find_(data, 'value.value') is not None:            
+            for addr in map(int, list(config.keys())):
+                raw = data['value']['value'][addr]
+                key = "d"
+                targets = config[f"{addr}"][key]["channel"]            
+                limit = self.SeverityLimit.find(f"{source}.{addr}.{key}")
+                if limit is not None:
+                    critical = (raw < limit["low"] or raw > limit["high"]) and 1 == (1 if raw is None or (limit["def"] is not None and raw != limit["def"]) else 0)
+                    if critical:
+                        for target in targets:
+                            severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_DISTANCE
+
+                            SeverityLogger.debug(f"3124.{target} {addr} {key} {raw}")                            
+
+        return severity
+
+    def severityEL7201(self, source, data, current, config: dict):
+        severity = current.copy()
+        if EcatMaster._find_(data, 'value.value') is not None:            
             for addr in map(int, list(config.keys())):
                 key = "d"
                 targets = config[f"{addr}"][key]["channel"]            
                 limit = self.SeverityLimit.find(f"{source}.{addr}.{key}")
                 if limit is not None:
-                    critical = (value[addr] < limit["low"] or value[addr] > limit["high"]) and 1 == (1 if value[addr] is None or \
-                                                                                                     (limit["def"] is not None and value[addr] != limit["def"]) else 0)
+                    raw = data['value']['value']['position']['raw']                                        
+                    
+                    critical = (raw < limit["low"] or raw > limit["high"]) and \
+                        1 == (1 if raw is None or (limit["def"] is not None and raw != limit["def"]) else 0)                    
+                    
                     if critical:
                         for target in targets:
                             severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_DISTANCE
 
-                            SeverityLogger.debug(f"3124.{target} {addr} {key} {value[addr]}")                            
+                            SeverityLogger.debug(f"7201.{target} {addr} {key} {raw}")
 
         return severity
-
 
     # coupler; several external
     
@@ -145,6 +165,8 @@ class EcatMasterDEV(EcatMaster):
                     severity = self.severityEL6021(source, data, severity, config._raw[alias][pos])
                 case "EL3124":
                     severity = self.severityEL3124(source, data, severity, config._raw[alias][pos])
+                case "EL7201":
+                    pass # severity = self.severityEL7201(source, data, severity, config._raw[alias][pos])
                 case _:
                     pass
         
