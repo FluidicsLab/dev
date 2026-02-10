@@ -16,6 +16,27 @@
         "env": []
     },
     {
+        "id": "9b47c84752ee5dd7",
+        "type": "group",
+        "z": "b5a6b1728e41b187",
+        "name": "info",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "67398d23c2f08135",
+            "087042646e3a5a95",
+            "c31d0b702dc52c7a",
+            "8016d77b958ad737",
+            "e399bcce0de39bbc",
+            "3b23eff0e19f2f25"
+        ],
+        "x": 64,
+        "y": 639,
+        "w": 182,
+        "h": 122
+    },
+    {
         "id": "3b5d6c9d7722ce65",
         "type": "ui_base",
         "theme": {
@@ -310,7 +331,7 @@
         "name": "status",
         "tab": "a26ec72ae3802b75",
         "order": 2,
-        "disp": true,
+        "disp": false,
         "width": "15",
         "collapse": false,
         "className": ""
@@ -326,7 +347,7 @@
         "usetls": false,
         "tls": "",
         "influxdbVersion": "2.0",
-        "url": "http://10.63.29.133:8086",
+        "url": "http://localhost:8086",
         "timeout": "10",
         "rejectUnauthorized": false
     },
@@ -398,7 +419,7 @@
         "z": "b5a6b1728e41b187",
         "name": "spacer",
         "group": "be8debe086d22ae9",
-        "order": 12,
+        "order": 5,
         "width": "1",
         "height": "1"
     },
@@ -418,7 +439,7 @@
         "z": "b5a6b1728e41b187",
         "name": "spacer",
         "group": "be8debe086d22ae9",
-        "order": 8,
+        "order": 1,
         "width": "2",
         "height": "1"
     },
@@ -438,7 +459,7 @@
         "z": "b5a6b1728e41b187",
         "name": "spacer",
         "group": "be8debe086d22ae9",
-        "order": 10,
+        "order": 3,
         "width": "3",
         "height": "1"
     },
@@ -458,7 +479,7 @@
         "z": "b5a6b1728e41b187",
         "name": "spacer",
         "group": "930073be26950e4a",
-        "order": 10,
+        "order": 9,
         "width": "2",
         "height": "1"
     },
@@ -519,8 +540,8 @@
         "z": "b5a6b1728e41b187",
         "name": "spacer",
         "group": "be8debe086d22ae9",
-        "order": 18,
-        "width": "7",
+        "order": 9,
+        "width": "1",
         "height": "1"
     },
     {
@@ -529,19 +550,9 @@
         "z": "b5a6b1728e41b187",
         "name": "spacer",
         "group": "be8debe086d22ae9",
-        "order": 13,
+        "order": 6,
         "width": "2",
         "height": "1"
-    },
-    {
-        "id": "06e1356e4882476e",
-        "type": "ui_spacer",
-        "z": "b5a6b1728e41b187",
-        "name": "spacer",
-        "group": "930073be26950e4a",
-        "order": 15,
-        "width": 1,
-        "height": 1
     },
     {
         "id": "d8f6b35452a5e7c7",
@@ -559,7 +570,7 @@
         "z": "b5a6b1728e41b187",
         "name": "spacer",
         "group": "930073be26950e4a",
-        "order": 13,
+        "order": 12,
         "width": "1",
         "height": "1"
     },
@@ -632,6 +643,37 @@
         "name": "spacer",
         "group": "0c32606f569b0680",
         "order": 8,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "215f06b2ed067897",
+        "type": "ui_group",
+        "name": "valve",
+        "tab": "a26ec72ae3802b75",
+        "order": 9,
+        "disp": true,
+        "width": "15",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "449b38c8d389818d",
+        "type": "ui_spacer",
+        "z": "b5a6b1728e41b187",
+        "name": "spacer",
+        "group": "215f06b2ed067897",
+        "order": 1,
+        "width": "2",
+        "height": "1"
+    },
+    {
+        "id": "0903e962f6fd7205",
+        "type": "ui_spacer",
+        "z": "b5a6b1728e41b187",
+        "name": "spacer",
+        "group": "215f06b2ed067897",
+        "order": 4,
         "width": 1,
         "height": 1
     },
@@ -1248,7 +1290,7 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "",
-        "func": "\n['1100'].forEach(function (item) {\n\n    let topic = '/hot/ecat/ek' + item + 'Worker';\n\n    if (msg.topic == topic) {\n\n        let target = msg.payload.value.index;\n        let key = item + '.' + target;\n        if (flow.get(key) === undefined) {\n            flow.set(key, {\n                target: target,\n                value: null\n            })\n        }\n\n        let trm = flow.get(key);\n        trm.value = { ...msg.payload.value.value };\n        flow.set(key, trm);\n\n    }\n});\n\n['severity'].forEach(function (item) {\n    let topic = '/hot/ecat/' + item + 'Worker';\n    if (msg.topic == topic) {\n        flow.set(item, msg.payload.value.value);\n    }\n});\n\n// dictionary value type\n['7201'].forEach(function (item) {\n\n    let topic = '/hot/ecat/el' + item + 'Worker';\n\n    if (msg.topic == topic) {\n\n        let target = msg.payload.value.index;\n        let key = item + '.' + target;\n        if (flow.get(key) === undefined) {\n            flow.set(key, {\n                target: target,\n                value: null\n            })\n        }\n\n        let value = { ...msg.payload.value.value };\n\n        if (value.control) {\n\n        } else {\n            let trm = flow.get(key);\n            trm.value = value;\n            if (trm.locked == undefined || !trm.locked) {\n                flow.set(key, trm);\n            }\n        }\n\n    }\n});\n\n// dictionary value type\n['6021'].forEach(function (item) {\n\n    let topic = '/hot/ecat/el' + item + 'Worker';\n\n    if (msg.topic == topic) {\n\n        let target = msg.payload.value.index;\n        let key = item + '.' + target;\n        if (flow.get(key) === undefined) {\n            flow.set(key, {\n                target: target,\n                value: null\n            })\n        }\n\n        let trm = flow.get(key);\n        trm.value = { ...msg.payload.value.value };\n        if (trm.locked == undefined || !trm.locked) {\n            flow.set(key, trm);\n        }\n\n    }\n});\n\n// array value type\n['3124'].forEach(function (item) {\n\n    let topic = '/hot/ecat/el' + item + 'Worker';\n\n    if (msg.topic == topic) {\n\n        let target = msg.payload.value.index;\n        let key = item + '.' + target;\n        if (flow.get(key) === undefined) {\n            flow.set(key, {\n                target: target,\n                value: null\n            })\n        }\n\n        let trm = flow.get(key);\n        trm.value = [...msg.payload.value.value];\n        if (trm.locked == undefined || !trm.locked) {\n            trm.modified = Date.now();\n            flow.set(key, trm);\n        }\n\n    }\n});",
+        "func": "\n['1100'].forEach(function (item) {\n\n    let topic = '/hot/ecat/ek' + item + 'Worker';\n\n    if (msg.topic == topic) {\n\n        let target = msg.payload.value.index;\n        let key = item + '.' + target;\n        if (flow.get(key) === undefined) {\n            flow.set(key, {\n                target: target,\n                value: null\n            })\n        }\n\n        let trm = flow.get(key);\n        trm.value = { ...msg.payload.value.value };\n        flow.set(key, trm);\n\n    }\n});\n\n['severity'].forEach(function (item) {\n    let topic = '/hot/ecat/' + item + 'Worker';\n    if (msg.topic == topic) {\n        flow.set(item, msg.payload.value.value);\n    }\n});\n\n// dictionary value type\n['7201'].forEach(function (item) {\n\n    let topic = '/hot/ecat/el' + item + 'Worker';\n\n    if (msg.topic == topic) {\n\n        let target = msg.payload.value.index;\n        let key = item + '.' + target;\n        if (flow.get(key) === undefined) {\n            flow.set(key, {\n                target: target,\n                value: null\n            })\n        }\n\n        let value = { ...msg.payload.value.value };\n\n        if (value.control) {\n\n        } else {\n            let trm = flow.get(key);\n            trm.value = value;\n            if (trm.locked == undefined || !trm.locked) {\n                flow.set(key, trm);\n            }\n        }\n\n    }\n});\n\n// dictionary value type\n['6021'].forEach(function (item) {\n\n    let topic = '/hot/ecat/el' + item + 'Worker';\n\n    if (msg.topic == topic) {\n\n        let target = msg.payload.value.index;\n        let key = item + '.' + target;\n        if (flow.get(key) === undefined) {\n            flow.set(key, {\n                target: target,\n                value: null\n            })\n        }\n\n        let trm = flow.get(key);\n        trm.value = { ...msg.payload.value.value };\n        if (trm.locked == undefined || !trm.locked) {\n            flow.set(key, trm);\n        }\n\n    }\n});\n\n// array value type\n['3124','2008'].forEach(function (item) {\n\n    let topic = '/hot/ecat/el' + item + 'Worker';\n\n    if (msg.topic == topic) {\n\n        let target = msg.payload.value.index;\n        let key = item + '.' + target;\n        if (flow.get(key) === undefined) {\n            flow.set(key, {\n                target: target,\n                value: null\n            })\n        }\n\n        let trm = flow.get(key);\n        trm.value = [...msg.payload.value.value];\n        if (trm.locked == undefined || !trm.locked) {\n            trm.modified = Date.now();\n            flow.set(key, trm);\n        }\n\n    }\n});\n\nif (undefined == flow.get(\"2008\")) {\n    [5].forEach(function(target) {\n        flow.set(\"2008.\" + target, {\n            target: target,\n            value: Array(8).fill(0)\n        });\n    });\n}",
         "outputs": 0,
         "noerr": 0,
         "initialize": "",
@@ -1394,7 +1436,7 @@
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
         "group": "930073be26950e4a",
-        "order": 12,
+        "order": 11,
         "width": "6",
         "height": "1",
         "name": "status.binary",
@@ -1407,29 +1449,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 360,
-        "wires": [],
-        "l": false
-    },
-    {
-        "id": "a5f44f746157332a",
-        "type": "ui_text",
-        "z": "b5a6b1728e41b187",
-        "group": "930073be26950e4a",
-        "order": 14,
-        "width": "14",
-        "height": "1",
-        "name": "status.text",
-        "label": "{{msg.status.text}}",
-        "format": "",
-        "layout": "row-right",
-        "className": "drive-status-text",
-        "style": false,
-        "font": "",
-        "fontSize": 16,
-        "color": "#000000",
-        "x": 205,
-        "y": 400,
+        "y": 410,
         "wires": [],
         "l": false
     },
@@ -1699,7 +1719,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 440,
+        "y": 550,
         "wires": [],
         "l": false
     },
@@ -1707,6 +1727,7 @@
         "id": "67398d23c2f08135",
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
+        "g": "9b47c84752ee5dd7",
         "group": "930073be26950e4a",
         "order": 4,
         "width": "4",
@@ -1721,7 +1742,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 530,
+        "y": 680,
         "wires": [],
         "l": false
     },
@@ -1729,6 +1750,7 @@
         "id": "087042646e3a5a95",
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
+        "g": "9b47c84752ee5dd7",
         "group": "930073be26950e4a",
         "order": 6,
         "width": "4",
@@ -1743,7 +1765,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 570,
+        "y": 720,
         "wires": [],
         "l": false
     },
@@ -1760,7 +1782,7 @@
         "property": "position",
         "topi": "topic",
         "x": 105,
-        "y": 240,
+        "y": 250,
         "wires": [
             [
                 "410efde5edeb8e05"
@@ -1772,6 +1794,7 @@
         "id": "c31d0b702dc52c7a",
         "type": "rbe",
         "z": "b5a6b1728e41b187",
+        "g": "9b47c84752ee5dd7",
         "name": "info2",
         "func": "rbe",
         "gap": "",
@@ -1781,7 +1804,7 @@
         "property": "info.warning",
         "topi": "topic",
         "x": 105,
-        "y": 570,
+        "y": 720,
         "wires": [
             [
                 "3b23eff0e19f2f25"
@@ -1793,6 +1816,7 @@
         "id": "8016d77b958ad737",
         "type": "rbe",
         "z": "b5a6b1728e41b187",
+        "g": "9b47c84752ee5dd7",
         "name": "info1",
         "func": "rbe",
         "gap": "",
@@ -1802,7 +1826,7 @@
         "property": "info.error",
         "topi": "topic",
         "x": 105,
-        "y": 530,
+        "y": 680,
         "wires": [
             [
                 "e399bcce0de39bbc"
@@ -1823,7 +1847,7 @@
         "property": "velocity",
         "topi": "topic",
         "x": 105,
-        "y": 440,
+        "y": 550,
         "wires": [
             [
                 "66907797f1f36832"
@@ -1844,10 +1868,10 @@
         "property": "status.text",
         "topi": "topic",
         "x": 105,
-        "y": 400,
+        "y": 450,
         "wires": [
             [
-                "a5f44f746157332a"
+                "2285dd7e20532192"
             ]
         ],
         "l": false
@@ -1865,7 +1889,7 @@
         "property": "status.value",
         "topi": "topic",
         "x": 105,
-        "y": 360,
+        "y": 410,
         "wires": [
             [
                 "6c96e878d53b066c"
@@ -1882,7 +1906,7 @@
         "order": 1,
         "width": "1",
         "height": "1",
-        "format": "\n<style>\n\n.drive-position p.value { font-size:150%;color:#536878; }\n\n.drive-status p.value { font-size:100%;color:gray; }\n.drive-status-text p.label { font-size:100%;color:gray; }\n\n.drive-probe-value p.value { font-size:150%;color:gray; }\n.drive-probe-raw p.value { font-size:100%;color:gray; }\n\n.drive-info1-text p.label { font-size:100%; background-color:#800000; padding:8px; }\n.drive-info1-text p.value { font-size:100%; background-color:transparent; }\n\n.drive-info2-text p.label { font-size:100%; background-color:#996515; padding:8px; }\n.drive-info2-text p.value { font-size:100%; background-color:transparent; }\n\n.drive-processvalue p.label { font-size:150%;color:gray; }\n.drive-setpoint { font-size:150%; text-align:right; }\n\n.drive-label p.label { color:gray; }\n\n.drive-mode p.value { color:gray; }\n\n#drive_mode md-card     { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_status md-card   { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n#drive_position md-card { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n#drive_velocity md-card { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n#drive_control md-card  { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n#drive_touch md-card    { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n#drive_torque md-card   { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n\n#drive_label md-card   { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n\ninput[type=\"number\"] { text-align: right; background-color:#536878; }\ninput[type=\"number\"]:disabled { background-color: #3e4e5a; color: #888; opacity: 0.7; }\n\n\n</style>",
+        "format": "\n<style>\n\n.drive-position p.value { font-size:150%;color:#536878; }\n\n.drive-status p.value { font-size:100%;color:gray; }\n.drive-status-text p.label { font-size:100%;color:gray; }\n\n.drive-probe-value p.value { font-size:150%;color:gray; }\n\n.drive-raw p.label { font-size:100%;color:gray; }\n.drive-current p.label { font-size:100%;color:gray; }\n\n.drive-info1-text p.label { font-size:100%; background-color:#800000; padding:8px; }\n.drive-info1-text p.value { font-size:100%; background-color:transparent; }\n\n.drive-info2-text p.label { font-size:100%; background-color:#996515; padding:8px; }\n.drive-info2-text p.value { font-size:100%; background-color:transparent; }\n\n.drive-processvalue p.label { font-size:150%;color:gray; }\n.drive-setpoint { font-size:150%; text-align:right; }\n\n.drive-label p.label { color:gray; }\n.drive-value-label p.value { color:gray; }\n\n.drive-mode p.value { color:gray; }\n\n#drive_mode md-card     { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_status md-card   { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n#drive_position md-card { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n#drive_velocity md-card { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n#drive_control md-card  { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n#drive_touch md-card    { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n#drive_torque md-card   { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n\n#drive_label md-card   { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\ninput[type=\"number\"] { text-align: right; background-color:#536878; }\ninput[type=\"number\"]:disabled { background-color: #3e4e5a; color: #888; opacity: 0.7; }\n\n\n</style>",
         "storeOutMessages": false,
         "fwdInMessages": false,
         "resendOnRefresh": false,
@@ -1898,6 +1922,7 @@
         "id": "e399bcce0de39bbc",
         "type": "change",
         "z": "b5a6b1728e41b187",
+        "g": "9b47c84752ee5dd7",
         "name": "info1",
         "rules": [
             {
@@ -1921,7 +1946,7 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 530,
+        "y": 680,
         "wires": [
             [
                 "67398d23c2f08135"
@@ -1933,6 +1958,7 @@
         "id": "3b23eff0e19f2f25",
         "type": "change",
         "z": "b5a6b1728e41b187",
+        "g": "9b47c84752ee5dd7",
         "name": "info2",
         "rules": [
             {
@@ -1956,7 +1982,7 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 570,
+        "y": 720,
         "wires": [
             [
                 "087042646e3a5a95"
@@ -1969,7 +1995,7 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "scope",
-        "func": "\nlet drive = flow.get(\"7201.1.value\");\nlet constraint = flow.get(\"6021.3.value.11\");\n\nreturn {\n    topic: 'scope',\n    measurement: 'am8111',\n    payload: [\n        {\n            position: drive.position.raw,\n            mtb: drive.position.value[0],\n            stb: drive.position.value[1],\n            velocity: drive.velocity.raw, \n            torque: drive.torque.value,\n            pressure: constraint.p,\n            temperature: constraint.T\n        },\n        {\n            addr: 1,\n            tag: \"develop\"\n        }\n    ]\n};",
+        "func": "\nlet drive = flow.get(\"7201.1.value\");\nlet presssure = flow.get(\"6021.3.value.11\");\nlet distance = flow.get(\"3124.4.value\");\n\nreturn {\n    topic: 'scope',\n    measurement: 'am8111',\n    payload: [\n        {\n            mode: drive.mode.value,\n            position: drive.position.raw,\n            mtb: drive.position.value[0],\n            stb: drive.position.value[1],\n            velocity: drive.velocity.raw, \n            torque: drive.torque.value,\n            \n            pressure: presssure.p,\n            temperature: presssure.T,\n\n            distance: distance[0],\n\n            pp1: drive.touch.probe1.positive.raw,\n            pp2: drive.touch.probe2.positive.raw,\n        },\n        {\n            addr: 1,\n            tag: \"develop\"\n        }\n    ]\n};",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -1998,7 +2024,7 @@
                 "vt": "str"
             }
         ],
-        "repeat": "0.1",
+        "repeat": "0.05",
         "crontab": "",
         "once": true,
         "onceDelay": "1",
@@ -2026,7 +2052,7 @@
         "database": "database",
         "precisionV18FluxV20": "ms",
         "retentionPolicyV18Flux": "",
-        "org": "hot",
+        "org": "fxl",
         "bucket": "am8111",
         "x": 205,
         "y": 130,
@@ -2239,7 +2265,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 640,
+        "y": 850,
         "wires": [],
         "l": false
     },
@@ -2256,7 +2282,7 @@
         "property": "touch",
         "topi": "topic",
         "x": 105,
-        "y": 640,
+        "y": 850,
         "wires": [
             [
                 "898431432a8378d4"
@@ -2282,7 +2308,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 780,
+        "y": 990,
         "wires": [],
         "l": false
     },
@@ -2299,7 +2325,7 @@
         "property": "touch.probe2",
         "topi": "topic",
         "x": 105,
-        "y": 780,
+        "y": 990,
         "wires": [
             [
                 "bcb00cef56537eb6",
@@ -2328,7 +2354,7 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 780,
+        "y": 990,
         "wires": [
             [
                 "a7631aaf7e28b4cf"
@@ -2354,7 +2380,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 690,
+        "y": 900,
         "wires": [],
         "l": false
     },
@@ -2378,7 +2404,7 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 690,
+        "y": 900,
         "wires": [
             [
                 "1e1c1779341c0dc9"
@@ -2781,10 +2807,10 @@
         "width": "6",
         "height": "1",
         "name": "setpoint.label",
-        "label": "setpoint",
-        "format": "",
+        "label": "",
+        "format": "setpoint",
         "layout": "row-right",
-        "className": "drive-label",
+        "className": "drive-value-label",
         "style": false,
         "font": "",
         "fontSize": 16,
@@ -2803,10 +2829,10 @@
         "width": "6",
         "height": "1",
         "name": "processvalue.label",
-        "label": "processvalue",
-        "format": "",
+        "label": "",
+        "format": "processvalue",
         "layout": "row-right",
-        "className": "drive-label",
+        "className": "drive-value-label",
         "style": false,
         "font": "",
         "fontSize": 16,
@@ -2946,7 +2972,7 @@
         "property": "touch.probe1",
         "topi": "topic",
         "x": 105,
-        "y": 690,
+        "y": 900,
         "wires": [
             [
                 "6dc79222b128bb79",
@@ -3076,7 +3102,7 @@
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
         "group": "be8debe086d22ae9",
-        "order": 9,
+        "order": 2,
         "width": "6",
         "height": "1",
         "name": "position.processvalue",
@@ -3089,7 +3115,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 240,
+        "y": 250,
         "wires": [],
         "l": false
     },
@@ -3098,14 +3124,14 @@
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
         "group": "be8debe086d22ae9",
-        "order": 16,
+        "order": 7,
         "width": "6",
         "height": "1",
         "name": "position.processvalue.current",
         "label": "{{msg.payload}}",
         "format": "",
         "layout": "row-right",
-        "className": "drive-processvalue",
+        "className": "drive-current",
         "style": false,
         "font": "",
         "fontSize": 16,
@@ -3166,8 +3192,8 @@
         "id": "1957066fd8af883f",
         "type": "function",
         "z": "b5a6b1728e41b187",
-        "name": "fxl",
-        "func": "\nlet fxl = {\n\n    laserUnit: {\n        mba: 5,         // cm Messbereichsanfang\n        mb: 10,         // cm Messbereich\n        mbe: 15,        // cm Messbereichsende\n        ampRange: 16\n    },\n\n    driveUnit: {\n        gearBoxGearRatio: 1000.,\n        spindlePitch: 5.,\n        timingBeltTransmissionGearRatio: 2.,\n        motorIncrementPositions: 8388608,\n        cylinderDiameter: 15.,\n        cylinderVolume: 10.,\n        cylinderArea: 176.7146, // cylinderDiameter ** 2 * PI / 4.\n    },\n\n    position: {\n\n        limit: {\n            max: 12.642,   // cm top (1ml)\n            min: 8.680,    // cm bottom (1ml + 7ml)\n            dev: 0.050\n        },\n\n        unit: \"cm\",\n        digits: 3,\n\n        valid: function (value, direction) {\n            if (direction == -1 && value < this.limit.min - this.limit.dev)\n                return false;\n            if (direction == 1 && value > this.limit.max + this.limit.dev)\n                return false;\n            return true;\n        }\n    },\n\n    volume: {\n        limit: {\n            min: 1.0,   // top (1ml)\n            max: 8.0    // bottom (1ml + 7ml) \n        },\n        unit: \"ml\",\n        digits: 3,\n        valid: function (value) {\n            return value >= this.limit.min && value <= this.limit.max;\n        }\n    },\n\n    amp2cm: function (value) {\n        return this.laserUnit.mba + this.laserUnit.mb * value / this.laserUnit.ampRange;\n    },\n\n    amp2ml: function (value) {\n        return this.volume.limit.min + (this.position.limit.max - this.amp2cm(value)) * this.driveUnit.cylinderArea / 100.0;\n    }    \n\n}\n\nmsg.payload = Number(fxl.amp2cm(msg.payload) * 10).toFixed(3) + \" (\" + Number(msg.payload).toFixed(1) + \")\";\n\nreturn msg;",
+        "name": "position",
+        "func": "\nlet fxl = flow.get(\"fxl\");\n\nmsg.payload = Number(fxl.amp2cm(msg.payload) * 10).toFixed(3) + \"mm (\" + Number(msg.payload).toFixed(1) + \"mA)\";\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -3191,16 +3217,16 @@
         "width": "6",
         "height": "1",
         "name": "probe1.positive.raw",
-        "label": "",
-        "format": "{{msg.payload}}",
+        "label": "{{msg.payload}}",
+        "format": "",
         "layout": "row-right",
-        "className": "drive-probe-raw",
+        "className": "drive-raw",
         "style": false,
         "font": "",
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 730,
+        "y": 940,
         "wires": [],
         "l": false
     },
@@ -3224,7 +3250,7 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 730,
+        "y": 940,
         "wires": [
             [
                 "159f9629c25a4c86"
@@ -3241,16 +3267,16 @@
         "width": "6",
         "height": "1",
         "name": "probe2.positive.raw",
-        "label": "",
-        "format": "{{msg.payload}}",
+        "label": "{{msg.payload}}",
+        "format": "",
         "layout": "row-right",
-        "className": "drive-probe-raw",
+        "className": "drive-raw",
         "style": false,
         "font": "",
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 820,
+        "y": 1030,
         "wires": [],
         "l": false
     },
@@ -3274,7 +3300,7 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 820,
+        "y": 1030,
         "wires": [
             [
                 "8a92f048f9a72e9a"
@@ -3300,7 +3326,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 480,
+        "y": 590,
         "wires": [],
         "l": false
     },
@@ -3317,7 +3343,7 @@
         "property": "torque",
         "topi": "topic",
         "x": 105,
-        "y": 480,
+        "y": 590,
         "wires": [
             [
                 "f0da729fa7d2cc63"
@@ -3345,7 +3371,7 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 480,
+        "y": 590,
         "wires": [
             [
                 "311eb4f951f33a77"
@@ -3368,6 +3394,13 @@
             },
             {
                 "t": "set",
+                "p": "raw",
+                "pt": "msg",
+                "to": "position.raw",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
                 "p": "cycle",
                 "pt": "msg",
                 "to": "position.value[0]",
@@ -3387,11 +3420,12 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 240,
+        "y": 250,
         "wires": [
             [
                 "fb8c12b9fb59e985",
-                "9f73b976c35ecf7a"
+                "9f73b976c35ecf7a",
+                "05ead60caaf9b31b"
             ]
         ],
         "l": false
@@ -3404,7 +3438,7 @@
         "label": "",
         "tooltip": "",
         "group": "be8debe086d22ae9",
-        "order": 11,
+        "order": 4,
         "width": "3",
         "height": "1",
         "passthru": false,
@@ -3493,7 +3527,7 @@
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
         "group": "930073be26950e4a",
-        "order": 11,
+        "order": 10,
         "width": "6",
         "height": "1",
         "name": "severity.binary",
@@ -3506,7 +3540,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 870,
+        "y": 1080,
         "wires": [],
         "l": false
     },
@@ -3523,7 +3557,7 @@
         "property": "status.value",
         "topi": "topic",
         "x": 105,
-        "y": 870,
+        "y": 1080,
         "wires": [
             [
                 "a17d90e3ba729f29"
@@ -3551,7 +3585,7 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 870,
+        "y": 1080,
         "wires": [
             [
                 "b1ac887cb9f1ef82"
@@ -3887,9 +3921,324 @@
         "finalize": "",
         "libs": [],
         "x": 205,
-        "y": 290,
+        "y": 330,
         "wires": [
             []
+        ],
+        "l": false
+    },
+    {
+        "id": "05ead60caaf9b31b",
+        "type": "ui_text",
+        "z": "b5a6b1728e41b187",
+        "group": "be8debe086d22ae9",
+        "order": 8,
+        "width": "6",
+        "height": "1",
+        "name": "position.raw",
+        "label": "{{msg.raw}}",
+        "format": "",
+        "layout": "row-right",
+        "className": "drive-raw",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 205,
+        "y": 290,
+        "wires": [],
+        "l": false
+    },
+    {
+        "id": "e348b5feba7a365e",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "fxl",
+        "func": "\nlet fxl = {\n\n    laserUnit: {\n        mba: 5,         // cm Messbereichsanfang\n        mb: 10,         // cm Messbereich\n        mbe: 15,        // cm Messbereichsende\n        ampRange: 16\n    },\n\n    driveUnit: {\n        gearBoxGearRatio: 1000.,\n        spindlePitch: 5.,\n        timingBeltTransmissionGearRatio: 2.,\n        motorIncrementPositions: 8388608,\n        cylinderDiameter: 15.,\n        cylinderVolume: 10.,\n        cylinderArea: 176.7146, // cylinderDiameter ** 2 * PI / 4.\n    },\n\n    position: {\n\n        limit: {\n            max: 12.642,   // cm top (1ml)\n            min: 8.680,    // cm bottom (1ml + 7ml)\n            dev: 0.050\n        },\n\n        unit: \"cm\",\n        digits: 3,\n\n        valid: function (value, direction) {\n            if (direction == -1 && value < this.limit.min - this.limit.dev)\n                return false;\n            if (direction == 1 && value > this.limit.max + this.limit.dev)\n                return false;\n            return true;\n        }\n    },\n\n    volume: {\n        limit: {\n            min: 1.0,   // top (1ml)\n            max: 8.0    // bottom (1ml + 7ml) \n        },\n        unit: \"ml\",\n        digits: 3,\n        valid: function (value) {\n            return value >= this.limit.min && value <= this.limit.max;\n        }\n    },\n\n    amp2cm: function (value) {\n        return this.laserUnit.mba + this.laserUnit.mb * value / this.laserUnit.ampRange;\n    },\n\n    amp2ml: function (value) {\n        return this.volume.limit.min + (this.position.limit.max - this.amp2cm(value)) * this.driveUnit.cylinderArea / 100.0;\n    }\n\n}\n\nflow.set(\"fxl\", fxl);",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 225,
+        "y": 50,
+        "wires": [
+            []
+        ],
+        "l": false
+    },
+    {
+        "id": "6e6726dd9edc9104",
+        "type": "inject",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": ".1",
+        "topic": "",
+        "x": 175,
+        "y": 50,
+        "wires": [
+            [
+                "e348b5feba7a365e"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "48c197d4100bbca7",
+        "type": "ui_template",
+        "z": "b5a6b1728e41b187",
+        "group": "930073be26950e4a",
+        "name": "status.indicator",
+        "order": 8,
+        "width": "15",
+        "height": "1",
+        "format": "<style>\n\n#ops {\ntable-layout : fixed;\n}\n\n#ops td {\ntext-align:center;\ncolor:gray;\nvertical-align:middle;\nline-height:24px;\n}\n\n#ops .title {\nfont-size:80%;\n}\n\n</style>\n\n<div>\n    <table id=\"ops\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" height=\"100%\">\n        <tr>\n            <td ng-repeat=\"item in msg.payload\" class=\"title\">{{item.title}}</td>\n        </tr>\n        <tr>\n            <td ng-repeat=\"item in msg.payload\" title=\"{{item.title}}\"><i class=\"{{item.icon}}\" /></td>\n        </tr>\n    </table>    \n</div>",
+        "storeOutMessages": false,
+        "fwdInMessages": false,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 205,
+        "y": 450,
+        "wires": [
+            []
+        ],
+        "l": false
+    },
+    {
+        "id": "2285dd7e20532192",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "status.indicator",
+        "func": "\n\nlet ss = msg.status.text.split(\",\")\n\nlet out = {\n    topic: 'status',\n    payload: []\n};\n\nlet states = ['READY_TO_SWITCH_ON', 'SWITCHED_ON', 'OPERATION_ENABLED', 'QUICK_STOP', 'SWITCH_ON_DISABLED', 'WARNING']\nstates.reverse();\n\nlet titles = states.map(key => key.replaceAll(\"_\", \" \").toLowerCase() );\n\nstates.forEach(function(s, i) {\n    let enabled = ss.includes(s);\n    out.payload.push({\n        key: s,        \n        index: i + 1,\n        title: titles[i],\n        enabled: enabled,\n        icon: 'fa ' + (enabled ? 'fa-circle' : 'fa-circle-thin')\n    });\n\n});\n\nreturn out;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 155,
+        "y": 450,
+        "wires": [
+            [
+                "48c197d4100bbca7"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "3ca9fd54a054b35f",
+        "type": "inject",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 105,
+        "y": 1270,
+        "wires": [
+            [
+                "13503d13188d40bd"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "13503d13188d40bd",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "valve",
+        "func": "\nlet out = Array(node.outputCount).fill(null);\n\nlet ctx = flow.get(\"2008.5\");\nlet value = ctx.value;\n\nvalue.forEach(function(v, i) {\n    out[i] = {\n        topic: 'channel.' + i,\n        payload: v\n    };\n});\n\nreturn out;",
+        "outputs": 8,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 155,
+        "y": 1270,
+        "wires": [
+            [],
+            [],
+            [],
+            [],
+            [
+                "c04ca9264d07815d"
+            ],
+            [
+                "6df2f871d5666024"
+            ],
+            [
+                "d398fb0538a71e6f"
+            ],
+            [
+                "6a08af9b48e3b028"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "6a08af9b48e3b028",
+        "type": "ui_switch",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "label": "",
+        "tooltip": "",
+        "group": "215f06b2ed067897",
+        "order": 2,
+        "width": "1",
+        "height": "1",
+        "passthru": true,
+        "decouple": "false",
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "num",
+        "onicon": "fa-square",
+        "oncolor": "#606060",
+        "offvalue": "0",
+        "offvalueType": "num",
+        "officon": "fa-square-o",
+        "offcolor": "#606060",
+        "animate": false,
+        "className": "",
+        "x": 215,
+        "y": 1360,
+        "wires": [
+            [
+                "339a8754c8fd1f3a"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "d398fb0538a71e6f",
+        "type": "ui_switch",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "label": "",
+        "tooltip": "",
+        "group": "215f06b2ed067897",
+        "order": 3,
+        "width": "1",
+        "height": "1",
+        "passthru": true,
+        "decouple": "false",
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "num",
+        "onicon": "fa-square",
+        "oncolor": "#606060",
+        "offvalue": "0",
+        "offvalueType": "num",
+        "officon": "fa-square-o",
+        "offcolor": "#606060",
+        "animate": false,
+        "className": "",
+        "x": 215,
+        "y": 1320,
+        "wires": [
+            [
+                "339a8754c8fd1f3a"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "6df2f871d5666024",
+        "type": "ui_switch",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "label": "",
+        "tooltip": "",
+        "group": "215f06b2ed067897",
+        "order": 5,
+        "width": "1",
+        "height": "1",
+        "passthru": true,
+        "decouple": "false",
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "num",
+        "onicon": "fa-square",
+        "oncolor": "#606060",
+        "offvalue": "0",
+        "offvalueType": "num",
+        "officon": "fa-square-o",
+        "offcolor": "#606060",
+        "animate": false,
+        "className": "",
+        "x": 215,
+        "y": 1280,
+        "wires": [
+            [
+                "339a8754c8fd1f3a"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "c04ca9264d07815d",
+        "type": "ui_switch",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "label": "",
+        "tooltip": "",
+        "group": "215f06b2ed067897",
+        "order": 6,
+        "width": "1",
+        "height": "1",
+        "passthru": true,
+        "decouple": "false",
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "num",
+        "onicon": "fa-square",
+        "oncolor": "#606060",
+        "offvalue": "0",
+        "offvalueType": "num",
+        "officon": "fa-square-o",
+        "offcolor": "#606060",
+        "animate": false,
+        "className": "",
+        "x": 215,
+        "y": 1240,
+        "wires": [
+            [
+                "339a8754c8fd1f3a"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "339a8754c8fd1f3a",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "merge",
+        "func": "\nlet ctx = flow.get(\"2008.5\");\nctx.value[parseInt(msg.topic.split(\".\")[1])] = msg.payload;\n\nreturn {\n    item: \"2008\",\n    target: 5,\n    payload: JSON.stringify(ctx.value)\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 265,
+        "y": 1280,
+        "wires": [
+            [
+                "ac3e61e75ce1f789"
+            ]
         ],
         "l": false
     }

@@ -354,12 +354,12 @@ class AM8111Profile:
     
     warning_name = [None, None, 'UNDER_VOLTAGE', 'OVER_VOLTAGE', 'OVER_TEMPERATURE', 
                     'I2T_AMPLIFIER', 'I2T_MOTOR', 'ENCODER']
+    
     error_name = ['ADC_ERROR', 'OVER_CURRENT', 'UNDER_VOLTAGE', 'OVER_VOLTAGE', 'OVER_TEMPERATURE', 
                   'I2T_AMPLIFIER', 'I2T_MOTOR', 'ENCODER', 'WATCHDOG']
     
     touch_name = ['TP1_ENABLE', 'TP1_POS', 'TP1_NEG', None, None, None, None, 'TP1_INPUT',
-                  'TP2_ENABLE', 'TP2_POS', 'TP2_NEG', None, None, None, None, 'TP2_INPUT'
-                  ]
+                  'TP2_ENABLE', 'TP2_POS', 'TP2_NEG', None, None, None, None, 'TP2_INPUT']
 
     @staticmethod
     def __info__(value, mode='e'):
@@ -485,7 +485,7 @@ class AM8111MotionController(BeckhoffMotionController):
     CYCLE_TIME = 10_000_000     # ns
 
     ENCODER_TURNBITS = [17,15]              # multiturn, singleturn; default 12,20
-    
+        
     class RxMapEx:
         register = 0x1C12
         address = [0x1600,0x1601,
@@ -666,8 +666,8 @@ class AM8111MotionController(BeckhoffMotionController):
         try:
             out = AM8111MotionController.RxMap()
             out.control = ctypes.c_uint16(int(self.ControlWord,2))
-            out.velocity = self.Velocity
-            out.position = ctypes.c_int32(value)
+            out.velocity = max(-self.VelocityLimit, min(self.VelocityLimit, ctypes.c_int32(value[1])))
+            out.position = ctypes.c_int32(value[0])
             out.touchprobe = ctypes.c_uint16(int(self.TouchprobeWord,2))
             out.mode = self.Mode
             self.write(out)            
@@ -747,11 +747,21 @@ class AM8111MotionController(BeckhoffMotionController):
         self._turnbits = None
     Turnbits = property(fget=_get_turnbits,fset=_set_turnbits)
 
+    _toggle = None
+    def _get_toggle(self):
+        if self._toggle is None:
+            self._toggle = ctypes.c_bool.from_buffer_copy(self.Device.sdo_read(0x8010,0x01)).value
+        return self._toggle
+    def _set_toggle(self,value):
+        self.Device.sdo_write(0x8010, 0x01, bytes(ctypes.c_bool(value)))
+        self._toggle = None
+    Toggle = property(fget=_get_toggle,fset=_set_toggle)
+
     def debug(self):
         bits = self.Turnbits
         EcatLogger.debug(f"++ debug")
         EcatLogger.debug(f"   bits      {bits} {2**bits[0]}, {2**bits[1]}")
-        EcatLogger.debug(f"   toggle    {ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(0x8010,0x01)).value}")
+        EcatLogger.debug(f"   toggle    {self.Toggle}")
         EcatLogger.debug(f"   offset    {AM8111ProfilePosition.split(self.PositionOffset, bits[1])}")
         
     _initialized = False
@@ -803,20 +813,25 @@ class AM8111MotionController(BeckhoffMotionController):
             else:
                 EcatLogger.debug(f"-- PREOP_STATE NOT reached")
 
+            self._enablePdoAssignment(False)   
+
+            #
             # amplifier settings
-            self.Device.sdo_write(0x8010, 0x01, bytes(ctypes.c_bool(True)), ca)     # enable toggle
+            #
+            self.Toggle = True
 
-            # FB settings 0x8000            
-            self.PositionOffset = [22_900, 0]                           # 0x17 uin32
-
+            #
+            # FB settings 0x8000      
+            #    
+            
+            self.PositionOffset = [22_900, 0] # 0x17 uint32
+            
             # mode of operation
             self.Device.sdo_write(0x7010, 0x03, bytes(ctypes.c_uint8(self.Mode)))
 
             #
             # PDO
             #
-
-            self._enablePdoAssignment(False)
 
             # inputs; read; slave-master
             addr = AM8111MotionController.TxMapEx.register            
@@ -828,6 +843,7 @@ class AM8111MotionController(BeckhoffMotionController):
             for i,value in enumerate(AM8111MotionController.RxMapEx.address): 
                 self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)))
 
+            
             self._enablePdoAssignment(True)
             # ESM PREOP -> SAFEOP TxPDO effective
             # ESM SAFEOP -> OP TxPDO effective
@@ -842,14 +858,14 @@ class AM8111MotionController(BeckhoffMotionController):
             self.Device.sdo_write(0x8011, 0x12, bytes(ctypes.c_uint32(2710)), ca)   # rated current
             
             self.Device.sdo_write(0x8011, 0x15, bytes(ctypes.c_int16(-90)), ca)     # commutation offset
-            self.Device.sdo_write(0x8011, 0x16, bytes(ctypes.c_uint32(70)), ca)     # torque const.
+            self.Device.sdo_write(0x8011, 0x16, bytes(ctypes.c_uint32(70)), ca)     # torque const. mNm/A
             self.Device.sdo_write(0x8011, 0x18, bytes(ctypes.c_uint32(33)), ca)     # rotor moment of inertia g cm^2
-            self.Device.sdo_write(0x8011, 0x19, bytes(ctypes.c_uint16(15)), ca)     # winding inductance
-            self.Device.sdo_write(0x8011, 0x1B, bytes(ctypes.c_uint32(5406)), ca)   # motor speed limitation 1/min ~ 291_780 1/s
+            self.Device.sdo_write(0x8011, 0x19, bytes(ctypes.c_uint16(15)), ca)     # winding inductance 0.1 mH
+            self.Device.sdo_write(0x8011, 0x1B, bytes(ctypes.c_uint32(5406)), ca)   # motor speed limitation 1/min          ~ 291_780 1/s
             
-            self.Device.sdo_write(0x8011, 0x2B, bytes(ctypes.c_uint16(1200)), ca)   # motor temperature warn level 0.1°C
-            self.Device.sdo_write(0x8011, 0x2C, bytes(ctypes.c_uint16(1400)), ca)   # motor temperature error level 0.1°C
-            self.Device.sdo_write(0x8011, 0x2D, bytes(ctypes.c_uint16(5400)), ca)   # motor thermal time constant 0.1s
+            self.Device.sdo_write(0x8011, 0x2B, bytes(ctypes.c_uint16(1200)), ca)   # motor temperature warn level 0.1°C    ~ 120°C
+            self.Device.sdo_write(0x8011, 0x2C, bytes(ctypes.c_uint16(1400)), ca)   # motor temperature error level 0.1°C   ~ 140°C
+            self.Device.sdo_write(0x8011, 0x2D, bytes(ctypes.c_uint16(5400)), ca)   # motor thermal time constant 0.1s      ~ 9min
             
             # current controller
             self.Device.sdo_write(0x8010, 0x13, bytes(ctypes.c_uint16(177)), ca)    # P 0.1 V/A
@@ -1037,7 +1053,7 @@ class AM8111MotionController(BeckhoffMotionController):
                     self.Velocity = self._data['velocity']
                     self._data['velocity'] = None
 
-                if 'position' in self._data.keys() and self._data['position'] is not None:    
+                if 'position' in self._data.keys() and self._data['position'] is not None:                    
                     self.Position = AM8111ProfilePosition.merge(self._data['position'], self.Turnbits[1])
                     self._data['position'] = None
 
