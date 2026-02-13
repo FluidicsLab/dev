@@ -109,7 +109,7 @@ class BeckhoffAnalogController(AnalogController):
                 self.compute()
 
         except Exception as ex:
-            EcatLogger.debug(f"-- BeckhoffAnalogController.run {ex}")
+            EcatLogger.error(f"BeckhoffAnalogController.run {ex}")
 
         finally:
             self._lock.release()
@@ -133,7 +133,7 @@ class BeckhoffAnalogController(AnalogController):
         try:
             self.Device.output = data        
         except Exception as ex:
-            EcatLogger.debug(f"-- BeckhoffAnalogController.write {ex}")
+            EcatLogger.error(f"BeckhoffAnalogController.write {ex}")
         finally:
             self.DeviceLock.release() 
 
@@ -148,12 +148,12 @@ class BeckhoffAnalogController(AnalogController):
                 for i in range(num):
                     if self._severity is not None and not EcatSeverityController.isValid([self._severity[i]]):
                         data[i] = 0
-                        SeverityLogger.debug(f"-- BeckhoffAnalogController.output denied by severity {self._severity}")
+                        SeverityLogger.debug(f"BeckhoffAnalogController.output denied by severity {self._severity}")
                 
                 self.write(struct.pack(f'{num}H', *(data)))
 
         except Exception as ex:
-            EcatLogger.error(f"-- BeckhoffAnalogController.output {ex}")
+            EcatLogger.error(f"BeckhoffAnalogController.output {ex}")
             return False
 
         return True

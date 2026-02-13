@@ -99,7 +99,7 @@ class EcatSeverityController:
         if source not in self._items.keys():         
             self._items[source] = callback
         if source.split('.')[0] != 'SEVERITY':
-            EcatLogger.debug(f"+ register severity for {source}")    
+            EcatLogger.debug(f"register severity for {source}")    
 
     def unregister(self, source):
         if source not in self._items.keys():
@@ -112,8 +112,8 @@ class EcatSeverityController:
 
     def startup(self):
 
-        EcatLogger.debug("+ start severity controller")
-        EcatLogger.debug(f"  version {self._config.version} enabled {self._config.enabled} ")
+        EcatLogger.debug("start severity controller")
+        EcatLogger.debug(f"version {self._config.version} enabled {self._config.enabled} ")
         
         self._severity, _ = EcatSeverityController.create_(f"{self._id}", self._size)
 
@@ -121,10 +121,10 @@ class EcatSeverityController:
 
     def release(self):
 
-        EcatLogger.debug("+ release severity controller")
+        EcatLogger.debug("release severity controller")
         self.unregisterAll()
         EcatSeverityController.release_(self._severity)
-        EcatLogger.debug("- done")        
+        EcatLogger.debug("done")        
 
     def push(self, name, pos, data, config):  
         

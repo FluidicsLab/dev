@@ -1,8 +1,8 @@
 from _BeckhoffMotionController import AM8111ProfilePosition
 from _EcatMaster import EcatMaster, EcatLogger, AM8111MotionController, BeckhoffCouplerController, KellerModbusController
 from _EcatSeverity import SEVERITY_VERBOSE, SEVERITY_CRITICAL, SEVERITY_REASON_SYSTEM, \
-    SEVERITY_REASON_PRESSURE, SEVERITY_REASON_TEMPERATURE, SEVERITY_REASON_TIME, SEVERITY_REASON_DISTANCE, \
-        SeverityLogger
+    SEVERITY_REASON_PRESSURE, SEVERITY_REASON_TEMPERATURE, SEVERITY_REASON_TIME, SEVERITY_REASON_DISTANCE, SeverityLogger
+from _EcatStates import EcatStates
 
 import pysoem, time, ctypes
 
@@ -21,18 +21,18 @@ class EcatMasterDEV(EcatMaster):
     #
     def describe(self):
 
-        EcatLogger.debug(f"--- {self.Master.__class__.__name__}")
-        EcatLogger.debug(f"    always release gil   {self.Master.always_release_gil}")
-        EcatLogger.debug(f"    context initialized  {self.Master.context_initialized}")
-        EcatLogger.debug(f"    dc time              {self.Master.dc_time}")
-        EcatLogger.debug(f"    do check state       {self.Master.do_check_state}")
-        EcatLogger.debug(f"    expected wkc         {self.Master.expected_wkc}")
-        EcatLogger.debug(f"    in op                {self.Master.in_op}")
-        EcatLogger.debug(f"    manual state change  {self.Master.manual_state_change}")
-        EcatLogger.debug(f"    sdo read timeout     {self.Master.sdo_read_timeout}")
-        EcatLogger.debug(f"    sdo write timeout    {self.Master.sdo_write_timeout}")
-        EcatLogger.debug(f"    state                {self.Master.state}")
-        EcatLogger.debug(f"    slaves               {len(self.Master.slaves)}")
+        EcatLogger.debug(f"{self.Master.__class__.__name__}")
+        EcatLogger.debug(f"always release gil   {self.Master.always_release_gil}")
+        EcatLogger.debug(f"context initialized  {self.Master.context_initialized}")
+        EcatLogger.debug(f"dc time              {self.Master.dc_time}")
+        EcatLogger.debug(f"do check state       {self.Master.do_check_state}")
+        EcatLogger.debug(f"expected wkc         {self.Master.expected_wkc}")
+        EcatLogger.debug(f"in op                {self.Master.in_op}")
+        EcatLogger.debug(f"manual state change  {self.Master.manual_state_change}")
+        EcatLogger.debug(f"sdo read timeout     {self.Master.sdo_read_timeout}")
+        EcatLogger.debug(f"sdo write timeout    {self.Master.sdo_write_timeout}")
+        EcatLogger.debug(f"state                {self.Master.state}")
+        EcatLogger.debug(f"slaves               {len(self.Master.slaves)}")
 
     #
     # severity section
@@ -166,7 +166,7 @@ class EcatMasterDEV(EcatMaster):
                 case "EL3124":
                     severity = self.severityEL3124(source, data, severity, config._raw[alias][pos])
                 case "EL7201":
-                    pass # severity = self.severityEL7201(source, data, severity, config._raw[alias][pos])
+                    pass #severity = self.severityEL7201(source, data, severity, config._raw[alias][pos])
                 case _:
                     pass
         
@@ -191,9 +191,9 @@ class EcatMasterDEV(EcatMaster):
 
                 self._beckhoffCouplerController[pos] = BeckhoffCouplerController(pos, slave, self.ProcessLock)           
                 self.SeverityController.register(f"EK1100.{pos}")
-                EcatLogger.debug(f"** init BeckhoffCouplerController @ {pos}")
+                EcatLogger.debug(f"init BeckhoffCouplerController @ {pos}")
             
-        EcatLogger.debug(f"-- done with {rc}")
+        EcatLogger.debug(f"done with {rc}")
 
         return rc    
 
@@ -213,12 +213,11 @@ class EcatMasterDEV(EcatMaster):
                 self._beckhoffMotionController[pos].init()
 
                 self.SeverityController.register(f"EL7201.{pos}", self._beckhoffMotionController[pos].severityFunc)
-
                 self.CallbackController.register(f"EL7201.{pos}", "EL6021.3", self._beckhoffMotionController[pos].callback)
 
-                EcatLogger.debug(f"** init EL7201 MotionController @ {pos}")
+                EcatLogger.debug(f"init EL7201 MotionController @ {pos}")
         
-        EcatLogger.debug(f"-- done with {rc}")
+        EcatLogger.debug(f"done with {rc}")
         
         return rc      
     
@@ -238,9 +237,9 @@ class EcatMasterDEV(EcatMaster):
                 self._kellerModbusController[pos] = KellerModbusController(pos, slave, self.ProcessLock, addr)                
                 self.SeverityController.register(f"EL6021.{slot}")
                 
-                EcatLogger.debug(f"** init KellerModbusController @ {addr}")
+                EcatLogger.debug(f"init KellerModbusController @ {addr}")
 
-        EcatLogger.debug(f"-- done")
+        EcatLogger.debug(f"done")
 
         return rc
     
@@ -265,7 +264,21 @@ class EcatMasterDEV(EcatMaster):
                 for i, a in enumerate([0x8000, 0x8010, 0x8020, 0x8030]):
                     slave.sdo_write(a, 0x02, bytes(ctypes.c_uint8(0)))
 
-        EcatLogger.debug(f"-- done")
+        EcatLogger.debug(f"done")
 
         return rc     
+    
+    def configEL2008(self, pos, slave):
+
+        rc = super().configEL2008(pos, slave)
+
+        if rc:
+
+            slot = 5
+            if self.isSlot("drive", (slot, pos)):
+                pass
+
+        EcatLogger.debug(f"done")
+
+        return rc
     

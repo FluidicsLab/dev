@@ -167,7 +167,7 @@ class Wt901cModbusController(ModbusController):
 
     def compute(self):
 
-        EcatLogger.debug(f"--- start computing {self.__class__.__name__}")
+        EcatLogger.debug(f"start computing {self.__class__.__name__}")
 
         while not self._exit.is_set():
 
@@ -262,7 +262,7 @@ class Wt901cModbusController(ModbusController):
                     except Exception as ex:
                         EcatLogger.debug(ex)
 
-        EcatLogger.debug(f"--- stop computing {self.__class__.__name__}")
+        EcatLogger.debug(f"stop computing {self.__class__.__name__}")
                         
         
     def run(self):
@@ -355,7 +355,7 @@ class Sth01ModbusController(ModbusController):
 
     def compute(self):
 
-        EcatLogger.debug(f"--- start computing {self.__class__.__name__}")
+        EcatLogger.debug(f"start computing {self.__class__.__name__}")
                     
         while not self._exit.is_set():
 
@@ -413,7 +413,7 @@ class Sth01ModbusController(ModbusController):
                     except Exception as ex:
                         EcatLogger.debug(ex)
 
-        EcatLogger.debug(f"--- stop computing {self.__class__.__name__}")
+        EcatLogger.debug(f"stop computing {self.__class__.__name__}")
         
     def run(self):
         
@@ -529,7 +529,7 @@ class KellerModbusController(ModbusController):
 
     def compute(self):
 
-        EcatLogger.debug(f"--- start computing {self.__class__.__name__}")
+        EcatLogger.debug(f"start computing {self.__class__.__name__}")
                     
         while not self._exit.is_set():
 
@@ -606,7 +606,7 @@ class KellerModbusController(ModbusController):
                         'sw': 0
                     })
 
-        EcatLogger.debug(f"--- stop computing {self.__class__.__name__}")
+        EcatLogger.debug(f"stop computing {self.__class__.__name__}")
 
     def run(self):
         

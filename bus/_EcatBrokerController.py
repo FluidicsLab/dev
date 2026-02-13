@@ -93,6 +93,7 @@ class scheduleWorker(threading.Thread):
 class subscribeWorker(scheduleWorker):
 
     TOPIC = '/hot/ecat/value'
+    VERBOSE = 0
 
     _lock: Lock = Lock()
 
@@ -194,8 +195,9 @@ class subscribeWorker(scheduleWorker):
     
     def callback(self, data):
 
-        EcatLogger.debug(f"++ receive subscription")
-        EcatLogger.debug(f"   {data}")
+        if subscribeWorker.VERBOSE == 1:
+            EcatLogger.debug(f"receive subscription")
+            EcatLogger.debug(f"   {data}")
 
         self._dataLock.acquire()        
         
@@ -238,12 +240,13 @@ class subscribeWorker(scheduleWorker):
             self._dataLock.release()    
 
         if all(error is None for error in errors):
-            EcatLogger.debug(f"-- done with {len(items)}")
+            if subscribeWorker.VERBOSE == 1:
+                EcatLogger.debug(f"done with {len(items)}")
         else:            
-            EcatLogger.debug(f"-- failed")
+            EcatLogger.error(f"subscription failed")
             for i,error in enumerate(errors):
                 if error is not None:
-                    EcatLogger.error(f"   {i} {error}")
+                    EcatLogger.error(f"{i} {error}")
 
         asyncio.get_running_loop().call_soon_threadsafe(self._event.set)
 
@@ -340,7 +343,7 @@ class EcatBrokerController:
 
     def startup(self):
 
-        EcatLogger.debug(f"+ start broker controller @ {self._ports}")
+        EcatLogger.debug(f"start broker controller @ {self._ports}")
 
         self._scheduler = []
         
@@ -353,11 +356,11 @@ class EcatBrokerController:
         for s in self._scheduler:
             s.start()
 
-        EcatLogger.debug("- done")
+        EcatLogger.debug("done")
 
     def release(self):
 
-        EcatLogger.debug("+ release broker controller")
+        EcatLogger.debug("release broker controller")
 
         for s in self._scheduler:
             # subscribeWorker will be freed 
@@ -366,7 +369,7 @@ class EcatBrokerController:
                 s.exit()
                 s.join()
         
-        EcatLogger.debug("- done")
+        EcatLogger.debug("done")
 
     def push(self, name, n, data, verbose=0):
 
@@ -445,15 +448,15 @@ class EcatCallbackController:
 
     def startup(self):
 
-        EcatLogger.debug("+ start callback controller")
+        EcatLogger.debug("start callback controller")
         
-        EcatLogger.debug("- done")
+        EcatLogger.debug("done")
 
     def release(self):
 
-        EcatLogger.debug("+ release callback controller")
+        EcatLogger.debug("release callback controller")
         self.unregisterAll()
-        EcatLogger.debug("- done")        
+        EcatLogger.debug("done")        
 
     def push(self, name, n, data, verbose=0):  
         target = f"{data['name'].lower()}.{n}"

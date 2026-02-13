@@ -1,4 +1,3 @@
-
 import pysoem
 import psutil
 
@@ -107,7 +106,7 @@ class BeckhoffCouplerController(CouplerController):
                     self._reader.start()
             
         except Exception as ex:
-            EcatLogger.debug(f"-- BeckhoffCouplerController.run {ex}")
+            EcatLogger.error(f"BeckhoffCouplerController.run {ex}")
 
         finally:
             self._lock.release()
@@ -116,7 +115,7 @@ class BeckhoffCouplerController(CouplerController):
     
     def compute(self):
         
-        EcatLogger.debug(f"--- start computing {self.__class__.__name__}")
+        EcatLogger.debug(f"start computing {self.__class__.__name__}")
                     
         while not self._exit.is_set():
 
@@ -125,7 +124,7 @@ class BeckhoffCouplerController(CouplerController):
             delay = 1.0
             self._exit.wait(delay)
 
-        EcatLogger.debug(f"--- stop computing {self.__class__.__name__}")
+        EcatLogger.debug(f"stop computing {self.__class__.__name__}")
 
     
     def read(self):
@@ -140,7 +139,7 @@ class BeckhoffCouplerController(CouplerController):
                 }
 
         except Exception as ex:
-            EcatLogger.debug(f"-- BeckhoffCouplerController.read {ex}")
+            EcatLogger.error(f"BeckhoffCouplerController.read {ex}")
         finally:
             self.DeviceLock.release() 
 
