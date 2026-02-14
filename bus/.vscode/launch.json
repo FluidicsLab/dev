@@ -12,15 +12,6 @@
             "console": "integratedTerminal",
             "args": ["_EcatSettingsDEV"],
             "justMyCode": false
-        },
-        {
-            "name": "DEV-broker",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "./util/drive.broker.py",
-            "console": "integratedTerminal",
-            "args": [""],
-            "justMyCode": false
         }
 
     ]

@@ -96,7 +96,8 @@ class EcatMasterDEV(EcatMaster):
                 targets = config[f"{addr}"][key]["channel"]            
                 limit = self.SeverityLimit.find(f"{source}.{addr}.{key}")
                 if limit is not None:
-                    critical = (raw < limit["low"] or raw > limit["high"]) and 1 == (1 if raw is None or (limit["def"] is not None and raw != limit["def"]) else 0)
+                    critical = (raw < limit["low"] or raw > limit["high"]) and \
+                        1 == (1 if raw is None or (limit["def"] is not None and raw != limit["def"]) else 0)
                     if critical:
                         for target in targets:
                             severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_DISTANCE
@@ -113,11 +114,9 @@ class EcatMasterDEV(EcatMaster):
                 targets = config[f"{addr}"][key]["channel"]            
                 limit = self.SeverityLimit.find(f"{source}.{addr}.{key}")
                 if limit is not None:
-                    raw = data['value']['value']['position']['raw']                                        
-                    
+                    raw = data['value']['value']['position']['raw']                                                            
                     critical = (raw < limit["low"] or raw > limit["high"]) and \
                         1 == (1 if raw is None or (limit["def"] is not None and raw != limit["def"]) else 0)                    
-                    
                     if critical:
                         for target in targets:
                             severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_DISTANCE
@@ -210,7 +209,7 @@ class EcatMasterDEV(EcatMaster):
                 self._beckhoffMotionController[pos] = AM8111MotionController(pos, slave, self.ProcessLock)
 
                 self._beckhoffMotionController[pos].initEx({ "name": "EL6021.3", "addr": 0x0B, "key": "p", "low": 0, "high": 700 })
-                self._beckhoffMotionController[pos].init()
+                self._beckhoffMotionController[pos].initConfig()
 
                 self.SeverityController.register(f"EL7201.{pos}", self._beckhoffMotionController[pos].severityFunc)
                 self.CallbackController.register(f"EL7201.{pos}", "EL6021.3", self._beckhoffMotionController[pos].callback)

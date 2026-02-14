@@ -69,9 +69,9 @@ DELAY_INPUT_LOOP        = 0.1
 DELAY_OUTPUT_LOOP       = 0.1
 
 DELAY_PROCESS_LOOP      = 0.01      # 0.01
-DELAY_CHECK_LOOP        = 0.05      # 0.01
+DELAY_CHECK_LOOP        = 0.10      # 0.01
 
-DELAY_DEBUG_LOOP        = 0.005
+DELAY_DEBUG_LOOP        = 0.01
 
 DEBUG = 1
 VERBOSE = 1
@@ -179,9 +179,7 @@ class EcatMaster(EcatObject):
     """    
     def _set_state(self, value):        
         self.Master.state = value
-        wkc = self.Master.write_state() 
-        state = self.Master.state_check(value, timeout=TIMEOUT_STATE_CHECK)
-        EcatLogger.debug(f'  {wkc:03d} {EcatStates.desc(value)} ~ {EcatStates.desc(state)}')        
+        self.Master.write_state()         
     def _get_state(self): 
         return self.Master.state    
     State = property(fget=_get_state,fset=_set_state)
@@ -938,10 +936,6 @@ class EcatMaster(EcatObject):
         self.receive()
     
         self.Master.write_state()
-
-    def debugSlaveState(self):
-        for i, slave in enumerate(self.Master.slaves):
-            EcatLogger.info(f"{i} {slave.name:15s} {EcatStates.desc(slave.state, desc=True)}")
     
     def writeSlaveState(self, state):
         for slave in self.Master.slaves:
@@ -970,18 +964,16 @@ class EcatMaster(EcatObject):
         demand = EcatStates.desc(state, desc=True)
     
         timeout = TIMEOUT_MASTER_STATE
-        EcatLogger.info(f"switch to {demand} from {current} in {timeout} s")
+        EcatLogger.info(f"switch master to {demand} <-- {current} ({timeout}s)")
 
         rc = True
 
-        self.State = state
-       
+        self.State = state       
         start_time = time.time()
-        while self.Master.state_check(state, timeout=TIMEOUT_STATE_CHECK) != state:
+        while (self.Master.state_check(state, timeout=TIMEOUT_STATE_CHECK) & state) != state:
             if time.time() - start_time > timeout:
                 rc = False
                 break
-
         EcatLogger.debug(f"{EcatStates.desc(state, desc=True)}={rc} by {time.time() - start_time}s")
 
         self.checkMasterState(state)
@@ -1029,8 +1021,6 @@ class EcatMaster(EcatObject):
                 
         self.writeSlaveState(pysoem.OP_STATE) 
         self._running = self.writeMasterState(pysoem.OP_STATE)
-
-        self.debugSlaveState()
         
         #
         #
@@ -1046,8 +1036,6 @@ class EcatMaster(EcatObject):
 
         self._outputThread = Thread(target=self._outputLoop)
         self._outputThread.start()
-
-        self.debugSlaveState()
         
         self._checkThread = Thread(target=self._checkLoop)
         self._checkThread.start()
@@ -1154,26 +1142,15 @@ class EcatMaster(EcatObject):
         EcatLogger.debug("end alive loop")
 
         return True
-    
-    _debugEvent = Event()
-    _debugThread = None    
-    def _debugLoop(self):
-
-        EcatLogger.debug(f"start debug loop")
-
-        s = None
-
-        while not self._debugEvent.is_set():
-
-            if s is None or s != self.Master.slaves[1].state:
-                EcatLogger.warning(f"{EcatStates.desc(s, desc=True)} --> {EcatStates.desc(self.Master.slaves[1].state, desc=True)}")
-                s = self.Master.slaves[1].state
-
-            self._debugEvent.wait(DELAY_DEBUG_LOOP)
-
-        EcatLogger.debug("end debug loop")
-
-        return True
+        
+    def _debugSlaves(self):
+        EcatLogger.warning(">>>>")
+        for pos,slave in enumerate(self.Master.slaves):
+            name, state, code = slave.name, slave.state, slave.al_status
+            code_text = pysoem.al_status_code_to_string(code)
+            title = f"{pos:03d} {name} {EcatStates.desc(state,desc=1)} [{hex(code)}, {code_text}]"
+            EcatLogger.debug(f"{title}")
+        EcatLogger.warning("<<<<")
     
     # --------------------------------------
     # output / callback
@@ -1662,42 +1639,38 @@ class EcatMaster(EcatObject):
         name = slave.name
         state = slave.state
         code = slave.al_status
-
         code_text = pysoem.al_status_code_to_string(code)
-
         title = f"{pos:03d} {name} {EcatStates.desc(state,desc=1)} [{hex(code)}, {code_text}]"
         
         if state == (pysoem.SAFEOP_STATE + pysoem.STATE_ERROR):
-            if verbose:
-                EcatLogger.warning(f'{title} -> {EcatStates.desc(pysoem.SAFEOP_STATE+pysoem.STATE_ACK,desc=1)}')        
+            EcatLogger.warning(f'{title:50s} --> {EcatStates.desc(pysoem.SAFEOP_STATE+pysoem.STATE_ACK,desc=1)}')        
             slave.state = pysoem.SAFEOP_STATE + pysoem.STATE_ACK
             slave.write_state()        
+        
         elif slave.state == pysoem.SAFEOP_STATE:
-            if verbose:                
-                EcatLogger.warning(f'{title} -> {EcatStates.desc(pysoem.OP_STATE,desc=1)}')            
+            EcatLogger.warning(f'{title:50s} --> {EcatStates.desc(pysoem.OP_STATE,desc=1)}')            
             slave.state = pysoem.OP_STATE
             slave.write_state()
+        
         elif slave.state > pysoem.NONE_STATE:
             if slave.reconfig():
                 slave.is_lost = False
-                if verbose:
-                    EcatLogger.error(f'{title} reconfigured')
+                EcatLogger.error(f'{title:50s} --> reconfigured')
+        
         elif not slave.is_lost:
             slave.state_check(pysoem.OP_STATE, timeout=TIMEOUT_STATE_CHECK)
             if slave.state == pysoem.NONE_STATE:
                 slave.is_lost = True
-                if verbose:
-                    EcatLogger.error(f'{title} lost')
+                EcatLogger.error(f'{title:50s} --> lost')
+        
         if slave.is_lost:
             if slave.state == pysoem.NONE_STATE:
                 if slave.recover():
                     slave.is_lost = False
-                    if verbose:
-                        EcatLogger.error(f'{title} recovered')
+                    EcatLogger.error(f'{title:50s} --> recovered')
             else:
                 slave.is_lost = False
-                if verbose:
-                    EcatLogger.debug(f'{title} found')
+                EcatLogger.debug(f'{title:50s} --> found')
 
     def _hasLost(self):
         for i, slave in enumerate(self.Master.slaves):
@@ -1722,12 +1695,41 @@ class EcatMaster(EcatObject):
                         self.Master.do_check_state = True
                         EcatMaster._checkSlave(slave, i, verbose=VERBOSE)
                 
-                #if not self.Master.do_check_state:
-                #    EcatLogger.debug(f'    all slaves resumed OP')
+                if not self.Master.do_check_state:
+                    EcatLogger.info(f'slave states resumed to {EcatStates.desc(pysoem.OP_STATE, desc=True)}')
             
             self._checkEvent.wait(DELAY_CHECK_LOOP)
 
         EcatLogger.debug("end check loop")
+
+    _debugEvent = Event()
+    _debugThread = None    
+    
+    def _debugLoop(self):
+
+        EcatLogger.debug(f"start debug loop")
+
+        states = [pysoem.NONE_STATE] * len(self.Master.slaves)
+
+        while not self._debugEvent.is_set():
+
+            for pos,slave in enumerate(self.Master.slaves):
+                
+                if (states[pos] & slave.state) != states[pos]:
+                
+                    name, state, code = slave.name, slave.state, slave.al_status
+                    code_text = pysoem.al_status_code_to_string(code)
+                    title = f"{pos:03d} {name} {EcatStates.desc(state,desc=1)} [{hex(code)}, {code_text}]"
+                
+                    EcatLogger.warning(f"{title:50s} <-- {EcatStates.desc(states[pos], desc=True)}")
+                
+                states[pos] = slave.state
+
+            self._debugEvent.wait(DELAY_DEBUG_LOOP)
+
+        EcatLogger.debug("end debug loop")
+
+        return True        
 
     def config_map(self):
         EcatLogger.info("config map")
@@ -1933,7 +1935,7 @@ class EcatMaster(EcatObject):
         self._ports = ports
                 
     def __str__(self):
-        return f"{EcatStates.describe(self.State)} {len(self.Devices)}"
+        return f"{EcatStates.desc(self.State, desc=True)} {len(self.Devices)}"
     
     def __desc__(self):
 
@@ -1943,10 +1945,9 @@ class EcatMaster(EcatObject):
         for i,device in enumerate(self.Devices):
 
             state = device.state
-            states = EcatStates.describe(state)
+            states = EcatStates.desc(state, desc=True)
            
             EcatLogger.debug(f"{i:>3} {str(device.name)} {states}")
-
 
 def instance(mandant:str="STD"):
 

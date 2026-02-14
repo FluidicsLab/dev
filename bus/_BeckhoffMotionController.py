@@ -1,5 +1,6 @@
 
 import ctypes, time, struct
+from turtle import position
 from types import SimpleNamespace
 
 from narwhals import UInt32
@@ -486,7 +487,8 @@ class AM8111MotionController(BeckhoffMotionController):
     SHIFT_TIME = 250_000        # ns
     CYCLE_TIME = 10_000_000     # ns
 
-    ENCODER_TURNBITS = [17,15]              # multiturn, singleturn; default 12,20
+    ENCODER_TURNBITS = [16,16]              # multiturn, singleturn; default 12,20
+    POSITION_OFFSET = [57_548, 0] # [24_780, 0]  # 0x17 uint32
         
     class RxMapEx:
         register = 0x1C12
@@ -653,9 +655,23 @@ class AM8111MotionController(BeckhoffMotionController):
         try:
             value = AM8111ProfilePosition.merge(value, AM8111MotionController.ENCODER_TURNBITS[1])
             self.Device.sdo_write(0x8000,0x17,bytes(ctypes.c_uint32(value)))
+            self._positionOffset = None
         except Exception as ex:
             EcatLogger.error(f"PositionOffset {ex}")
     PositionOffset = property(fget=_get_positionOffset,fset=_set_positionOffset)
+
+    _positionOffsetEnabled = None
+    def _get_positionOffsetEnabled(self):
+        if self._positionOffsetEnabled is None:
+            self._positionOffsetEnabled = ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(0x8000,0x0D)).value
+        return self._positionOffsetEnabled
+    def _set_positionOffsetEnabled(self, value):
+        try:
+            self.Device.sdo_write(0x8000,0x0D,bytes(ctypes.c_uint8(value)))
+            self._positionOffsetEnabled = None
+        except Exception as ex:
+            EcatLogger.error(f"PositionOffsetEnabled {ex}")
+    PositionOffsetEnabled = property(fget=_get_positionOffsetEnabled,fset=_set_positionOffsetEnabled)
 
     def _get_position(self):
         try:
@@ -760,12 +776,18 @@ class AM8111MotionController(BeckhoffMotionController):
     Toggle = property(fget=_get_toggle,fset=_set_toggle)
 
     def debug(self):
-        bits = self.Turnbits
+
         EcatLogger.debug(f"debug")
+
+        bits = self.Turnbits
         EcatLogger.debug(f"bits      {bits} {2**bits[0]}, {2**bits[1]}")
-        EcatLogger.debug(f"toggle    {self.Toggle}")
-        EcatLogger.debug(f"offset    {AM8111ProfilePosition.split(self.PositionOffset, bits[1])}")
         
+        EcatLogger.debug(f"toggle    {self.Toggle}")
+        EcatLogger.debug(f"offset    {AM8111ProfilePosition.split(self.PositionOffset, bits[1])} {self.PositionOffsetEnabled}")
+
+        EcatLogger.debug(f"invert fb {ctypes.c_bool.from_buffer_copy(self.Device.sdo_read(0x8000,0x01)).value}")
+        EcatLogger.debug(f"referencd {ctypes.c_bool.from_buffer_copy(self.Device.sdo_read(0x8000,0x02)).value}")
+
     _initialized = False
 
     def initEx(self, source=None): 
@@ -804,13 +826,12 @@ class AM8111MotionController(BeckhoffMotionController):
     def hasState(self, state):
         return self.Device.state & state == state
 
-    def init(self): 
+    def initConfig(self): 
 
         """                
         :param self: 
         """
-        self._initialized = False
-
+        
         try:
 
             ca = True   # complete access
@@ -821,12 +842,6 @@ class AM8111MotionController(BeckhoffMotionController):
             # amplifier settings
             #
             self.Toggle = True
-
-            #
-            # FB settings 0x8000      
-            #    
-            
-            self.PositionOffset = [24_780, 0] # 0x17 uint32
             
             # mode of operation
             self.Device.sdo_write(0x7010, 0x03, bytes(ctypes.c_uint8(self.Mode)))
@@ -904,11 +919,7 @@ class AM8111MotionController(BeckhoffMotionController):
             self.Turnbits = AM8111MotionController.ENCODER_TURNBITS     # 0x13, 0x12   
             _ = self.Turnbits
 
-            _ = self.PositionOffset
-
             self.debug()
-
-            self._initialized = True
 
         except pysoem.SdoError as se:
             self._initialized = False
@@ -926,12 +937,38 @@ class AM8111MotionController(BeckhoffMotionController):
             self._initialized = False
             EcatLogger.error(f"Exception {ex}")  
 
-        return self._initialized
-    
+    def init(self):
+
+        self._initialized = False
+        
+        try:
+
+            self.PositionOffsetEnabled = 0
+            self.PositionOffset = AM8111MotionController.POSITION_OFFSET
+            self.PositionOffsetEnabled = 2
+
+            _ = self.PositionOffset
+
+            self._initialized = True
+
+        except pysoem.SdoError as se:
+            EcatLogger.error(f"SdoError {se}")  
+        except pysoem.PacketError as pe:
+            EcatLogger.error(f"PacketError {pe}")  
+        except pysoem.MailboxError as me:
+            EcatLogger.error(f"MailboxError {me}")  
+        except pysoem.WkcError as we:
+            EcatLogger.error(f"WkcError {we}")  
+        except Exception as ex:
+            EcatLogger.error(f"Exception {ex}")  
+
     def input(self):
 
         # pdo read
         try:
+
+            if not self._initialized:      
+                self.init()          
 
             buff =  AM8111MotionController.TxMap.from_buffer_copy(self.Device.input)
             status = bin(buff.status)[2:].zfill(16)  
@@ -953,7 +990,7 @@ class AM8111MotionController(BeckhoffMotionController):
                     'offset': {
                         'raw': self.PositionOffset,
                         'value': AM8111ProfilePosition.split(self.PositionOffset, bits)
-                    }
+                    }                    
                 },
                 'velocity':{
                     'raw': buff.velocity,
@@ -1000,7 +1037,10 @@ class AM8111MotionController(BeckhoffMotionController):
                     'value':status,
                     'text': AM8111Profile.__str__(int(status,2)),
                 },
-                'transition': AM8111Profile.__transit__(int(status,2))
+                'transition': AM8111Profile.__transit__(int(status,2)),
+                'encoder': {
+                    'bits': self.Turnbits
+                }
             }
 
             return data
@@ -1051,23 +1091,7 @@ class AM8111MotionController(BeckhoffMotionController):
                     self._data['velocity'] = None
 
                 if 'position' in self._data.keys() and self._data['position'] is not None:   
-                    
-                    bits = self.Turnbits[1]
-
-                    current, setpoint = data["position"]["value"], self._data['position']                    
-                    delta = current[0] - setpoint[0]
-                    cycles = abs(delta)
-                    sign = -1 if delta < 0 else +1
-
-                    cycles_ = 2**bits - 1 - cycles
-                    EcatLogger.debug(f"{sign:3d} {cycles:7d} {cycles_:7d} {cycles - cycles_:7d}")
-
-                    position = AM8111ProfilePosition.merge(setpoint, bits)
-                    current = data["position"]["raw"]
-                    self.Position = position
-
-                    EcatLogger.debug(f"{position - current:12d}")
-
+                    self.Position = AM8111ProfilePosition.merge(self._data['position'], self.Turnbits[1])
                     self._data['position'] = None
 
                 if 'touchprobe' in self._data.keys() and self._data['touchprobe'] is not None:
@@ -1133,10 +1157,15 @@ class AM8111MotionController(BeckhoffMotionController):
     def isValid(self):
         return EcatSeverityController.isValid(self._severity)
     
+    _severity = False
     def severityFunc(self, value):
         self._severity = value        
         if not self.isValid():
             self._data = { 
                 'velocity': 0,
                 'command': AM8111Profile.SHUTDOWN
-            }                
+            }
+            self._severity = True
+        else:
+            self._severity = False
+
