@@ -93,7 +93,7 @@ class scheduleWorker(threading.Thread):
 class subscribeWorker(scheduleWorker):
 
     TOPIC = '/hot/ecat/value'
-    VERBOSE = 0
+    VERBOSE = 1
 
     _lock: Lock = Lock()
 

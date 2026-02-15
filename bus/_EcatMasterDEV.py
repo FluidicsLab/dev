@@ -165,7 +165,7 @@ class EcatMasterDEV(EcatMaster):
                 case "EL3124":
                     severity = self.severityEL3124(source, data, severity, config._raw[alias][pos])
                 case "EL7201":
-                    pass #severity = self.severityEL7201(source, data, severity, config._raw[alias][pos])
+                    severity = self.severityEL7201(source, data, severity, config._raw[alias][pos])
                 case _:
                     pass
         
@@ -280,4 +280,13 @@ class EcatMasterDEV(EcatMaster):
         EcatLogger.debug(f"done")
 
         return rc
+    
+    def configSeverity(self):
+        if self.SeverityLimit.enabled == 1:
+            config = self.SeverityLimit.config
+            # severity channel
+            for target in range(config.control.channel):
+                self.SeverityController.register(f"{config.control.item}.{target}", self.SeverityController.controlFunc)
+            # severity limit data reload
+            self.SeverityController.register(f"{config.control.item}.99")    
     

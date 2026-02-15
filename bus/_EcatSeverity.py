@@ -117,7 +117,7 @@ class EcatSeverityController:
         
         self._severity, _ = EcatSeverityController.create_(f"{self._id}", self._size)
 
-        EcatLogger.debug("- done")
+        EcatLogger.debug("done")
 
     def release(self):
 

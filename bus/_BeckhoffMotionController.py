@@ -3,6 +3,7 @@ import ctypes, time, struct
 from turtle import position
 from types import SimpleNamespace
 
+from matplotlib.pylab import poisson
 from narwhals import UInt32
 import pysoem
 import numpy as np
@@ -271,6 +272,16 @@ class AM8111Profile:
     SHUTDOWN                = '00000110'    # 0xxx x110 2,6,8
     SWITCH_ON               = '00000111'    # 0xxx 0111 3,5
     ENABLE_OPERATION        = '00001111'    # 0xx0 1111 4
+
+    control = ['10000000','00000110','00000111','00001111']
+    control_name = ['FAULT_RESET','SHUTDOWN','SWITCH_ON','ENABLE_OPERATION']
+
+    @staticmethod
+    def __control__(value):
+        for i,c in enumerate(AM8111Profile.control):
+            if int(value,2) == int(c,2):
+                return value, AM8111Profile.control_name[i]
+        return value, 'UNKNOWN'
     
     """
     status                                              control
@@ -488,7 +499,7 @@ class AM8111MotionController(BeckhoffMotionController):
     CYCLE_TIME = 10_000_000     # ns
 
     ENCODER_TURNBITS = [16,16]              # multiturn, singleturn; default 12,20
-    POSITION_OFFSET = [57_548, 0] # [24_780, 0]  # 0x17 uint32
+    POSITION_OFFSET = [57_548, 0]           # [24_780, 0]  # 0x17 uint32
         
     class RxMapEx:
         register = 0x1C12
@@ -608,7 +619,7 @@ class AM8111MotionController(BeckhoffMotionController):
             except Exception as ex:            
                 EcatLogger.error(f"{ex}")
     Mode = property(fget=_get_mode,fset=_set_mode)     
-
+    
     _velocityLimit = None # inc/s
     def _get_velocityLimit(self):
         if self._velocityLimit is None:
@@ -619,7 +630,7 @@ class AM8111MotionController(BeckhoffMotionController):
                 self._velocityLimit = np.int32(ver * msl / 60)
             except Exception as ex:
                 EcatLogger.error(f"{ex}")
-        return self._velocityLimit
+        return self._velocityLimit    
     VelocityLimit = property(fget=_get_velocityLimit)
 
     def _get_velocity(self):
@@ -633,7 +644,7 @@ class AM8111MotionController(BeckhoffMotionController):
         try:
             out = AM8111MotionController.RxMap()
             out.control = ctypes.c_uint16(int(self.ControlWord,2))
-            out.velocity = max(-self.VelocityLimit, min(self.VelocityLimit, ctypes.c_int32(value)))
+            out.velocity = max(-self.VelocityLimit, min(self.VelocityLimit, ctypes.c_int32(value)))            
             out.position = self.Position
             out.touchprobe = ctypes.c_uint16(int(self.TouchprobeWord,2))
             out.mode = self.Mode
@@ -641,6 +652,13 @@ class AM8111MotionController(BeckhoffMotionController):
         except Exception as ex:            
             EcatLogger.error(f"{ex}")
     Velocity = property(fset=_set_velocity,fget=_get_velocity)
+
+    _velocitySetpoint = None
+    def _get_velocitySetpoint(self):
+        return self._velocitySetpoint
+    def _set_velocitySetpoint(self,value):
+        self._velocitySetpoint = value
+    VelocitySetpoint = property(fget=_get_velocitySetpoint, fset=_set_velocitySetpoint)    
 
     def _get_positionLimit(self):
         return AM8111MotionController.UINT32_MAX
@@ -693,6 +711,13 @@ class AM8111MotionController(BeckhoffMotionController):
             EcatLogger.error(f"Position {ex}")
     Position = property(fget=_get_position, fset=_set_position)
 
+    _positionSetpoint = None
+    def _get_positionSetpoint(self):
+        return self._positionSetpoint
+    def _set_positionSetpoint(self,value):
+        self._positionSetpoint = value
+    PositionSetpoint = property(fget=_get_positionSetpoint, fset=_set_positionSetpoint)
+
     def _get_statusWord(self):
         try:
             buff = AM8111MotionController.TxMap.from_buffer_copy(self.Device.input)                
@@ -711,12 +736,26 @@ class AM8111MotionController(BeckhoffMotionController):
             return None
     def _set_controlWord(self, value):
         try:            
+
+            EcatLogger.info(f"control {AM8111Profile.__control__(value)}")
+
             out = AM8111MotionController.RxMap()
+            
             out.control = ctypes.c_uint16(int(value,2))
-            out.velocity = ctypes.c_int32(0)
-            out.position = self.Position     
+            
+            if self.Mode == AM8111ProfileMode.MODE_CSP:                
+                EcatLogger.info(f"CSP use SP {self.PositionSetpoint}")
+                if self.PositionSetpoint is not None:
+                    out.position = self.PositionSetpoint
+            
+            if self.Mode == AM8111ProfileMode.MODE_CSV:                
+                EcatLogger.info(f"CSV use SP {self.VelocitySetpoint}")
+                if self.VelocitySetpoint is not None:
+                    out.velocity = self.VelocitySetpoint        
+            
             out.touchprobe = ctypes.c_uint16(0)
             out.mode = self.Mode
+            
             self.write(out)            
         except Exception as ex:
             EcatLogger.error(f"{ex}")
@@ -894,6 +933,9 @@ class AM8111MotionController(BeckhoffMotionController):
 
             # position controller
             self.Device.sdo_write(0x8010, 0x17, bytes(ctypes.c_uint32(5)), ca)    # P (rad/s)/rad
+
+            # velocity limitation
+            # 0x8010 0x31 uint32
 
             # torque limitation
             self.Device.sdo_write(0x7010, 0x0B, bytes(ctypes.c_uint16(0x02)), ca)
@@ -1084,14 +1126,20 @@ class AM8111MotionController(BeckhoffMotionController):
 
                 if 'mode' in self._data.keys() and self._data['mode'] is not None:   
                     self.Mode = self._data['mode']
+                    if self.Mode != AM8111ProfileMode.MODE_CSP:
+                        self.PositionSetpoint = None
                     self._data['mode'] = None
 
                 if 'velocity' in self._data.keys() and self._data['velocity'] is not None:   
-                    self.Velocity = self._data['velocity']
+                    velocity = self._data['velocity']
+                    self.VelocitySetpoint = velocity
+                    self.Velocity = velocity
                     self._data['velocity'] = None
 
                 if 'position' in self._data.keys() and self._data['position'] is not None:   
-                    self.Position = AM8111ProfilePosition.merge(self._data['position'], self.Turnbits[1])
+                    position = AM8111ProfilePosition.merge(self._data['position'], self.Turnbits[1])
+                    self.PositionSetpoint = position
+                    self.Position = position
                     self._data['position'] = None
 
                 if 'touchprobe' in self._data.keys() and self._data['touchprobe'] is not None:
