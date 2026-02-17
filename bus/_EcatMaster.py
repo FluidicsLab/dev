@@ -983,13 +983,11 @@ class EcatMaster(EcatObject):
     _running = False
     
     def run(self):
-
         """
         ethercat master main intialization and running
         
         :param self: 
         """
-
         EcatLogger.debug("--- run")
 
         if not self.layoutCheck():

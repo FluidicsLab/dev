@@ -18,18 +18,33 @@ from _EcatStates import EcatStates
 
 class AM8111PidController(object):
 
-    _scaler = SimpleNamespace(**{
-        'input': { "low": 0, "high": 700 },          # bar   (pressure) 
-        'output': { "low": 0, "high": 24_185_993 }   # inc/s (velocity)
-    })
+    TIMEOUT_CONTROL = 0.25
+    FRACTION = 20
+    MODE_DEFAULT = 'p'
+
+    _scaler = {
+        'input': {
+            'p': { "low": 0, "high": 700 },     # bar   (pressure)         
+            'd': { "low": 0, "high": 1306460160 }   # cycle (distance)         
+        },
+        'output': { "low": 0, "high": 24_185_993 }  # inc/s (velocity)
+    }
 
     _lock: Lock = Lock()
     _exit = Event()
 
     _task: Thread = None
 
-    _processvalue = 0
-    _setpoint = 0
+    _processvalue = {}
+    _setpoint = {}
+
+    _mode = MODE_DEFAULT              # p,d
+    def _get_mode(self):
+        return self._mode
+    def _set_mode(self, value):
+        self.reset()
+        self._mode = value
+    Mode = property(fget=_get_mode,fset=_set_mode)
 
     _enabled = False
     def _get_enabled(self):
@@ -41,23 +56,32 @@ class AM8111PidController(object):
     _integral = []
 
     # Kp, Ki, Kd, dt
-    _params = [0.5, 0.001, 0.0001, 0.1]
+    _params = {
+        'p': [0.5, 0.001, 0.0001, 0.1],
+        'd': [0.8, 0.0, 0.0, 0.1]
+    }
+
+    _factor = {
+        'p': +1,
+        'd': -1
+    }
 
     _updatable = True
 
     _callback = None
 
-    _source = SimpleNamespace(**{
-        "name": None,
-        "addr": 0x00,
-        "key": None,
-        "low": 0,
-        "high": 0
-    })
-    def _set_source(self, value: dict):
-        self._source = SimpleNamespace(**value)
-        self._scaler.input["low"] = self._source.low
-        self._scaler.input["high"] = self._source.high
+    _source = []
+    def _set_source(self, values: list):
+        self._source = []
+        for value in values:
+            self._source.append(SimpleNamespace(**value))
+            self._scaler['input'][value['key']] = {
+                "low": value["low"], 
+                "high": value["high"]
+            }
+            self._processvalue[value['key']] = 0
+            self._setpoint[value['key']] = 0
+            
     def _get_source(self):
         return self._source
     Source = property(fset=_set_source, fget=_get_source)
@@ -74,31 +98,37 @@ class AM8111PidController(object):
     def config(self, config):
         self._lock.acquire()
         try:
-            EcatLogger.debug(f"    ++ update config {config}")
+            EcatLogger.debug(f"update config {config}")
+
+            if 'mode' in config.keys() and config['mode'] is not None:
+                self.Mode = config['mode']
 
             if 'setpoint' in config.keys() and config['setpoint'] is not None:
-                self._setpoint = config['setpoint']
-            if 'processvalue' in config.keys() and config['processvalue'] is not None:
-                pass
-                #self._updatable = False
-                #self._processvalue = config['processvalue']
+                self._setpoint[self.Mode] = config['setpoint']
+
+            if 'params' in config.keys() and config['params'] is not None:
+                self._params[self.Mode] = config['params'].copy()
+
             if 'enabled' in config.keys() and config['enabled'] is not None:
                 self._enabled = config['enabled']
+
             if 'reset' in config.keys():
                 self.reset()
-            if 'params' in config.keys() and config['params'] is not None:
-                self._params = config['params']
+                
             if 'updatable' in config.keys() and config['updatable'] is not None:
                 self._updatable = config['updatable']
-            
+
+            if 'processvalue' in config.keys() and config['processvalue'] is not None:
+                pass                
+
         finally:
             self._lock.release()
 
-    def update(self, value=None):
+    def update(self, key, value=None):
         self._lock.acquire()
         try:
             if value is not None:
-                self._processvalue = value
+                self._processvalue[key] = value
             else:
                 self._enabled = False
         finally:
@@ -108,14 +138,15 @@ class AM8111PidController(object):
         self._error = 0.0
         self._demand = 0.0
         self._integral = []
+        self._mode = AM8111PidController.MODE_DEFAULT
 
     def compute(self):
 
         def scale(value):
-            return (value - self._scaler.input['low']) / (self._scaler.input['high'] - self._scaler.input['low'])
+            return (value - self._scaler['input'][self._mode]['low']) / (self._scaler['input'][self._mode]['high'] - self._scaler['input'][self._mode]['low'])
         
         def unscale(value):
-            return self._scaler.output['low'] + (self._scaler.output['high'] - self._scaler.output['low']) * value
+            return self._scaler['output']['low'] + (self._scaler['output']['high'] - self._scaler['output']['low']) * value
 
         enabled = False
 
@@ -123,24 +154,26 @@ class AM8111PidController(object):
 
             if enabled and not self._enabled:
                 if self._callback is not None:
-                    self._callback(0)
+                    self._callback(None)
 
             if self._enabled:
 
                 self._lock.acquire()
                 try:
 
-                    sp = scale(self._setpoint)
-                    pv = scale(max(0, self._processvalue))
+                    sp = scale(self._setpoint[self.Mode])
+                    pv = scale(max(0, self._processvalue[self.Mode]))
 
-                    err = pv - sp
+                    err = (pv - sp) * self._factor[self.Mode]
 
-                    kp = self._params[0] * err
-                    ki = self._params[1] * err * self._params[3]
-                    kd = self._params[2] * (err - self._error) / self._params[3]
+                    params = self._params[self.Mode]
+
+                    kp = params[0] * err
+                    ki = params[1] * err * params[3]
+                    kd = params[2] * (err - self._error) / params[3]
 
                     self._integral.append(ki)                    
-                    while len(self._integral) > 20:
+                    while len(self._integral) > AM8111PidController.FRACTION:
                         self._integral.pop(0)
                     ki = sum(self._integral)
                     self._error = err
@@ -157,7 +190,7 @@ class AM8111PidController(object):
                 finally:
                     self._lock.release()
 
-            self._exit.wait(0.25)
+            self._exit.wait(AM8111PidController.TIMEOUT_CONTROL)
 
             enabled = self._enabled
 
@@ -232,6 +265,14 @@ class AM8111ProfilePosition:
                 return +1
         return 0        
     
+    @staticmethod
+    def sub(a, b, bits):
+        return AM8111ProfilePosition.merge(a, bits) - AM8111ProfilePosition.merge(b, bits)
+
+    @staticmethod
+    def add(a, b, bits):
+        return AM8111ProfilePosition.merge(a, bits) + AM8111ProfilePosition.merge(b, bits)    
+    
 
 class AM8111ProfileTorque:
 
@@ -266,6 +307,7 @@ class AM8111Profile:
     QUICK_STOP              = 32
     SWITCH_ON_DISABLED      = 64    # xxx0 xxxx x1xx 0000
     WARNING                 = 128
+    LIMIT_ACTIVE            = 2_048
 
     # control word LoByte
     FAULT_RESET             = '10000000'    # 1xxx xxxx 15
@@ -307,11 +349,11 @@ class AM8111Profile:
     
     status = [
         NOT_READY_TO_SWITCH_ON, READY_TO_SWITCH_ON, SWITCHED_ON, OPERATION_ENABLED, 
-        FAULT, QUICK_STOP, SWITCH_ON_DISABLED, WARNING]
+        FAULT, QUICK_STOP, SWITCH_ON_DISABLED, WARNING, LIMIT_ACTIVE]
     
     status_name = [
         'NOT_READ_TO_SWITCH_ON','READY_TO_SWITCH_ON', 'SWITCHED_ON', 'OPERATION_ENABLED', 
-        'FAULT', 'QUICK_STOP', 'SWITCH_ON_DISABLED', 'WARNING']
+        'FAULT', 'QUICK_STOP', 'SWITCH_ON_DISABLED', 'WARNING', 'LIMIT_ACTIVE']
     
     @staticmethod
     def __str__(state):
@@ -736,26 +778,13 @@ class AM8111MotionController(BeckhoffMotionController):
             return None
     def _set_controlWord(self, value):
         try:            
-
             EcatLogger.info(f"control {AM8111Profile.__control__(value)}")
-
             out = AM8111MotionController.RxMap()
-            
             out.control = ctypes.c_uint16(int(value,2))
-            
-            if self.Mode == AM8111ProfileMode.MODE_CSP:                
-                EcatLogger.info(f"CSP use SP {self.PositionSetpoint}")
-                if self.PositionSetpoint is not None:
-                    out.position = self.PositionSetpoint
-            
-            if self.Mode == AM8111ProfileMode.MODE_CSV:                
-                EcatLogger.info(f"CSV use SP {self.VelocitySetpoint}")
-                if self.VelocitySetpoint is not None:
-                    out.velocity = self.VelocitySetpoint        
-            
+            out.position = self.Position
+            out.velocity = self.Velocity
             out.touchprobe = ctypes.c_uint16(0)
             out.mode = self.Mode
-            
             self.write(out)            
         except Exception as ex:
             EcatLogger.error(f"{ex}")
@@ -824,27 +853,24 @@ class AM8111MotionController(BeckhoffMotionController):
         EcatLogger.debug(f"toggle    {self.Toggle}")
         EcatLogger.debug(f"offset    {AM8111ProfilePosition.split(self.PositionOffset, bits[1])} {self.PositionOffsetEnabled}")
 
-        EcatLogger.debug(f"invert fb {ctypes.c_bool.from_buffer_copy(self.Device.sdo_read(0x8000,0x01)).value}")
-        EcatLogger.debug(f"referencd {ctypes.c_bool.from_buffer_copy(self.Device.sdo_read(0x8000,0x02)).value}")
-
     _initialized = False
 
-    def initEx(self, source=None): 
+    def initEx(self, source=[]): 
         """                
         :param self: 
-        :param source: dict with keys like { terminal, address, key, low, high }
+        :param source: [] with dict with keys like { terminal, address, key, low, high }
         """
         if self._controller is not None:
-            self._controller.Source = source
+            self._controller.Source = source.copy()
 
     def _enablePdoAssignment(self, enable=False):
         try:
             if not enable:
-                # disable pdo mapping assignment
+                # DISABLE pdo mapping assignment
                 self.Device.sdo_write(AM8111MotionController.TxMapEx.register, 0, bytes(ctypes.c_uint8(0)))
                 self.Device.sdo_write(AM8111MotionController.RxMapEx.register, 0, bytes(ctypes.c_uint8(0))) 
             else:
-                # enable pdo mapping assignment
+                # ENABLE pdo mapping assignment
                 self.Device.sdo_write(AM8111MotionController.TxMapEx.register, 0, 
                                     bytes(ctypes.c_uint8(len(AM8111MotionController.TxMapEx.address))))
                 self.Device.sdo_write(AM8111MotionController.RxMapEx.register, 0, 
@@ -922,6 +948,7 @@ class AM8111MotionController(BeckhoffMotionController):
             self.Device.sdo_write(0x8011, 0x2B, bytes(ctypes.c_uint16(1200)), ca)   # motor temperature warn level 0.1°C    ~ 120°C
             self.Device.sdo_write(0x8011, 0x2C, bytes(ctypes.c_uint16(1400)), ca)   # motor temperature error level 0.1°C   ~ 140°C
             self.Device.sdo_write(0x8011, 0x2D, bytes(ctypes.c_uint16(5400)), ca)   # motor thermal time constant 0.1s      ~ 9min
+            self.Device.sdo_write(0x8010, 0x31, bytes(ctypes.c_uint32(262144)), ca)            
             
             # current controller
             self.Device.sdo_write(0x8010, 0x13, bytes(ctypes.c_uint16(177)), ca)    # P 0.1 V/A
@@ -932,10 +959,10 @@ class AM8111MotionController(BeckhoffMotionController):
             self.Device.sdo_write(0x8010, 0x14, bytes(ctypes.c_uint32(150)), ca)    # I 0.1 ms Tn   integral time
 
             # position controller
-            self.Device.sdo_write(0x8010, 0x17, bytes(ctypes.c_uint32(5)), ca)    # P (rad/s)/rad
+            self.Device.sdo_write(0x8010, 0x17, bytes(ctypes.c_uint32(5)), ca)      # P (rad/s)/rad
 
             # velocity limitation
-            # 0x8010 0x31 uint32
+            self.Device.sdo_write(0x8010, 0x31, bytes(ctypes.c_uint32(262_144)), ca) 
 
             # torque limitation
             self.Device.sdo_write(0x7010, 0x0B, bytes(ctypes.c_uint16(0x02)), ca)
@@ -956,10 +983,11 @@ class AM8111MotionController(BeckhoffMotionController):
             _ = self.TorqueConfig
             _ = self.TorqueLimit
 
-            _ = self.VelocityLimit         
 
-            self.Turnbits = AM8111MotionController.ENCODER_TURNBITS     # 0x13, 0x12   
+            self.Turnbits = AM8111MotionController.ENCODER_TURNBITS   
             _ = self.Turnbits
+
+            _ = self.VelocityLimit                     
 
             self.debug()
 
@@ -988,7 +1016,6 @@ class AM8111MotionController(BeckhoffMotionController):
             self.PositionOffsetEnabled = 0
             self.PositionOffset = AM8111MotionController.POSITION_OFFSET
             self.PositionOffsetEnabled = 2
-
             _ = self.PositionOffset
 
             self._initialized = True
@@ -1029,6 +1056,10 @@ class AM8111MotionController(BeckhoffMotionController):
                 'position': {
                     'raw': position,
                     'value': AM8111ProfilePosition.split(position, bits),
+                    'setpoint': {
+                        'raw': self.PositionSetpoint,
+                        'value': AM8111ProfilePosition.split(self.PositionSetpoint, bits) if self.PositionSetpoint is not None else None
+                    },
                     'offset': {
                         'raw': self.PositionOffset,
                         'value': AM8111ProfilePosition.split(self.PositionOffset, bits)
@@ -1036,7 +1067,8 @@ class AM8111MotionController(BeckhoffMotionController):
                 },
                 'velocity':{
                     'raw': buff.velocity,
-                    'limit': self.VelocityLimit
+                    'limit': self.VelocityLimit,
+                    'setpoint': self.VelocitySetpoint
                 },
                 'torque': {
                     'raw': buff.torque,
@@ -1082,6 +1114,9 @@ class AM8111MotionController(BeckhoffMotionController):
                 'transition': AM8111Profile.__transit__(int(status,2)),
                 'encoder': {
                     'bits': self.Turnbits
+                },
+                '0x01': {
+                    'd': position
                 }
             }
 
@@ -1126,20 +1161,16 @@ class AM8111MotionController(BeckhoffMotionController):
 
                 if 'mode' in self._data.keys() and self._data['mode'] is not None:   
                     self.Mode = self._data['mode']
-                    if self.Mode != AM8111ProfileMode.MODE_CSP:
-                        self.PositionSetpoint = None
                     self._data['mode'] = None
 
                 if 'velocity' in self._data.keys() and self._data['velocity'] is not None:   
-                    velocity = self._data['velocity']
-                    self.VelocitySetpoint = velocity
-                    self.Velocity = velocity
+                    self.VelocitySetpoint = self._data['velocity']
+                    self.Velocity = self.VelocitySetpoint
                     self._data['velocity'] = None
 
                 if 'position' in self._data.keys() and self._data['position'] is not None:   
-                    position = AM8111ProfilePosition.merge(self._data['position'], self.Turnbits[1])
-                    self.PositionSetpoint = position
-                    self.Position = position
+                    #self.PositionSetpoint = AM8111ProfilePosition.merge(self._data['position'], self.Turnbits[1])
+                    #self.Position = self.PositionSetpoint
                     self._data['position'] = None
 
                 if 'touchprobe' in self._data.keys() and self._data['touchprobe'] is not None:
@@ -1152,7 +1183,9 @@ class AM8111MotionController(BeckhoffMotionController):
                         enabled = self._controller.Enabled
                         self._controller.config(self._data['control'])   
                         if enabled and not self._controller.Enabled:
-                            self.Velocity = 0
+                            self.VelocitySetpoint = 0
+                            self.Velocity = self.VelocitySetpoint
+                            self.ControlWord = AM8111Profile.SWITCH_ON
                     self._data['control'] = None
 
         except Exception as ex:
@@ -1180,17 +1213,19 @@ class AM8111MotionController(BeckhoffMotionController):
         return rc
     
     def callback(self, *args):
-        if self._controller is not None and self._controller._updatable and self._controller.Source.name is not None:
+        if self._controller is not None and self._controller._updatable and len(self._controller.Source) != 0:
             name = f"{args[0]['name']}.{args[0]['index']}"
-            if name == self._controller.Source.name:
-                addr = self._controller.Source.addr
-                key = self._controller.Source.key
-                value = args[0]['value']['value']
-                if value:
-                    if addr in value.keys():
-                        data = value[addr]
-                        if key in data.keys():                    
-                            self._controller.update(data[key])                    
+            for source in self._controller.Source:
+                if name == source.name:
+                    addr = source.addr
+                    key = source.key
+                    if 'value' in list(args[0]['value']):
+                        value = args[0]['value']['value']
+                        if value:
+                            if addr in value.keys():
+                                data = value[addr]
+                                if key in data.keys():                    
+                                    self._controller.update(key, data[key])                    
 
     def controllerFunc(self, value):
         self._lock.acquire()

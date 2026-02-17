@@ -208,11 +208,15 @@ class EcatMasterDEV(EcatMaster):
 
                 self._beckhoffMotionController[pos] = AM8111MotionController(pos, slave, self.ProcessLock)
 
-                self._beckhoffMotionController[pos].initEx({ "name": "EL6021.3", "addr": 0x0B, "key": "p", "low": 0, "high": 700 })
+                self._beckhoffMotionController[pos].initEx(source=[
+                    { "key": "p", "name": "EL6021.3", "addr": 0x0B, "low": 0, "high": 700 },
+                    { "key": "d", "name": "EL7201.1", "addr": '0x01', "low": 0, "high": 1306460160 }
+                    ])
                 self._beckhoffMotionController[pos].initConfig()
 
-                self.SeverityController.register(f"EL7201.{pos}", self._beckhoffMotionController[pos].severityFunc)
+                self.SeverityController.register(f"EL7201.{pos}", self._beckhoffMotionController[pos].severityFunc)                
                 self.CallbackController.register(f"EL7201.{pos}", "EL6021.3", self._beckhoffMotionController[pos].callback)
+                self.CallbackController.register(f"EL7201.{pos}", f"EL7201.{pos}", self._beckhoffMotionController[pos].callback)
 
                 EcatLogger.debug(f"init EL7201 MotionController @ {pos}")
         
