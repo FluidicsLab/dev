@@ -25,28 +25,26 @@
         },
         "nodes": [
             "66907797f1f36832",
-            "8177435ea9354355",
             "99a2a8498b95bda2",
             "5ba8baf1e843ed74",
-            "a931e3fa73324adc"
+            "a931e3fa73324adc",
+            "36ce8ed036de6094",
+            "eb0a2398c727b230",
+            "84a7d2f76124e0ba",
+            "440d18902686122d"
         ],
         "x": 64,
-        "y": 509,
+        "y": 609,
         "w": 182,
-        "h": 162
+        "h": 212
     },
     {
         "id": "4fb0a43aba06e96a",
         "type": "group",
         "z": "b5a6b1728e41b187",
+        "name": "position",
         "style": {
-            "stroke": "#999999",
-            "stroke-opacity": "1",
-            "fill": "none",
-            "fill-opacity": "1",
-            "label": true,
-            "label-position": "nw",
-            "color": "#a4a4a4"
+            "label": true
         },
         "nodes": [
             "4a3db1ddef7aa9e6",
@@ -56,32 +54,6 @@
         ],
         "x": 64,
         "y": 249,
-        "w": 182,
-        "h": 122
-    },
-    {
-        "id": "ebd78cddcd1063f8",
-        "type": "group",
-        "z": "b5a6b1728e41b187",
-        "style": {
-            "stroke": "#999999",
-            "stroke-opacity": "1",
-            "fill": "none",
-            "fill-opacity": "1",
-            "label": true,
-            "label-position": "nw",
-            "color": "#a4a4a4"
-        },
-        "nodes": [
-            "9a478729e0489950",
-            "48c197d4100bbca7",
-            "2285dd7e20532192",
-            "8be3b39a6bb61cad",
-            "f16b5416b7c7f866",
-            "e55005b5f23dcb65"
-        ],
-        "x": 64,
-        "y": 379,
         "w": 182,
         "h": 122
     },
@@ -317,7 +289,7 @@
         "id": "a26ec72ae3802b75",
         "type": "ui_tab",
         "name": "drive",
-        "icon": "dashboard",
+        "icon": "settings_input_component",
         "order": 1,
         "disabled": false,
         "hidden": false
@@ -325,9 +297,10 @@
     {
         "id": "be8debe086d22ae9",
         "type": "ui_group",
+        "d": true,
         "name": "position",
         "tab": "a26ec72ae3802b75",
-        "order": 4,
+        "order": 9,
         "disp": false,
         "width": "15",
         "collapse": false,
@@ -338,7 +311,7 @@
         "type": "ui_group",
         "name": "velocity",
         "tab": "a26ec72ae3802b75",
-        "order": 5,
+        "order": 4,
         "disp": false,
         "width": "15",
         "collapse": false,
@@ -377,7 +350,7 @@
     {
         "id": "930073be26950e4a",
         "type": "ui_group",
-        "name": "status",
+        "name": "machine",
         "tab": "a26ec72ae3802b75",
         "order": 2,
         "disp": false,
@@ -403,10 +376,9 @@
     {
         "id": "a1eb8ecf83f023ab",
         "type": "ui_group",
-        "d": true,
         "name": "touch",
         "tab": "a26ec72ae3802b75",
-        "order": 8,
+        "order": 10,
         "disp": false,
         "width": "15",
         "collapse": false,
@@ -428,7 +400,7 @@
         "z": "b5a6b1728e41b187",
         "name": "spacer",
         "group": "a1eb8ecf83f023ab",
-        "order": 11,
+        "order": 4,
         "width": "1",
         "height": "1"
     },
@@ -437,7 +409,7 @@
         "type": "ui_group",
         "name": "control",
         "tab": "a26ec72ae3802b75",
-        "order": 6,
+        "order": 5,
         "disp": false,
         "width": "15",
         "collapse": false,
@@ -459,7 +431,7 @@
         "z": "b5a6b1728e41b187",
         "name": "spacer",
         "group": "382ba0e3898f6a9b",
-        "order": 6,
+        "order": 18,
         "width": "1",
         "height": "1"
     },
@@ -479,8 +451,8 @@
         "z": "b5a6b1728e41b187",
         "name": "spacer",
         "group": "a1eb8ecf83f023ab",
-        "order": 7,
-        "width": "1",
+        "order": 3,
+        "width": "8",
         "height": "1"
     },
     {
@@ -499,7 +471,7 @@
         "z": "b5a6b1728e41b187",
         "name": "spacer",
         "group": "a1eb8ecf83f023ab",
-        "order": 13,
+        "order": 10,
         "width": "1",
         "height": "1"
     },
@@ -524,22 +496,12 @@
         "height": "1"
     },
     {
-        "id": "1e1e74cdc908d359",
-        "type": "ui_spacer",
-        "z": "b5a6b1728e41b187",
-        "name": "spacer",
-        "group": "382ba0e3898f6a9b",
-        "order": 4,
-        "width": "3",
-        "height": "1"
-    },
-    {
         "id": "0de429ecfbfdc27c",
         "type": "ui_spacer",
         "z": "b5a6b1728e41b187",
         "name": "spacer",
         "group": "a1eb8ecf83f023ab",
-        "order": 8,
+        "order": 9,
         "width": "2",
         "height": "1"
     },
@@ -549,7 +511,7 @@
         "d": true,
         "name": "torque",
         "tab": "a26ec72ae3802b75",
-        "order": 9,
+        "order": 7,
         "disp": false,
         "width": "15",
         "collapse": false,
@@ -633,7 +595,7 @@
         "name": "spacer",
         "group": "21661f8f0d46b6dd",
         "order": 4,
-        "width": "4",
+        "width": "5",
         "height": "1"
     },
     {
@@ -682,7 +644,7 @@
         "type": "ui_group",
         "name": "valve",
         "tab": "a26ec72ae3802b75",
-        "order": 7,
+        "order": 6,
         "disp": false,
         "width": "15",
         "collapse": false,
@@ -719,22 +681,93 @@
         "height": 1
     },
     {
-        "id": "21c1e304c675451f",
+        "id": "340c63244d174e35",
+        "type": "ui_group",
+        "name": "debug",
+        "tab": "a26ec72ae3802b75",
+        "order": 8,
+        "disp": false,
+        "width": "15",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "3bcabca358d8af2d",
         "type": "ui_spacer",
         "z": "b5a6b1728e41b187",
         "name": "spacer",
-        "group": "930073be26950e4a",
+        "group": "340c63244d174e35",
         "order": 1,
+        "width": "1",
+        "height": "1"
+    },
+    {
+        "id": "ccae9ffcf363eea3",
+        "type": "ui_spacer",
+        "z": "b5a6b1728e41b187",
+        "name": "spacer",
+        "group": "44a7e842f264b1d2",
+        "order": 10,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "6784c02631d6c3f7",
+        "type": "ui_spacer",
+        "z": "b5a6b1728e41b187",
+        "name": "spacer",
+        "group": "382ba0e3898f6a9b",
+        "order": 8,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "cb8d4d856b881dae",
+        "type": "ui_spacer",
+        "z": "b5a6b1728e41b187",
+        "name": "spacer",
+        "group": "382ba0e3898f6a9b",
+        "order": 13,
         "width": "2",
         "height": "1"
     },
     {
-        "id": "2a317f986ddec2b7",
+        "id": "29963b67c97265d7",
         "type": "ui_spacer",
         "z": "b5a6b1728e41b187",
         "name": "spacer",
-        "group": "930073be26950e4a",
-        "order": 3,
+        "group": "382ba0e3898f6a9b",
+        "order": 17,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "51d856faa61fe78e",
+        "type": "ui_spacer",
+        "z": "b5a6b1728e41b187",
+        "name": "spacer",
+        "group": "382ba0e3898f6a9b",
+        "order": 7,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "522101b94bed588b",
+        "type": "ui_spacer",
+        "z": "b5a6b1728e41b187",
+        "name": "spacer",
+        "group": "44a7e842f264b1d2",
+        "order": 12,
+        "width": "1",
+        "height": "1"
+    },
+    {
+        "id": "fe8b81abd9dca303",
+        "type": "ui_spacer",
+        "z": "b5a6b1728e41b187",
+        "name": "spacer",
+        "group": "44a7e842f264b1d2",
+        "order": 11,
         "width": 1,
         "height": 1
     },
@@ -885,38 +918,8 @@
                 "vt": "flow"
             },
             {
-                "p": "status.value",
-                "v": "7201.1.value.status.value",
-                "vt": "flow"
-            },
-            {
-                "p": "status.text",
-                "v": "7201.1.value.status.text",
-                "vt": "flow"
-            },
-            {
-                "p": "info",
-                "v": "7201.1.value.info",
-                "vt": "flow"
-            },
-            {
-                "p": "touch",
-                "v": "7201.1.value.touch",
-                "vt": "flow"
-            },
-            {
-                "p": "torque",
-                "v": "7201.1.value.torque",
-                "vt": "flow"
-            },
-            {
                 "p": "mode",
                 "v": "7201.1.value.mode",
-                "vt": "flow"
-            },
-            {
-                "p": "severity",
-                "v": "severity",
                 "vt": "flow"
             }
         ],
@@ -930,15 +933,7 @@
         "wires": [
             [
                 "4a3db1ddef7aa9e6",
-                "8177435ea9354355",
-                "9a478729e0489950",
-                "2f26017bc61e59c5",
-                "4183e846bbe6bd50",
-                "6e1978dee374efee",
-                "3210d3dd8a53066c",
-                "29657fdb4e7be575",
-                "36ce8ed036de6094",
-                "e55005b5f23dcb65"
+                "29657fdb4e7be575"
             ]
         ],
         "l": false
@@ -970,11 +965,16 @@
                 "t": "eq",
                 "v": "enable_operation",
                 "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "disable_voltage",
+                "vt": "str"
             }
         ],
         "checkall": "true",
         "repair": false,
-        "outputs": 4,
+        "outputs": 5,
         "x": 525,
         "y": 260,
         "wires": [
@@ -989,6 +989,10 @@
             ],
             [
                 "0511fbe2a3090b13"
+            ],
+            [
+                "2fedd0cf2b915cb6",
+                "6389ff0c7c82f821"
             ]
         ],
         "l": false
@@ -1182,7 +1186,7 @@
         "y": 540,
         "wires": [
             [
-                "e2196149986cee61"
+                "977f3166c306f0e6"
             ],
             [
                 "9d71bce7e2152e14"
@@ -1210,7 +1214,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 550,
+        "y": 650,
         "wires": [],
         "l": false
     },
@@ -1237,32 +1241,9 @@
         "l": false
     },
     {
-        "id": "8177435ea9354355",
-        "type": "rbe",
-        "z": "b5a6b1728e41b187",
-        "g": "b62dea44680ac95a",
-        "name": "velocity",
-        "func": "rbe",
-        "gap": "",
-        "start": "",
-        "inout": "out",
-        "septopics": true,
-        "property": "velocity",
-        "topi": "topic",
-        "x": 105,
-        "y": 550,
-        "wires": [
-            [
-                "66907797f1f36832"
-            ]
-        ],
-        "l": false
-    },
-    {
         "id": "9a478729e0489950",
         "type": "rbe",
         "z": "b5a6b1728e41b187",
-        "g": "ebd78cddcd1063f8",
         "name": "status",
         "func": "rbe",
         "gap": "",
@@ -1289,7 +1270,7 @@
         "order": 1,
         "width": "1",
         "height": "1",
-        "format": "\n<style>\n\n.drive-position p.value { font-size:150%;color:#536878; }\n\n.drive-status p.value { font-size:100%;color:gray; }\n.drive-status-text p.label { font-size:100%;color:gray; }\n\n.drive-probe-value p.value { font-size:150%;color:gray; }\n\n.drive-raw p.label { font-size:100%;color:gray; }\n.drive-current p.label { font-size:100%;color:gray; }\n\n.drive-info1-text p.label { font-size:100%; background-color:#800000; padding:8px; }\n.drive-info1-text p.value { font-size:100%; background-color:transparent; }\n\n.drive-info2-text p.label { font-size:100%; background-color:#996515; padding:8px; }\n.drive-info2-text p.value { font-size:100%; background-color:transparent; }\n\n.drive-severity p.label { font-size:100%;color:gray; }\n\n.drive-processvalue p.label { font-size:150%;color:gray; }\n.drive-setpoint { font-size:150%; text-align:right; }\n\n.drive-label p.label { color:gray; }\n.drive-value-label p.value { color:gray; }\n\n.drive-mode p.value { color:gray; }\n\n#drive_mode md-card     { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_status md-card   { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_position md-card { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_velocity md-card { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_control md-card  { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_touch md-card    { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_torque md-card   { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_label md-card   { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\ninput[type=\"number\"] { text-align: right; background-color:#536878; }\ninput[type=\"number\"]:disabled { background-color: #3e4e5a; color: #888; opacity: 0.7; }\n\n\n</style>",
+        "format": "\n<style>\n\n.drive-position p.value { font-size:150%;color:#536878; }\n\n.drive-status p.value { font-size:100%;color:gray; }\n.drive-status-text p.label { font-size:100%;color:gray; }\n\n.drive-probe-value p.label { font-size:150%;color:gray; }\n\n.drive-setpoint-label p.label { font-size:100%;color:gray; }\n\n.drive-raw p.label { font-size:100%;color:gray; }\n.drive-current p.label { font-size:100%;color:gray; }\n\n.drive-info1-text p.label { font-size:100%; background-color:#800000; padding:8px; }\n.drive-info1-text p.value { font-size:100%; background-color:transparent; }\n\n.drive-info2-text p.label { font-size:100%; background-color:#996515; padding:8px; }\n.drive-info2-text p.value { font-size:100%; background-color:transparent; }\n\n.drive-severity p.label { font-size:100%;color:gray; }\n\n.drive-processvalue p.label { font-size:150%;color:gray; }\n.drive-setpoint { font-size:150%; text-align:right; }\n\n.drive-label p.label { color:gray; }\n.drive-value-label p.value { color:gray; }\n\n.drive-mode p.value { color:gray; }\n\n#drive_mode md-card     { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_machine md-card   { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n#drive_debug md-card    { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_position md-card { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_velocity md-card { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_control md-card  { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_torque md-card   { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_label md-card   { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_touch md-card { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n\ninput[type=\"number\"] { text-align: right; background-color:#536878; }\ninput[type=\"number\"]:disabled { background-color: #3e4e5a; color: #888; opacity: 0.7; }\n\n</style>",
         "storeOutMessages": false,
         "fwdInMessages": false,
         "resendOnRefresh": false,
@@ -1306,7 +1287,7 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "scope",
-        "func": "\nlet drive = flow.get(\"7201.1.value\");\nlet presssure = flow.get(\"6021.3.value.11\");\nlet distance = flow.get(\"3124.4.value\");\n\nlet fxl = flow.get(\"fxl\");\n\nreturn {\n    topic: 'scope',\n    measurement: 'am8111',\n    payload: [\n        {\n            mode: drive.mode.value,\n            \n            position: drive.position.raw,\n            mtb: drive.position.value[0],\n            stb: drive.position.value[1],\n            \n            velocity: drive.velocity.raw, \n            speed: fxl.incs2mulmin(drive.velocity.raw),\n\n            torque: drive.torque.value,\n            \n            pressure: presssure.p,\n            temperature: presssure.T,\n\n            distance: distance[0],\n\n            pp1: drive.touch.probe1.positive.raw,\n            pp2: drive.touch.probe2.positive.raw,\n        },\n        {\n            addr: 1,\n            tag: \"develop\"\n        }\n    ]\n};",
+        "func": "\nlet drive = flow.get(\"7201.1.value\");\nlet presssure = flow.get(\"6021.3.value.11\");\nlet distance = flow.get(\"3124.4.value\");\n\nlet fxl = flow.get(\"fxl\");\n\nlet ctrl = flow.get(\"control\");\n\nreturn {\n    topic: 'scope',\n    measurement: 'am8111',\n    payload: [\n        {\n            mode: drive.mode.value,\n            \n            position: drive.position.raw,\n            positionsetpoint: ctrl.d.setpoint,\n            mtb: drive.position.value[0],\n            stb: drive.position.value[1],\n            \n            velocity: drive.velocity.raw, \n            velocitysetpoint: drive.velocity.setpoint, \n            speed: fxl.incs2mulmin(drive.velocity.raw),\n\n            torque: drive.torque.value,\n            \n            pressure: presssure.p,\n            temperature: presssure.T,\n\n            distance: distance[0],\n\n            pp1: drive.touch.probe1.positive.raw,\n            pp2: drive.touch.probe2.positive.raw,\n        },\n        {\n            addr: 1,\n            tag: \"develop\"\n        }\n    ]\n};",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -1397,29 +1378,6 @@
         "l": false
     },
     {
-        "id": "978de381fa36e44b",
-        "type": "function",
-        "z": "b5a6b1728e41b187",
-        "name": "",
-        "func": "\nlet delay = 0;\nlet crono = 400; // ms\n\nlet status = flow.get(\"7201.1.value.status.text\").split(\",\");\n\nlet cc = ['fault_reset', 'shutdown', 'switch_on', 'enable_operation'];\n\nif (status.includes(\"OPERATION_ENABLED\")) {\n    cc = ['shutdown'];\n}\n\ncc.forEach(function(command) {\n\n    node.send(\n        [\n            {\n                topic: 'enable',\n                payload: command,\n                delay: delay\n            },\n            null\n        ]\n    );\n\n    delay += crono;\n\n});\n\nnode.send(\n    [\n        null,\n        {\n            topic: 'enable',            \n            payload: 0,\n            delay: crono * cc.length\n        }\n    ]\n);\n\n\nnode.done();",
-        "outputs": 2,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 425,
-        "y": 280,
-        "wires": [
-            [
-                "e98d382643183184"
-            ],
-            [
-                "3364b5bc39607710"
-            ]
-        ],
-        "l": false
-    },
-    {
         "id": "e98d382643183184",
         "type": "delay",
         "z": "b5a6b1728e41b187",
@@ -1446,172 +1404,16 @@
         "l": false
     },
     {
-        "id": "49673d894daf0182",
-        "type": "inject",
-        "z": "b5a6b1728e41b187",
-        "name": "",
-        "props": [
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": true,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "0",
-        "payloadType": "num",
-        "x": 375,
-        "y": 350,
-        "wires": [
-            [
-                "5efe23c9b9b718eb"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "5efe23c9b9b718eb",
-        "type": "ui_switch",
-        "z": "b5a6b1728e41b187",
-        "name": "enable",
-        "label": "",
-        "tooltip": "",
-        "group": "930073be26950e4a",
-        "order": 5,
-        "width": "1",
-        "height": "1",
-        "passthru": true,
-        "decouple": "false",
-        "topic": "enable",
-        "topicType": "str",
-        "style": "",
-        "onvalue": "1",
-        "onvalueType": "num",
-        "onicon": "power_settings_new",
-        "oncolor": "#c90000",
-        "offvalue": "0",
-        "offvalueType": "num",
-        "officon": "power_settings_new",
-        "offcolor": "#888",
-        "animate": false,
-        "className": "",
-        "x": 475,
-        "y": 350,
-        "wires": [
-            [
-                "7360cad9cd3db0f8"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "3364b5bc39607710",
-        "type": "delay",
-        "z": "b5a6b1728e41b187",
-        "name": "",
-        "pauseType": "delayv",
-        "timeout": "100",
-        "timeoutUnits": "milliseconds",
-        "rate": "1",
-        "nbRateUnits": "1",
-        "rateUnits": "second",
-        "randomFirst": "1",
-        "randomLast": "5",
-        "randomUnits": "seconds",
-        "drop": false,
-        "allowrate": false,
-        "outputs": 1,
-        "x": 475,
-        "y": 300,
-        "wires": [
-            [
-                "5efe23c9b9b718eb"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "7360cad9cd3db0f8",
-        "type": "switch",
-        "z": "b5a6b1728e41b187",
-        "name": "",
-        "property": "payload",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "eq",
-                "v": "1",
-                "vt": "num"
-            }
-        ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 1,
-        "x": 375,
-        "y": 280,
-        "wires": [
-            [
-                "978de381fa36e44b"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "898431432a8378d4",
-        "type": "ui_text",
-        "z": "b5a6b1728e41b187",
-        "group": "a1eb8ecf83f023ab",
-        "order": 12,
-        "width": "14",
-        "height": "1",
-        "name": "touch.status",
-        "label": "{{msg.touch.status.text}}",
-        "format": "",
-        "layout": "row-right",
-        "className": "drive-status-text",
-        "style": false,
-        "font": "",
-        "fontSize": 16,
-        "color": "#000000",
-        "x": 205,
-        "y": 910,
-        "wires": [],
-        "l": false
-    },
-    {
-        "id": "2f26017bc61e59c5",
-        "type": "rbe",
-        "z": "b5a6b1728e41b187",
-        "name": "touch.status",
-        "func": "rbe",
-        "gap": "",
-        "start": "",
-        "inout": "out",
-        "septopics": true,
-        "property": "touch",
-        "topi": "topic",
-        "x": 105,
-        "y": 910,
-        "wires": [
-            [
-                "898431432a8378d4"
-            ]
-        ],
-        "l": false
-    },
-    {
         "id": "a7631aaf7e28b4cf",
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
         "group": "a1eb8ecf83f023ab",
-        "order": 6,
+        "order": 8,
         "width": "4",
         "height": "1",
         "name": "probe2.positive.value",
-        "label": "",
-        "format": "{{msg.payload}}",
+        "label": "{{msg.payload}}",
+        "format": "",
         "layout": "row-right",
         "className": "drive-probe-value",
         "style": false,
@@ -1619,7 +1421,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 1050,
+        "y": 1080,
         "wires": [],
         "l": false
     },
@@ -1636,11 +1438,11 @@
         "property": "touch.probe2",
         "topi": "topic",
         "x": 105,
-        "y": 1050,
+        "y": 1080,
         "wires": [
             [
                 "bcb00cef56537eb6",
-                "fe50cff46e522a37"
+                "09739450676129cb"
             ]
         ],
         "l": false
@@ -1665,7 +1467,7 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 1050,
+        "y": 1080,
         "wires": [
             [
                 "a7631aaf7e28b4cf"
@@ -1678,12 +1480,12 @@
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
         "group": "a1eb8ecf83f023ab",
-        "order": 4,
+        "order": 6,
         "width": "4",
         "height": "1",
         "name": "probe1.positive.value",
-        "label": "",
-        "format": "{{msg.payload}}",
+        "label": "{{msg.payload}}",
+        "format": "",
         "layout": "row-right",
         "className": "drive-probe-value",
         "style": false,
@@ -1691,7 +1493,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 960,
+        "y": 990,
         "wires": [],
         "l": false
     },
@@ -1715,314 +1517,10 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 960,
+        "y": 990,
         "wires": [
             [
                 "1e1c1779341c0dc9"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "735f6ff0bddc9d41",
-        "type": "function",
-        "z": "b5a6b1728e41b187",
-        "name": "",
-        "func": "\nlet delay = 0;\nlet crono = 200; // ms\n\nif ('touch' == msg.topic) {\n\n    ['enable', 'continous','positive','negative'].forEach(function(command) {\n\n        node.send(\n            [\n                {\n                    topic: 'command',\n                    payload: command,\n                    delay: delay\n                },\n                null\n            ]\n        );\n\n        delay += crono;\n\n    });\n\n    node.send(\n        [\n            null,\n            {\n                topic: 'enable',            \n                payload: 0,\n                delay: crono * 4\n            }\n        ]\n    );\n\n}\n\nnode.done();",
-        "outputs": 4,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 425,
-        "y": 870,
-        "wires": [
-            [
-                "eee783393767bed6"
-            ],
-            [
-                "1257d1d2f442364d"
-            ],
-            [
-                "774019fc732a892c"
-            ],
-            [
-                "ce01f737cef7f45e"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "527333e84de10206",
-        "type": "switch",
-        "z": "b5a6b1728e41b187",
-        "name": "",
-        "property": "payload",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "eq",
-                "v": "1",
-                "vt": "num"
-            }
-        ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 1,
-        "x": 375,
-        "y": 870,
-        "wires": [
-            [
-                "735f6ff0bddc9d41"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "47c7bc94d12fc0a9",
-        "type": "ui_switch",
-        "z": "b5a6b1728e41b187",
-        "name": "touch.drive",
-        "label": "",
-        "tooltip": "",
-        "group": "a1eb8ecf83f023ab",
-        "order": 2,
-        "width": "1",
-        "height": "1",
-        "passthru": true,
-        "decouple": "false",
-        "topic": "touch",
-        "topicType": "str",
-        "style": "",
-        "onvalue": "1",
-        "onvalueType": "num",
-        "onicon": "touch_app",
-        "oncolor": "#c90000",
-        "offvalue": "0",
-        "offvalueType": "num",
-        "officon": "touch_app",
-        "offcolor": "#888",
-        "animate": false,
-        "className": "",
-        "x": 475,
-        "y": 970,
-        "wires": [
-            [
-                "527333e84de10206"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "eee783393767bed6",
-        "type": "delay",
-        "z": "b5a6b1728e41b187",
-        "name": "",
-        "pauseType": "delayv",
-        "timeout": "100",
-        "timeoutUnits": "milliseconds",
-        "rate": "1",
-        "nbRateUnits": "1",
-        "rateUnits": "second",
-        "randomFirst": "1",
-        "randomLast": "5",
-        "randomUnits": "seconds",
-        "drop": false,
-        "allowrate": false,
-        "outputs": 1,
-        "x": 475,
-        "y": 810,
-        "wires": [
-            [
-                "d20a59b730bb767d"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "1257d1d2f442364d",
-        "type": "delay",
-        "z": "b5a6b1728e41b187",
-        "name": "",
-        "pauseType": "delayv",
-        "timeout": "100",
-        "timeoutUnits": "milliseconds",
-        "rate": "1",
-        "nbRateUnits": "1",
-        "rateUnits": "second",
-        "randomFirst": "1",
-        "randomLast": "5",
-        "randomUnits": "seconds",
-        "drop": false,
-        "allowrate": false,
-        "outputs": 1,
-        "x": 475,
-        "y": 850,
-        "wires": [
-            [
-                "47c7bc94d12fc0a9"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "d20a59b730bb767d",
-        "type": "switch",
-        "z": "b5a6b1728e41b187",
-        "name": "",
-        "property": "payload",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "eq",
-                "v": "enable",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "continous",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "positive",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "negative",
-                "vt": "str"
-            }
-        ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 4,
-        "x": 525,
-        "y": 810,
-        "wires": [
-            [
-                "c486bbeba52a159f"
-            ],
-            [
-                "55e19b54604c90fc"
-            ],
-            [
-                "33f7ad48ac161760"
-            ],
-            [
-                "41bd8c056e6ff73b"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "c486bbeba52a159f",
-        "type": "change",
-        "z": "b5a6b1728e41b187",
-        "name": "enable",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload",
-                "pt": "msg",
-                "to": "{ \"touchprobe\": \"00000001\" }",
-                "tot": "str"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 575,
-        "y": 750,
-        "wires": [
-            [
-                "e2196149986cee61"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "55e19b54604c90fc",
-        "type": "change",
-        "z": "b5a6b1728e41b187",
-        "name": "continous",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload",
-                "pt": "msg",
-                "to": "{ \"touchprobe\": \"00000011\" }",
-                "tot": "str"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 575,
-        "y": 790,
-        "wires": [
-            [
-                "e2196149986cee61"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "33f7ad48ac161760",
-        "type": "change",
-        "z": "b5a6b1728e41b187",
-        "name": "positive",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload",
-                "pt": "msg",
-                "to": "{ \"touchprobe\": \"00010011\" }",
-                "tot": "str"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 575,
-        "y": 830,
-        "wires": [
-            [
-                "e2196149986cee61"
-            ]
-        ],
-        "l": false
-    },
-    {
-        "id": "41bd8c056e6ff73b",
-        "type": "change",
-        "z": "b5a6b1728e41b187",
-        "name": "negative",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload",
-                "pt": "msg",
-                "to": "{ \"touchprobe\": \"0011001100110011\" }",
-                "tot": "str"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 575,
-        "y": 870,
-        "wires": [
-            [
-                "e2196149986cee61"
             ]
         ],
         "l": false
@@ -2038,23 +1536,23 @@
         "order": 2,
         "width": "1",
         "height": "1",
-        "passthru": false,
+        "passthru": true,
         "decouple": "false",
-        "topic": "enabled",
+        "topic": "p.enabled",
         "topicType": "str",
         "style": "",
         "onvalue": "1",
         "onvalueType": "num",
-        "onicon": "tune",
+        "onicon": "fa-square",
         "oncolor": "#4682b4",
         "offvalue": "0",
         "offvalueType": "num",
-        "officon": "tune",
+        "officon": "fa-square-o",
         "offcolor": "#888",
         "animate": false,
         "className": "",
         "x": 475,
-        "y": 1030,
+        "y": 760,
         "wires": [
             [
                 "627cbaa5197821b9"
@@ -2067,19 +1565,20 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "control",
-        "func": "\nflow.set(\"control.\" + msg.topic, msg.payload);\nlet ctrl = flow.get(\"control\");\nlet keys = Object.keys(ctrl);\nif (keys.includes('enabled') && keys.includes('setpoint')) {\n    msg.payload = '{ \"control\": ' + JSON.stringify(ctrl) + (!ctrl['enabled'] ? ', \"velocity\": 0' : '') + ' }';\n    return msg;\n}\n\nreturn null;",
+        "func": "\nflow.set(\"control.\" + msg.topic, msg.payload);\n\nlet mode = 'p';\n\nlet ctrl = flow.get(\"control.\" + mode);\nctrl['mode'] = mode;\nlet keys = Object.keys(ctrl);\nif (keys.includes('enabled') && keys.includes('setpoint')) {\n    msg.payload = '{ \"control\": ' + JSON.stringify(ctrl) + (!ctrl['enabled'] ? ', \"velocity\": 0' : '') + ' }';\n    return msg;\n}\n\nreturn null;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 525,
-        "y": 1030,
+        "y": 760,
         "wires": [
             [
-                "e2196149986cee61"
+                "85bd718958dd9639"
             ]
         ],
+        "icon": "font-awesome/fa-calculator",
         "l": false
     },
     {
@@ -2090,21 +1589,21 @@
         "label": "",
         "tooltip": "",
         "group": "382ba0e3898f6a9b",
-        "order": 5,
+        "order": 6,
         "width": "3",
         "height": "1",
         "passthru": false,
         "mode": "number",
         "delay": "0",
-        "topic": "setpoint",
+        "topic": "p.setpoint",
         "sendOnBlur": false,
         "className": "drive-setpoint",
         "topicType": "str",
         "x": 475,
-        "y": 1070,
+        "y": 800,
         "wires": [
             [
-                "627cbaa5197821b9"
+                "2785fb6e08812231"
             ]
         ],
         "l": false
@@ -2154,54 +1653,6 @@
         "l": false
     },
     {
-        "id": "774019fc732a892c",
-        "type": "delay",
-        "z": "b5a6b1728e41b187",
-        "name": "",
-        "pauseType": "delayv",
-        "timeout": "100",
-        "timeoutUnits": "milliseconds",
-        "rate": "1",
-        "nbRateUnits": "1",
-        "rateUnits": "second",
-        "randomFirst": "1",
-        "randomLast": "5",
-        "randomUnits": "seconds",
-        "drop": false,
-        "allowrate": false,
-        "outputs": 1,
-        "x": 475,
-        "y": 890,
-        "wires": [
-            []
-        ],
-        "l": false
-    },
-    {
-        "id": "ce01f737cef7f45e",
-        "type": "delay",
-        "z": "b5a6b1728e41b187",
-        "name": "",
-        "pauseType": "delayv",
-        "timeout": "100",
-        "timeoutUnits": "milliseconds",
-        "rate": "1",
-        "nbRateUnits": "1",
-        "rateUnits": "second",
-        "randomFirst": "1",
-        "randomLast": "5",
-        "randomUnits": "seconds",
-        "drop": false,
-        "allowrate": false,
-        "outputs": 1,
-        "x": 475,
-        "y": 930,
-        "wires": [
-            []
-        ],
-        "l": false
-    },
-    {
         "id": "7808f1d3333250c7",
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
@@ -2209,7 +1660,7 @@
         "order": 3,
         "width": "6",
         "height": "1",
-        "name": "processvalue.current",
+        "name": "pressure.processvalue",
         "label": "{{msg.payload}}",
         "format": "",
         "layout": "row-right",
@@ -2219,7 +1670,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 475,
-        "y": 1130,
+        "y": 870,
         "wires": [],
         "l": false
     },
@@ -2241,7 +1692,7 @@
         "payload": "6021.3.value.11",
         "payloadType": "flow",
         "x": 375,
-        "y": 1130,
+        "y": 870,
         "wires": [
             [
                 "5c6162453e753c5a"
@@ -2253,7 +1704,7 @@
         "id": "5c6162453e753c5a",
         "type": "rbe",
         "z": "b5a6b1728e41b187",
-        "name": "touch.probe2",
+        "name": "",
         "func": "rbe",
         "gap": "",
         "start": "",
@@ -2262,7 +1713,7 @@
         "property": "payload",
         "topi": "topic",
         "x": 425,
-        "y": 1170,
+        "y": 910,
         "wires": [
             [
                 "dfc6db35f08f7034"
@@ -2283,11 +1734,11 @@
         "property": "touch.probe1",
         "topi": "topic",
         "x": 105,
-        "y": 960,
+        "y": 990,
         "wires": [
             [
                 "6dc79222b128bb79",
-                "6ea1dbece45cdab8"
+                "32b66002a250352f"
             ]
         ],
         "l": false
@@ -2297,7 +1748,7 @@
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
         "group": "a1eb8ecf83f023ab",
-        "order": 3,
+        "order": 5,
         "width": "2",
         "height": "1",
         "name": "probe1.label",
@@ -2319,7 +1770,7 @@
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
         "group": "a1eb8ecf83f023ab",
-        "order": 5,
+        "order": 7,
         "width": "2",
         "height": "1",
         "name": "probe2.label",
@@ -2356,7 +1807,7 @@
         "to": "",
         "reg": false,
         "x": 425,
-        "y": 1130,
+        "y": 870,
         "wires": [
             [
                 "7808f1d3333250c7"
@@ -2391,11 +1842,11 @@
         "id": "50efb4fbe5af34a0",
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
-        "group": "be8debe086d22ae9",
-        "order": 7,
+        "group": "44a7e842f264b1d2",
+        "order": 13,
         "width": "6",
         "height": "1",
-        "name": "position.processvalue.current",
+        "name": "laser.position",
         "label": "{{msg.payload}}",
         "format": "",
         "layout": "row-right",
@@ -2405,7 +1856,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 475,
-        "y": 480,
+        "y": 1300,
         "wires": [],
         "l": false
     },
@@ -2424,10 +1875,10 @@
         "once": true,
         "onceDelay": 0.1,
         "topic": "",
-        "payload": "3124.4.value.0",
+        "payload": "3124.4.value.1",
         "payloadType": "flow",
         "x": 365,
-        "y": 480,
+        "y": 1300,
         "wires": [
             [
                 "b1c8185d8f2b1d1c"
@@ -2448,7 +1899,7 @@
         "property": "payload",
         "topi": "topic",
         "x": 425,
-        "y": 440,
+        "y": 1340,
         "wires": [
             [
                 "1957066fd8af883f"
@@ -2460,18 +1911,19 @@
         "id": "1957066fd8af883f",
         "type": "function",
         "z": "b5a6b1728e41b187",
-        "name": "position",
-        "func": "\nlet fxl = flow.get(\"fxl\");\n\nmsg.payload = Number(fxl.amp2cm(msg.payload) * 10).toFixed(3) + \"mm (\" + Number(msg.payload).toFixed(1) + \"mA)\";\n\nreturn msg;",
+        "name": "laser.position",
+        "func": "\nlet fxl = flow.get(\"fxl\");\n\nlet mm = fxl.amp2cm(msg.payload) * 10;\n\nmsg.payload = Number(mm).toFixed(3) + \"mm (\" + Number(msg.payload).toFixed(2) + \"mA)\";\n\nmsg.gradient = 100 - Math.floor(100 * (mm - 81.3) / (131.1 - 81.3));\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 425,
-        "y": 480,
+        "y": 1300,
         "wires": [
             [
-                "50efb4fbe5af34a0"
+                "50efb4fbe5af34a0",
+                "af9ad7d6ea3bb2ee"
             ]
         ],
         "l": false
@@ -2481,7 +1933,7 @@
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
         "group": "a1eb8ecf83f023ab",
-        "order": 9,
+        "order": 11,
         "width": "6",
         "height": "1",
         "name": "probe1.positive.raw",
@@ -2494,36 +1946,8 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 1000,
+        "y": 1030,
         "wires": [],
-        "l": false
-    },
-    {
-        "id": "6ea1dbece45cdab8",
-        "type": "change",
-        "z": "b5a6b1728e41b187",
-        "name": "probe1",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload",
-                "pt": "msg",
-                "to": "$join([$string(msg.touch.probe1.positive.raw)],\"\")",
-                "tot": "jsonata"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 155,
-        "y": 1000,
-        "wires": [
-            [
-                "159f9629c25a4c86"
-            ]
-        ],
         "l": false
     },
     {
@@ -2531,7 +1955,7 @@
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
         "group": "a1eb8ecf83f023ab",
-        "order": 10,
+        "order": 12,
         "width": "6",
         "height": "1",
         "name": "probe2.positive.raw",
@@ -2544,36 +1968,8 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 1090,
+        "y": 1120,
         "wires": [],
-        "l": false
-    },
-    {
-        "id": "fe50cff46e522a37",
-        "type": "change",
-        "z": "b5a6b1728e41b187",
-        "name": "probe2",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload",
-                "pt": "msg",
-                "to": "$join([$string(msg.touch.probe2.positive.raw)],\"\")",
-                "tot": "jsonata"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 155,
-        "y": 1090,
-        "wires": [
-            [
-                "8a92f048f9a72e9a"
-            ]
-        ],
         "l": false
     },
     {
@@ -2594,7 +1990,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 710,
+        "y": 870,
         "wires": [],
         "l": false
     },
@@ -2611,7 +2007,7 @@
         "property": "torque",
         "topi": "topic",
         "x": 105,
-        "y": 710,
+        "y": 870,
         "wires": [
             [
                 "f0da729fa7d2cc63"
@@ -2639,7 +2035,7 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 710,
+        "y": 870,
         "wires": [
             [
                 "311eb4f951f33a77"
@@ -2663,9 +2059,9 @@
             },
             {
                 "t": "set",
-                "p": "raw",
+                "p": "setpoint",
                 "pt": "msg",
-                "to": "position.raw",
+                "to": "position.setpoint.value",
                 "tot": "msg"
             },
             {
@@ -2740,7 +2136,7 @@
         "y": 580,
         "wires": [
             [
-                "e2196149986cee61"
+                "977f3166c306f0e6"
             ],
             [
                 "ba30649e22810a8a"
@@ -2782,10 +2178,11 @@
         "onceDelay": 0.1,
         "topic": "",
         "x": 375,
-        "y": 1030,
+        "y": 760,
         "wires": [
             [
-                "e37b4be37619c03f"
+                "1583ffe939b7c935",
+                "dd08da47e43426a9"
             ]
         ],
         "l": false
@@ -2795,17 +2192,17 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "mode.set",
-        "func": "return {\n    topic: \"mode\",\n    payload: JSON.stringify({\n        mode: msg.payload\n    })\n}",
+        "func": "\nlet mode = flow.get(\"7201.1.value.mode.value\");\n\nif (mode == msg.payload)\n    msg.payload = 0;\n\nreturn {\n    topic: \"mode\",\n    payload: JSON.stringify({\n        mode: msg.payload\n    })\n}",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 525,
-        "y": 700,
+        "y": 670,
         "wires": [
             [
-                "e2196149986cee61"
+                "977f3166c306f0e6"
             ]
         ],
         "icon": "font-awesome/fa-calculator",
@@ -2815,7 +2212,7 @@
         "id": "29657fdb4e7be575",
         "type": "rbe",
         "z": "b5a6b1728e41b187",
-        "name": "position",
+        "name": "mode",
         "func": "rbe",
         "gap": "",
         "start": "",
@@ -2824,7 +2221,7 @@
         "property": "mode",
         "topi": "topic",
         "x": 105,
-        "y": 200,
+        "y": 220,
         "wires": [
             [
                 "a92f89a11ff52b1f"
@@ -2850,7 +2247,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 200,
+        "y": 220,
         "wires": [],
         "l": false
     },
@@ -2874,7 +2271,7 @@
         "to": "",
         "reg": false,
         "x": 155,
-        "y": 200,
+        "y": 220,
         "wires": [
             [
                 "1e79e0da4edaca43"
@@ -2886,6 +2283,7 @@
         "id": "c811d663d24d8eda",
         "type": "ui_button",
         "z": "b5a6b1728e41b187",
+        "d": true,
         "name": "csp",
         "group": "21661f8f0d46b6dd",
         "order": 5,
@@ -2903,7 +2301,7 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 475,
-        "y": 680,
+        "y": 650,
         "wires": [
             [
                 "14b6eb010f9699ac"
@@ -2923,12 +2321,15 @@
         "finalize": "",
         "libs": [],
         "x": 375,
-        "y": 700,
+        "y": 670,
         "wires": [
             [
                 "c811d663d24d8eda",
                 "280e06102ba79af8",
-                "e37b4be37619c03f"
+                "2f112a577ea9efdd",
+                "b67c026e15362332",
+                "1583ffe939b7c935",
+                "dd08da47e43426a9"
             ],
             [
                 "77bf775b3710582b",
@@ -2949,7 +2350,7 @@
         "onceDelay": 0.1,
         "topic": "",
         "x": 375,
-        "y": 660,
+        "y": 630,
         "wires": [
             [
                 "271f8b7e05473bfa"
@@ -2978,7 +2379,7 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 475,
-        "y": 720,
+        "y": 690,
         "wires": [
             [
                 "14b6eb010f9699ac"
@@ -3010,7 +2411,7 @@
                 "t": "set",
                 "p": "enabled",
                 "pt": "msg",
-                "to": "9 = $flowContext(\"mode.value\")",
+                "to": "9 = $flowContext(\"mode.value\") or 8 = $flowContext(\"mode.value\")",
                 "tot": "jsonata"
             }
         ],
@@ -3071,42 +2472,6 @@
         "l": false
     },
     {
-        "id": "e37b4be37619c03f",
-        "type": "change",
-        "z": "b5a6b1728e41b187",
-        "name": "pressure",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload",
-                "pt": "msg",
-                "to": "0",
-                "tot": "num"
-            },
-            {
-                "t": "set",
-                "p": "enabled",
-                "pt": "msg",
-                "to": "9 = $flowContext(\"mode.value\")",
-                "tot": "jsonata"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 425,
-        "y": 1030,
-        "wires": [
-            [
-                "5ad3b698f00de638",
-                "0a718161eca59f31"
-            ]
-        ],
-        "l": false
-    },
-    {
         "id": "05ead60caaf9b31b",
         "type": "ui_text",
         "z": "b5a6b1728e41b187",
@@ -3115,11 +2480,11 @@
         "order": 8,
         "width": "6",
         "height": "1",
-        "name": "position.raw",
-        "label": "{{msg.raw}}",
+        "name": "position.setpoint",
+        "label": "{{msg.setpoint}}",
         "format": "",
         "layout": "row-right",
-        "className": "drive-raw",
+        "className": "drive-setpoint-label",
         "style": false,
         "font": "",
         "fontSize": 16,
@@ -3134,7 +2499,7 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "fxl",
-        "func": "\nlet fxl = {\n\n    laserUnit: {\n        mba: 5,         // cm Messbereichsanfang\n        mb: 10,         // cm Messbereich\n        mbe: 15,        // cm Messbereichsende\n        ampRange: 16\n    },\n\n    driveUnit: {\n        mode: 'AM8111',                                             // AM8111, ED1F\n        gearBoxGearRatio: 1000.0,\n        spindlePitch: 5.0,\n        timingBeltTransmissionGearRatio: 2.0,\n        motorIncrementPositions: 1048576,                           // AM8111: 1048576; ED1F: 8388608\n        cylinderDiameter: 15.0,\n        cylinderVolume: 10.0,\n        cylinderArea: 176.7146                                      // cm^2 cylinderDiameter ** 2 * Math.PI / 4.\n    },\n\n    position: {\n\n        limit: {\n            max: 13.11,     // cm top\n            min: 8.13,      // cm bottom\n            dev: 0.050\n        },\n\n        unit: \"cm\",\n        digits: 3,\n\n        valid: function (value, direction) {\n            if (direction == -1 && value < this.limit.min - this.limit.dev)\n                return false;\n            if (direction == 1 && value > this.limit.max + this.limit.dev)\n                return false;\n            return true;\n        }\n    },\n\n    volume: {\n        limit: {\n            min: 0.0,   // top (1ml)\n            max: 9.0    // bottom (1ml + 8ml) \n        },\n        unit: \"ml\",\n        digits: 3,\n        valid: function (value) {\n            return value >= this.limit.min && value <= this.limit.max;\n        }\n    },\n\n    speed: {\n        unit: \"µl/min\",\n        digits: 3\n    },\n\n    amp2cm: function (value) {\n        return this.laserUnit.mba + this.laserUnit.mb * value / this.laserUnit.ampRange;\n    },\n\n    amp2ml: function (value) {\n        return this.volume.limit.min + (this.position.limit.max - this.amp2cm(value)) * this.driveUnit.cylinderArea / 100.0;\n    },\n\n    incs2mulmin: function (value) {\n        // mm/r\n        let transmission = this.driveUnit.spindlePitch / (this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio);\n        // mm³/r ~ µl/r\n        let injectionRateRotation = transmission * this.driveUnit.cylinderArea;\n        // µl/inc\n        let injectionRateIncrement = injectionRateRotation / this.driveUnit.motorIncrementPositions;\n        return value * injectionRateIncrement * 60;\n    },\n\n    incs2nalmin: function (value) {\n        return this.incs2mulmin(value) * 1000;\n    },\n\n    mulmin2incs: function (value) {\n        // mm/r\n        let transmission = this.driveUnit.spindlePitch / (this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio);\n        // µl/r\n        let injectionRateRotation = transmission * this.driveUnit.cylinderArea;\n        // µl/inc\n        let injectionRateIncrement = injectionRateRotation / this.driveUnit.motorIncrementPositions;\n        // µl/min\n        return value / (injectionRateIncrement * 60);\n    },\n\n    nalmin2incs: function (value) {\n        return this.mulmin2incs(value / 1000.0);\n    },\n    \n    severity2string: function (value, sep=\" \") {\n\n        let severity = value.slice(0, 4);\n        let reason = value.slice(4, 8);\n\n        let ignore = parseInt(reason, 2) & 1;\n\n        severity = parseInt(severity, 2);\n        reason = parseInt(reason, 2) & ~1;\n\n        let payload = [];\n\n        let severities = ['INFORMATION', 'WARNING', 'ERROR', 'CRITICAL'];\n        ['1000', '0100', '0010', '0001'].forEach(function (s, i) {\n            let a = parseInt(s, 2);\n            let b = severity;\n            if (a == b) {\n                payload.push(severities[i]);\n            }\n        });\n\n        let reasons = ['TEMPERATURE', 'LOCK', 'PRESSURE', 'TIME', 'DISTANCE', 'SYSTEM'];\n\n        ['1100', '1010', '1000', '0110', '0100', '0010'].forEach(function (r, i) {\n            let a = parseInt(r, 2)\n            let b = reason;\n            if (a == b) {\n                payload.push(reasons[i]);\n            }\n        });\n\n        if (ignore) {\n            payload.push(\"IGNORE\");\n        }\n\n        if (payload.length == 0) {\n            payload.push(\"NONE\");\n        }\n\n        return payload.join(sep).toLowerCase();\n\n    }\n\n}\n\nflow.set(\"fxl\", fxl);",
+        "func": "\nlet fxl = {\n\n    laserUnit: {\n        mba: 5,         // cm Messbereichsanfang\n        mb: 10,         // cm Messbereich\n        mbe: 15,        // cm Messbereichsende\n        ampRange: 16\n    },\n\n    driveUnit: {\n        mode: 'AM8111',                                             // AM8111, ED1F\n        gearBoxGearRatio: 1000.0,\n        spindlePitch: 5.0,\n        timingBeltTransmissionGearRatio: 2.0,\n        motorIncrementPositions: 1048576,                           // AM8111: 1048576; ED1F: 8388608\n        cylinderDiameter: 15.0,\n        cylinderVolume: 10.0,\n        cylinderArea: 176.7146                                      // cm^2 cylinderDiameter ** 2 * Math.PI / 4.\n    },\n\n    position: {\n\n        limit: {\n            max: 13.11,     // cm top\n            min: 8.13,      // cm bottom\n            dev: 0.050\n        },\n\n        unit: \"cm\",\n        digits: 3,\n\n        valid: function (value, direction) {\n            if (direction == -1 && value < this.limit.min - this.limit.dev)\n                return false;\n            if (direction == 1 && value > this.limit.max + this.limit.dev)\n                return false;\n            return true;\n        }\n    },\n\n    volume: {\n        limit: {\n            min: 0.0,   // top (1ml)\n            max: 9.0    // bottom (1ml + 8ml) \n        },\n        unit: \"ml\",\n        digits: 3,\n        valid: function (value) {\n            return value >= this.limit.min && value <= this.limit.max;\n        }\n    },\n\n    speed: {\n        unit: \"µl/min\",\n        digits: 3\n    },\n\n    amp2cm: function (value) {\n        return this.laserUnit.mba + this.laserUnit.mb * value / this.laserUnit.ampRange;\n    },\n\n    amp2ml: function (value) {\n        return this.volume.limit.min + (this.position.limit.max - this.amp2cm(value)) * this.driveUnit.cylinderArea / 100.0;\n    },\n\n    incs2mulmin: function (value) {\n        // mm/r\n        let transmission = this.driveUnit.spindlePitch / (this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio);\n        // mm³/r ~ µl/r\n        let injectionRateRotation = transmission * this.driveUnit.cylinderArea;\n        // µl/inc\n        let injectionRateIncrement = injectionRateRotation / this.driveUnit.motorIncrementPositions;\n        return value * injectionRateIncrement * 60;\n    },\n\n    incs2nalmin: function (value) {\n        return this.incs2mulmin(value) * 1000;\n    },\n\n    mulmin2incs: function (value) {\n        // mm/r\n        let transmission = this.driveUnit.spindlePitch / (this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio);\n        // µl/r\n        let injectionRateRotation = transmission * this.driveUnit.cylinderArea;\n        // µl/inc\n        let injectionRateIncrement = injectionRateRotation / this.driveUnit.motorIncrementPositions;\n        // µl/min\n        return value / (injectionRateIncrement * 60);\n    },\n\n    nalmin2incs: function (value) {\n        return this.mulmin2incs(value / 1000.0);\n    },\n    \n    severity2string: function (value, sep=\" \") {\n\n        let severity = value.slice(0, 4);\n        let reason = value.slice(4, 8);\n\n        let ignore = parseInt(reason, 2) & 1;\n\n        severity = parseInt(severity, 2);\n        reason = parseInt(reason, 2) & ~1;\n\n        let payload = [];\n\n        let severities = ['INFORMATION', 'WARNING', 'ERROR', 'CRITICAL'];\n        ['1000', '0100', '0010', '0001'].forEach(function (s, i) {\n            let a = parseInt(s, 2);\n            let b = severity;\n            if (a == b) {\n                payload.push(severities[i]);\n            }\n        });\n\n        let reasons = ['TEMPERATURE', 'LOCK', 'PRESSURE', 'TIME', 'DISTANCE', 'SYSTEM'];\n\n        ['1100', '1010', '1000', '0110', '0100', '0010'].forEach(function (r, i) {\n            let a = parseInt(r, 2)\n            let b = reason;\n            if (a == b) {\n                payload.push(reasons[i]);\n            }\n        });\n\n        if (ignore) {\n            payload.push(\"IGNORE\");\n        }\n\n        if (payload.length == 0) {\n            payload.push(\"NONE\");\n        }\n\n        return payload.join(sep).toLowerCase();\n\n    },\n\n    profile: {\n\n        value: function(value, range) {\n            return value < 0 ? Math.pow(2, range) - 1 + value : value;\n        },\n\n        merge: function(value, bits, range = 32) {\n            return this.value(parseInt(\n                value[0].toString(2).padStart(bits, '0') +\n                value[1].toString(2).padStart(range - bits, '0'), 2)\n            );\n        },\n\n        split: function(value, bits, range = 32) {\n            value = value.toString(2).padStart(range, '0');\n            return [parseInt(value.slice(0, bits), 2), parseInt(value.slice(bits), 2)];\n        }\n\n    }\n\n}\n\nflow.set(\"fxl\", fxl);",
         "outputs": 0,
         "noerr": 0,
         "initialize": "",
@@ -3169,13 +2534,12 @@
         "id": "48c197d4100bbca7",
         "type": "ui_template",
         "z": "b5a6b1728e41b187",
-        "g": "ebd78cddcd1063f8",
         "group": "930073be26950e4a",
         "name": "status.indicator",
         "order": 6,
-        "width": "12",
+        "width": "13",
         "height": "1",
-        "format": "\n<style>\n    #ops {\n        table-layout: fixed;        \n    }\n\n    #ops td {\n        text-align: center;\n        color: gray;\n        vertical-align: middle;\n        line-height: 24px;        \n    }\n\n    #ops .title {\n        font-size: 80%;\n    }\n</style>\n\n<div>\n    <table id=\"ops\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" height=\"100%\">\n        <tr>\n            <td ng-repeat=\"item in msg.payload\" class=\"title\">{{item.title}}</td>\n        </tr>\n        <tr>\n            <td ng-repeat=\"item in msg.payload\" title=\"{{item.title}}\"><i class=\"{{item.icon}}\" style=\"color:{{item.color}};\" />\n            </td>\n        </tr>\n    </table>\n</div>\n",
+        "format": "\n<style>\n    #ops {\n        table-layout: fixed;        \n    }\n\n    #ops td {\n        text-align: center;\n        color: gray;\n        vertical-align: middle;\n        line-height: 24px;  \n    }\n\n    #ops .title {\n        font-size: 80%;\n    }\n</style>\n\n<div>\n    <table id=\"ops\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" height=\"100%\" width=\"100%\">\n        <tr>\n            <td ng-repeat=\"item in msg.payload\" class=\"title\">{{item.title}}</td>\n        </tr>\n        <tr>\n            <td ng-repeat=\"item in msg.payload\" title=\"{{item.title}}\" ng-click=\"send({topic:item.topic,payload:item.payload})\">\n                <i class=\"{{item.icon}}\" style=\"color:{{item.color}};cursor:pointer;\" />\n            </td>\n        </tr>\n    </table>\n</div>\n",
         "storeOutMessages": false,
         "fwdInMessages": false,
         "resendOnRefresh": true,
@@ -3184,7 +2548,9 @@
         "x": 205,
         "y": 420,
         "wires": [
-            []
+            [
+                "0c84892ae4177f15"
+            ]
         ],
         "l": false
     },
@@ -3192,9 +2558,8 @@
         "id": "2285dd7e20532192",
         "type": "function",
         "z": "b5a6b1728e41b187",
-        "g": "ebd78cddcd1063f8",
-        "name": "status.indicator",
-        "func": "\n\nlet ss = msg.status.text.split(\",\")\n\nlet out = {\n    topic: 'status',\n    payload: []\n};\n\n// CiA 402 drive state machine\n\nlet states = ['READY_TO_SWITCH_ON', 'SWITCHED_ON', 'OPERATION_ENABLED', 'QUICK_STOP', 'SWITCH_ON_DISABLED', 'WARNING'];\nstates.reverse();\nlet colors = ['#FFC107', '#4CAF50', '#2196F3', '#FF9800', '#9E9E9E', '#FF5722'];\ncolors.reverse();\n\nlet titles = states.map(key => key.replaceAll(\"_\", \" \").toLowerCase() );\n\nstates.forEach(function(s, i) {\n    let enabled = ss.includes(s);\n    out.payload.push({\n        key: s,        \n        index: i + 1,\n        title: titles[i],\n        enabled: enabled,\n        icon: 'fa ' + (enabled ? 'fa-circle' : 'fa-circle-thin'),\n        color: enabled ? colors[i] : 'gray'\n    });\n});\n\nreturn out;",
+        "name": "machine",
+        "func": "\nlet ss = msg.status.text.split(\",\")\n\nlet out = {\n    topic: 'status',\n    payload: []\n};\n\n// CiA 402 drive state machine\n\nlet states = ['READY_TO_SWITCH_ON', 'SWITCHED_ON', 'OPERATION_ENABLED', 'SWITCH_ON_DISABLED', 'LIMIT_ACTIVE', 'RESET'];\nstates.reverse();\n\nlet colors = ['#FFC107', '#4CAF50', '#2196F3', '#9E9E9E', '#FF5722', '#FF9800'];\ncolors.reverse();\n\nlet titles = states.map(key => key.replaceAll(\"_\", \" \").toLowerCase() );\n\nstates.forEach(function(state, i) {\n    let enabled = ss.includes(state) || state == 'RESET';\n    out.payload.push({\n        key: state,        \n        index: i + 1,\n        title: titles[i],\n        enabled: enabled,\n        icon: 'fa ' + (enabled ? 'fa-circle' : 'fa-circle-thin'),\n        color: enabled ? colors[i] : 'gray',\n        topic: state,\n        payload: enabled\n    });\n});\n\nreturn out;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -3207,6 +2572,7 @@
                 "48c197d4100bbca7"
             ]
         ],
+        "icon": "font-awesome/fa-flash",
         "l": false
     },
     {
@@ -3220,8 +2586,8 @@
         "once": true,
         "onceDelay": 0.1,
         "topic": "",
-        "x": 105,
-        "y": 1270,
+        "x": 805,
+        "y": 500,
         "wires": [
             [
                 "13503d13188d40bd"
@@ -3240,8 +2606,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 155,
-        "y": 1270,
+        "x": 855,
+        "y": 500,
         "wires": [
             [],
             [],
@@ -3284,8 +2650,8 @@
         "offcolor": "#606060",
         "animate": false,
         "className": "",
-        "x": 205,
-        "y": 1310,
+        "x": 905,
+        "y": 540,
         "wires": [
             [
                 "339a8754c8fd1f3a"
@@ -3319,8 +2685,8 @@
         "offcolor": "#606060",
         "animate": false,
         "className": "",
-        "x": 205,
-        "y": 1260,
+        "x": 905,
+        "y": 490,
         "wires": [
             [
                 "339a8754c8fd1f3a"
@@ -3339,8 +2705,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 255,
-        "y": 1280,
+        "x": 955,
+        "y": 510,
         "wires": [
             [
                 "5c9a185e2b0165eb"
@@ -3358,14 +2724,14 @@
         "order": 2,
         "width": "1",
         "height": "1",
-        "format": "<style>\n#veloc {\npadding-left:12px;\n}\n#veloc div {\nheight:24px;\nwidth:24px;\nbackground-color:transparent;\nborder-radius:12px;\n}\n\n</style>\n\n<div id=\"veloc\">\n    <div style=\"background-color:{{msg.payload[0].color}};\"></div>\n    <div style=\"background-color:{{msg.payload[1].color}};\"></div>    \n</div>",
+        "format": "<style>\n#veloc {\npadding-left:12px;\n}\n#veloc div {\nheight:21px;\nwidth:21px;\nbackground-color:transparent;\nborder-radius:12px;\n}\n\n</style>\n\n<div id=\"veloc\">\n    <div style=\"background-color:{{msg.payload[0].color}};\"></div>\n    <div style=\"background-color:{{msg.payload[1].color}};\"></div>    \n</div>",
         "storeOutMessages": false,
         "fwdInMessages": false,
         "resendOnRefresh": true,
         "templateScope": "local",
         "className": "",
         "x": 205,
-        "y": 590,
+        "y": 690,
         "wires": [
             []
         ],
@@ -3375,6 +2741,7 @@
         "id": "eb0a2398c727b230",
         "type": "function",
         "z": "b5a6b1728e41b187",
+        "g": "b62dea44680ac95a",
         "name": "velocity.direction",
         "func": "\nlet sign = Math.sign(msg.velocity.raw);\n\nreturn {\n    payload: [\n        { icon: 'fa fa-arrow-up fa-2x', color: sign == -1 ? '#536878': '#444' },\n        { icon: 'fa fa-arrow-down fa-2x', color: sign == +1 ? '#536878': '#444' }\n    ]};",
         "outputs": 1,
@@ -3383,7 +2750,7 @@
         "finalize": "",
         "libs": [],
         "x": 155,
-        "y": 570,
+        "y": 690,
         "wires": [
             [
                 "99a2a8498b95bda2"
@@ -3395,7 +2762,8 @@
         "id": "36ce8ed036de6094",
         "type": "rbe",
         "z": "b5a6b1728e41b187",
-        "name": "status",
+        "g": "b62dea44680ac95a",
+        "name": "velocity",
         "func": "rbe",
         "gap": "",
         "start": "",
@@ -3404,11 +2772,13 @@
         "property": "velocity",
         "topi": "topic",
         "x": 105,
-        "y": 570,
+        "y": 690,
         "wires": [
             [
                 "eb0a2398c727b230",
-                "5ba8baf1e843ed74"
+                "5ba8baf1e843ed74",
+                "440d18902686122d",
+                "66907797f1f36832"
             ]
         ],
         "l": false
@@ -3419,14 +2789,14 @@
         "z": "b5a6b1728e41b187",
         "g": "b62dea44680ac95a",
         "name": "velocity.computed",
-        "func": "\nlet fxl = flow.get(\"fxl\");\n\nreturn {\n    payload: Number(fxl.incs2mulmin(msg.velocity.raw)).toFixed(fxl.speed.digits) + fxl.speed.unit\n};",
+        "func": "\nlet fxl = flow.get(\"fxl\");\n\nnode.status({fill:\"red\",shape:\"ring\",text:\" \" + msg.velocity.limit});\n\nreturn {\n    payload: Number(fxl.incs2mulmin(msg.velocity.raw)).toFixed(fxl.speed.digits) + fxl.speed.unit\n};",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 155,
-        "y": 630,
+        "y": 730,
         "wires": [
             [
                 "a931e3fa73324adc"
@@ -3443,7 +2813,7 @@
         "order": 8,
         "width": "6",
         "height": "1",
-        "name": "velocity.raw",
+        "name": "velocity.computed",
         "label": "{{msg.payload}}",
         "format": "",
         "layout": "row-right",
@@ -3453,7 +2823,7 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 205,
-        "y": 630,
+        "y": 730,
         "wires": [],
         "l": false
     },
@@ -3461,22 +2831,23 @@
         "id": "8be3b39a6bb61cad",
         "type": "ui_template",
         "z": "b5a6b1728e41b187",
-        "g": "ebd78cddcd1063f8",
-        "group": "930073be26950e4a",
-        "name": "status.information",
+        "group": "340c63244d174e35",
+        "name": "debug",
         "order": 2,
-        "width": "12",
+        "width": "13",
         "height": "1",
-        "format": "\n<style>\n\n#wes {\nline-height:48px;\ncolor:gray;\ntext-align:right;\nfont-size:100%;\nborder:none;\n}\n\n</style>\n\n<div id=\"wes\">\n    {{msg.payload}}\n</div>\n",
+        "format": "\n<style>\n\n#debug {\ndisplay: flex;\njustify-content: center;\nalign-items: center;\ngap: 1px;\nline-height:48px;\nborder:none;\n}\n\n#debug div:nth-child(1) {\ntext-align:center;\ncolor:gray;\nwidth:48px;\n}\n\n#debug div:nth-child(1) i {\ncursor:pointer;\n}\n\n\n#debug div:nth-child(2) {\ncolor:gray;\ntext-align:right;\nfont-size:100%;\nborder:none;\nwidth:100%;\n}\n\n</style>\n\n<div id=\"debug\">\n    <div><i class=\"fa fa-circle\" style=\"color:{{msg.color}}; visibility:{{msg.severity.enabled ? 'block' : 'hidden'}};\" ng-click=\"send({topic:'SEVERITY',channel:msg.severity.channel,target:msg.severity.target})\">&nbsp;</i></div>\n    <div style=\"color:{{msg.color}};\">{{msg.payload}}</div>\n</div>\n",
         "storeOutMessages": false,
         "fwdInMessages": false,
         "resendOnRefresh": true,
         "templateScope": "local",
         "className": "",
         "x": 205,
-        "y": 460,
+        "y": 480,
         "wires": [
-            []
+            [
+                "67141384a060f376"
+            ]
         ],
         "l": false
     },
@@ -3484,43 +2855,21 @@
         "id": "f16b5416b7c7f866",
         "type": "function",
         "z": "b5a6b1728e41b187",
-        "g": "ebd78cddcd1063f8",
-        "name": "status.information",
-        "func": "\n// warning, error, severity\n\nlet out = {\n    topic: 'status.information',\n    payload: []\n};\n\nif (0 != msg.info.error) {\n    out.payload.push(\"error:\" + msg.info.error_text);\n}\n\nif (0 != msg.info.warning) {\n    out.payload.push(\"warning:\" + msg.info.warning_text);\n}\n\nif (0 != msg.severity[0]) {\n    let fxl = flow.get(\"fxl\");    \n    out.payload.push(\"severity: \" + fxl.severity2string(msg.severity[0].toString(2).padStart(8, \"0\")));\n}\n\nif (out.payload.length == 0) {\n    out.payload = \"no messages\";\n} else {\n    out.payload = out.payload.join(\";\");\n}\n\nreturn out;",
+        "name": "debug",
+        "func": "\n// warning, error, severity\n\nlet out = { topic: 'debug', payload: [], severity: { enabled: false, channel: 0, target:0 } };\n\nif (0 != msg.info.error) {\n    out.payload.push(\"error: \" + msg.info.error_text.toLowerCase());\n}\n\nif (0 != msg.info.warning) {\n    out.payload.push(\"warning: \" + msg.info.warning_text.toLowerCase());\n}\n\nif (0 != msg.severity[0]) {\n    let fxl = flow.get(\"fxl\");    \n    let bin = msg.severity[0].toString(2).padStart(8, \"0\");\n    out.payload.push(\"severity: \" + fxl.severity2string(bin));\n\n    out.severity = { enabled: true, channel: bin.split(\"\")[7] == 0 ? 1 : 0, target: 0 };\n}\n\nif (out.payload.length == 0) {\n    out.payload = \"no messages\";\n    out.color = \"gray\";\n} else {\n    out.payload = out.payload.join(\";\");\n    out.color = \"#FF9800\";\n}\n\nreturn out;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 155,
-        "y": 460,
+        "y": 480,
         "wires": [
             [
                 "8be3b39a6bb61cad"
             ]
         ],
-        "l": false
-    },
-    {
-        "id": "e55005b5f23dcb65",
-        "type": "rbe",
-        "z": "b5a6b1728e41b187",
-        "g": "ebd78cddcd1063f8",
-        "name": "status",
-        "func": "rbe",
-        "gap": "",
-        "start": "",
-        "inout": "out",
-        "septopics": true,
-        "property": "severity",
-        "topi": "topic",
-        "x": 105,
-        "y": 460,
-        "wires": [
-            [
-                "f16b5416b7c7f866"
-            ]
-        ],
+        "icon": "node-red/alert.svg",
         "l": false
     },
     {
@@ -3532,8 +2881,8 @@
         "links": [
             "8f1470a5fdf2ee1c"
         ],
-        "x": 305,
-        "y": 1280,
+        "x": 955,
+        "y": 470,
         "wires": []
     },
     {
@@ -3551,6 +2900,1196 @@
                 "ac3e61e75ce1f789"
             ]
         ]
+    },
+    {
+        "id": "0c84892ae4177f15",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "func": "\nlet delay = 0;\nlet crono = 400; // ms\n\nlet cc = [];\n\n// transition logic\n\nif (msg.topic == 'OPERATION_ENABLED') {\n    cc = msg.payload ? ['switch_on'] : ['enable_operation'];\n}\n\nif (msg.topic == 'SWITCHED_ON') {\n    cc = msg.payload ? ['shutdown'] : ['switch_on'];\n}\n\nif (msg.topic == 'READY_TO_SWITCH_ON') {\n    cc = msg.payload ? ['disable_voltage'] : ['switch_on'];\n}\n\nif (msg.topic == 'SWITCH_ON_DISABLED') {\n    cc = msg.payload ? ['shutdown'] : ['disable_voltage'];\n}\n\nif (msg.topic == 'RESET') {\n    cc = ['fault_reset'];\n}\n\ncc.forEach(function(command) {\n\n    node.send({ topic: 'enable',\n                payload: command,\n                delay: delay\n                });\n\n    delay += crono;\n\n});\n\nnode.done();",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 255,
+        "y": 420,
+        "wires": [
+            [
+                "e98d382643183184"
+            ]
+        ],
+        "icon": "font-awesome/fa-flash",
+        "l": false
+    },
+    {
+        "id": "2fedd0cf2b915cb6",
+        "type": "change",
+        "z": "b5a6b1728e41b187",
+        "name": "disable_voltage",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{ \"command\": \"00000000\" }",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 575,
+        "y": 360,
+        "wires": [
+            [
+                "e2196149986cee61"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "6389ff0c7c82f821",
+        "type": "change",
+        "z": "b5a6b1728e41b187",
+        "name": "disable_voltage",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{ \"command\": \"00000010\" }",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 575,
+        "y": 400,
+        "wires": [
+            [
+                "1f35722d8691547c"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "342fa69add16c8aa",
+        "type": "link in",
+        "z": "b5a6b1728e41b187",
+        "name": "in.terminal",
+        "links": [
+            "85bd718958dd9639",
+            "977f3166c306f0e6",
+            "d87af39ee2c2232b"
+        ],
+        "x": 645,
+        "y": 310,
+        "wires": [
+            [
+                "e2196149986cee61"
+            ]
+        ]
+    },
+    {
+        "id": "85bd718958dd9639",
+        "type": "link out",
+        "z": "b5a6b1728e41b187",
+        "name": "out.terminal",
+        "mode": "link",
+        "links": [
+            "342fa69add16c8aa"
+        ],
+        "x": 575,
+        "y": 840,
+        "wires": []
+    },
+    {
+        "id": "977f3166c306f0e6",
+        "type": "link out",
+        "z": "b5a6b1728e41b187",
+        "name": "out.terminal",
+        "mode": "link",
+        "links": [
+            "342fa69add16c8aa"
+        ],
+        "x": 575,
+        "y": 630,
+        "wires": []
+    },
+    {
+        "id": "1f35722d8691547c",
+        "type": "delay",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "200",
+        "timeoutUnits": "milliseconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 575,
+        "y": 440,
+        "wires": [
+            [
+                "e2196149986cee61"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "6660e56e1a4e3abc",
+        "type": "delay",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "4",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 105,
+        "y": 480,
+        "wires": [
+            [
+                "f16b5416b7c7f866"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "67141384a060f376",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "func": "\nif (msg.topic == 'SEVERITY') {\n\n    let payload = Array(4).fill(0);\n    payload[msg.channel] = 1;\n\n    let j = '{ \"source\": \"severity\", \"target\": ' + msg.target + ', \"value\": [' + payload.toString() + '] }';\n    //let j = '{ \"source\": \"severity\", \"target\": 99, \"value\": \"reset\" }'; // reload severity data\n\n    return {\n        topic: \"/hot/ecat/value\",\n        payload: JSON.parse(j)\n    };\n    \n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 255,
+        "y": 480,
+        "wires": [
+            [
+                "950281ba2eab72b5"
+            ]
+        ],
+        "icon": "node-red/alert.svg",
+        "l": false
+    },
+    {
+        "id": "3ee2c636240b6594",
+        "type": "link in",
+        "z": "b5a6b1728e41b187",
+        "name": "in.telegram",
+        "links": [
+            "950281ba2eab72b5"
+        ],
+        "x": 745,
+        "y": 310,
+        "wires": [
+            [
+                "80b68c34364943a4"
+            ]
+        ]
+    },
+    {
+        "id": "950281ba2eab72b5",
+        "type": "link out",
+        "z": "b5a6b1728e41b187",
+        "name": "out.telegram",
+        "mode": "link",
+        "links": [
+            "3ee2c636240b6594"
+        ],
+        "x": 255,
+        "y": 530,
+        "wires": []
+    },
+    {
+        "id": "84a7d2f76124e0ba",
+        "type": "ui_text",
+        "z": "b5a6b1728e41b187",
+        "g": "b62dea44680ac95a",
+        "group": "44a7e842f264b1d2",
+        "order": 9,
+        "width": "6",
+        "height": "1",
+        "name": "velocity.setpoint",
+        "label": "{{msg.setpoint}}",
+        "format": "",
+        "layout": "row-right",
+        "className": "drive-setpoint-label",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 205,
+        "y": 780,
+        "wires": [],
+        "l": false
+    },
+    {
+        "id": "440d18902686122d",
+        "type": "change",
+        "z": "b5a6b1728e41b187",
+        "g": "b62dea44680ac95a",
+        "name": "velocity",
+        "rules": [
+            {
+                "t": "set",
+                "p": "setpoint",
+                "pt": "msg",
+                "to": "velocity.setpoint",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 155,
+        "y": 780,
+        "wires": [
+            [
+                "84a7d2f76124e0ba"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "fcc45d387eb7ddb7",
+        "type": "ui_switch",
+        "z": "b5a6b1728e41b187",
+        "name": "distance.setpoint.enabled",
+        "label": "",
+        "tooltip": "",
+        "group": "382ba0e3898f6a9b",
+        "order": 9,
+        "width": "1",
+        "height": "1",
+        "passthru": true,
+        "decouple": "false",
+        "topic": "d.enabled",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "num",
+        "onicon": "fa-square",
+        "oncolor": "#4682b4",
+        "offvalue": "0",
+        "offvalueType": "num",
+        "officon": "fa-square-o",
+        "offcolor": "#888",
+        "animate": false,
+        "className": "",
+        "x": 475,
+        "y": 990,
+        "wires": [
+            [
+                "631c24cfee7faa24"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "631c24cfee7faa24",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "control.distance",
+        "func": "\nflow.set(\"control.\" + msg.topic, msg.payload);\n\nlet mode = 'd';\n\nlet ctrl = flow.get(\"control.\"+mode);\nctrl['mode'] = mode;\nctrl['params'] = [15.0,0.0,0.0,0.1];\n\nlet keys = Object.keys(ctrl);\nif (keys.includes('enabled') && keys.includes('setpoint')) {\n    msg.payload = '{ \"control\": ' + JSON.stringify(ctrl) + (!ctrl['enabled'] ? ', \"velocity\": 0' : '') + ' }';\n    return msg;\n}\n\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 525,
+        "y": 990,
+        "wires": [
+            [
+                "85bd718958dd9639"
+            ]
+        ],
+        "icon": "font-awesome/fa-calculator",
+        "l": false
+    },
+    {
+        "id": "026b3d1f6eeb9e2d",
+        "type": "ui_text_input",
+        "z": "b5a6b1728e41b187",
+        "name": "distance.setpoint.multiturn",
+        "label": "",
+        "tooltip": "",
+        "group": "382ba0e3898f6a9b",
+        "order": 12,
+        "width": "3",
+        "height": "1",
+        "passthru": false,
+        "mode": "number",
+        "delay": "0",
+        "topic": "d.setpoint",
+        "sendOnBlur": false,
+        "className": "drive-setpoint",
+        "topicType": "str",
+        "x": 475,
+        "y": 1050,
+        "wires": [
+            [
+                "e6cbb7cbed953e34"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "a82edc0c99e3e618",
+        "type": "inject",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 375,
+        "y": 1010,
+        "wires": [
+            [
+                "2f112a577ea9efdd",
+                "b67c026e15362332"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "2f112a577ea9efdd",
+        "type": "change",
+        "z": "b5a6b1728e41b187",
+        "name": "distance",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "d.enabled",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "control.d.enabled",
+                "pt": "flow",
+                "to": "9 != $flowContext(\"mode.value\") ? 0 : $flowContext(\"control.d.enabled\")",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "9 = $flowContext(\"mode.value\") ? $flowContext(\"control.d.enabled\") : 0",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "enabled",
+                "pt": "msg",
+                "to": "9 = $flowContext(\"mode.value\")",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 425,
+        "y": 990,
+        "wires": [
+            [
+                "fcc45d387eb7ddb7"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "5da9f54f2754cef9",
+        "type": "ui_text",
+        "z": "b5a6b1728e41b187",
+        "group": "382ba0e3898f6a9b",
+        "order": 10,
+        "width": "6",
+        "height": "1",
+        "name": "distance.multiturn",
+        "label": "{{msg.cycle}}",
+        "format": "",
+        "layout": "row-right",
+        "className": "drive-processvalue",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 475,
+        "y": 1150,
+        "wires": [],
+        "l": false
+    },
+    {
+        "id": "113c977b46351ae2",
+        "type": "change",
+        "z": "b5a6b1728e41b187",
+        "name": "position",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "$join([$string(msg.position.value[0]),\" | \",$string(msg.position.value[1])],\"\")",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "setpoint",
+                "pt": "msg",
+                "to": "position.setpoint.value",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "cycle",
+                "pt": "msg",
+                "to": "position.value[0]",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "position",
+                "pt": "msg",
+                "to": "position.value[1]",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 425,
+        "y": 1150,
+        "wires": [
+            [
+                "5da9f54f2754cef9",
+                "74fed39775a2d8ef"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "197746479582e293",
+        "type": "rbe",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "func": "rbe",
+        "gap": "",
+        "start": "",
+        "inout": "out",
+        "septopics": true,
+        "property": "position",
+        "topi": "topic",
+        "x": 425,
+        "y": 1190,
+        "wires": [
+            [
+                "113c977b46351ae2"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "036fb6bd2a2e3796",
+        "type": "inject",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "props": [
+            {
+                "p": "position",
+                "v": "7201.1.value.position",
+                "vt": "flow"
+            }
+        ],
+        "repeat": ".1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 375,
+        "y": 1150,
+        "wires": [
+            [
+                "197746479582e293"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "e6cbb7cbed953e34",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "control.distance",
+        "func": "\nlet fxl = flow.get(\"fxl\");\n\nlet out = Array(node.outputCount).fill(null);\n\nlet payload = Math.max(0, Math.min(19935, msg.payload));\n\nif (payload != msg.payload) {\n    out = [null, { topic:msg.topic,payload:payload }];\n} else {\n    let bits = 16;\n    let setpoint = flow.get(\"control.d.setpoint\");\n    let value = fxl.profile.split(setpoint, bits);\n    out = [{ topic: msg.topic, payload: fxl.profile.merge([payload, value[1]], bits) }, null];\n}\n    \n\nreturn out;",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 525,
+        "y": 1060,
+        "wires": [
+            [
+                "631c24cfee7faa24"
+            ],
+            [
+                "026b3d1f6eeb9e2d"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "2785fb6e08812231",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "control.pressure",
+        "func": "\nlet out = Array(node.outputCount).fill(null);\n\nlet payload = Math.max(0, Math.min(700, msg.payload));\n\nif (payload != msg.payload)\n    out = [null, { topic: '', payload: payload }];\nelse\n    out = [{ ...msg }, null];\n\nreturn out;",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 525,
+        "y": 820,
+        "wires": [
+            [
+                "627cbaa5197821b9"
+            ],
+            [
+                "0a718161eca59f31"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "4e10bc839e692ce4",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "control.distance",
+        "func": "\nlet out = Array(node.outputCount).fill(null);\n\nlet fxl = flow.get(\"fxl\");\nlet payload = fxl.profile.split(msg.payload, 16);   \n\npayload.forEach(function(p, i) {\n    out[i] = {\n        topic: 'turn.' + i,\n        payload: p,\n        enabled: msg.enabled\n    }\n});\n\nreturn out;",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 425,
+        "y": 1070,
+        "wires": [
+            [
+                "026b3d1f6eeb9e2d"
+            ],
+            [
+                "7884dd6b0fe3b8dc"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "7884dd6b0fe3b8dc",
+        "type": "ui_text_input",
+        "z": "b5a6b1728e41b187",
+        "name": "distance.setpoint.singleturn",
+        "label": "",
+        "tooltip": "",
+        "group": "382ba0e3898f6a9b",
+        "order": 16,
+        "width": "3",
+        "height": "1",
+        "passthru": false,
+        "mode": "number",
+        "delay": "0",
+        "topic": "d.setpoint",
+        "sendOnBlur": false,
+        "className": "drive-setpoint",
+        "topicType": "str",
+        "x": 475,
+        "y": 1090,
+        "wires": [
+            [
+                "eb26325d73cba0a8"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "74fed39775a2d8ef",
+        "type": "ui_text",
+        "z": "b5a6b1728e41b187",
+        "group": "382ba0e3898f6a9b",
+        "order": 14,
+        "width": "6",
+        "height": "1",
+        "name": "distance.singleturn",
+        "label": "{{msg.position}}",
+        "format": "",
+        "layout": "row-right",
+        "className": "drive-processvalue",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 475,
+        "y": 1190,
+        "wires": [],
+        "l": false
+    },
+    {
+        "id": "eb26325d73cba0a8",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "control.distance",
+        "func": "\nlet fxl = flow.get(\"fxl\");\n\nlet out = Array(node.outputCount).fill(null);\n\nlet payload = Math.max(0, Math.min(65535, msg.payload));\n\nif (payload != msg.payload) {\n    out = [null, { topic:msg.topic, payload:payload }];\n} else {\n    let bits = 16;\n    let setpoint = flow.get(\"control.d.setpoint\");\n    let value = fxl.profile.split(setpoint, bits);\n    out = [{ topic: msg.topic, payload: fxl.profile.merge([value[0], payload], bits) }, null];\n}\n    \n\nreturn out;",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 525,
+        "y": 1100,
+        "wires": [
+            [
+                "631c24cfee7faa24"
+            ],
+            [
+                "7884dd6b0fe3b8dc"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "9f9d342678ccbf1f",
+        "type": "ui_text",
+        "z": "b5a6b1728e41b187",
+        "group": "382ba0e3898f6a9b",
+        "order": 11,
+        "width": "3",
+        "height": "1",
+        "name": "multiturn.label",
+        "label": "multiturn",
+        "format": "",
+        "layout": "row-right",
+        "className": "drive-label",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 855,
+        "y": 170,
+        "wires": [],
+        "l": false
+    },
+    {
+        "id": "324d7733e2fed02d",
+        "type": "ui_text",
+        "z": "b5a6b1728e41b187",
+        "group": "382ba0e3898f6a9b",
+        "order": 15,
+        "width": "3",
+        "height": "1",
+        "name": "singleturn.label",
+        "label": "singleturn",
+        "format": "",
+        "layout": "row-right",
+        "className": "drive-label",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 895,
+        "y": 170,
+        "wires": [],
+        "l": false
+    },
+    {
+        "id": "badb21233ab89511",
+        "type": "ui_text",
+        "z": "b5a6b1728e41b187",
+        "group": "382ba0e3898f6a9b",
+        "order": 5,
+        "width": "3",
+        "height": "1",
+        "name": "pressure.label",
+        "label": "pressure",
+        "format": "",
+        "layout": "row-right",
+        "className": "drive-label",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 815,
+        "y": 170,
+        "wires": [],
+        "l": false
+    },
+    {
+        "id": "d87af39ee2c2232b",
+        "type": "link out",
+        "z": "b5a6b1728e41b187",
+        "name": "out.terminal",
+        "mode": "link",
+        "links": [
+            "342fa69add16c8aa",
+            "d0c5b03332fab685"
+        ],
+        "x": 255,
+        "y": 1250,
+        "wires": []
+    },
+    {
+        "id": "b67c026e15362332",
+        "type": "change",
+        "z": "b5a6b1728e41b187",
+        "name": "distance",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "control.d.setpoint",
+                "tot": "flow"
+            },
+            {
+                "t": "set",
+                "p": "enabled",
+                "pt": "msg",
+                "to": "9 = $flowContext(\"mode.value\")",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 425,
+        "y": 1030,
+        "wires": [
+            [
+                "4e10bc839e692ce4"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "1583ffe939b7c935",
+        "type": "change",
+        "z": "b5a6b1728e41b187",
+        "name": "pressure",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "p.enabled",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "control.p.enabled",
+                "pt": "flow",
+                "to": "9 != $flowContext(\"mode.value\") ? 0 : $flowContext(\"control.p.enabled\")",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "9 = $flowContext(\"mode.value\") ? $flowContext(\"control.p.enabled\") : 0",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "enabled",
+                "pt": "msg",
+                "to": "9 = $flowContext(\"mode.value\")",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 425,
+        "y": 760,
+        "wires": [
+            [
+                "5ad3b698f00de638"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "dd08da47e43426a9",
+        "type": "change",
+        "z": "b5a6b1728e41b187",
+        "name": "pressure",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "control.p.setpoint",
+                "tot": "flow"
+            },
+            {
+                "t": "set",
+                "p": "enabled",
+                "pt": "msg",
+                "to": "9 = $flowContext(\"mode.value\")",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 425,
+        "y": 800,
+        "wires": [
+            [
+                "0a718161eca59f31"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "af9ad7d6ea3bb2ee",
+        "type": "ui_template",
+        "z": "b5a6b1728e41b187",
+        "group": "44a7e842f264b1d2",
+        "name": "css.laser.position",
+        "order": 14,
+        "width": "1",
+        "height": "1",
+        "format": "\n<style>\n\n#drive_velocity md-card:nth-child(12) { \nbackground: linear-gradient(\n    to bottom, \n    #444 {{msg.gradient}}%, \n    transparent {{msg.gradient}}% 100%\n    ); \noverflow:hidden; \nborder:dashed 0px #666; \nopacity: 100 !important; \n}\n\n</style>",
+        "storeOutMessages": false,
+        "fwdInMessages": false,
+        "resendOnRefresh": false,
+        "templateScope": "local",
+        "className": "",
+        "x": 475,
+        "y": 1260,
+        "wires": [
+            []
+        ],
+        "l": false
+    },
+    {
+        "id": "32b66002a250352f",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "laser.position",
+        "func": "\nlet fxl = flow.get(\"fxl\");\n\nmsg.payload = msg.touch.probe1.positive.raw;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 155,
+        "y": 1030,
+        "wires": [
+            [
+                "159f9629c25a4c86"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "cf6237c884d06652",
+        "type": "inject",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "props": [
+            {
+                "p": "touch",
+                "v": "7201.1.value.touch",
+                "vt": "flow"
+            }
+        ],
+        "repeat": ".1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 55,
+        "y": 940,
+        "wires": [
+            [
+                "6e1978dee374efee",
+                "4183e846bbe6bd50",
+                "32b66002a250352f",
+                "5e9ce6111d370ad4"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "09739450676129cb",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "laser.position",
+        "func": "\nlet fxl = flow.get(\"fxl\");\n\nmsg.payload = msg.touch.probe2.positive.raw;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 155,
+        "y": 1120,
+        "wires": [
+            [
+                "8a92f048f9a72e9a"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "6c54a6fa125d7ded",
+        "type": "inject",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "props": [
+            {
+                "p": "torque",
+                "v": "7201.1.value.torque",
+                "vt": "flow"
+            }
+        ],
+        "repeat": ".1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 55,
+        "y": 870,
+        "wires": [
+            [
+                "3210d3dd8a53066c"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "90053b170bf71ec0",
+        "type": "inject",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "props": [
+            {
+                "p": "velocity",
+                "v": "7201.1.value.velocity",
+                "vt": "flow"
+            }
+        ],
+        "repeat": ".1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 55,
+        "y": 690,
+        "wires": [
+            [
+                "36ce8ed036de6094"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "d998f1647c3891ff",
+        "type": "inject",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "props": [
+            {
+                "p": "status.value",
+                "v": "7201.1.value.status.value",
+                "vt": "flow"
+            },
+            {
+                "p": "status.text",
+                "v": "7201.1.value.status.text",
+                "vt": "flow"
+            },
+            {
+                "p": "info",
+                "v": "7201.1.value.info",
+                "vt": "flow"
+            },
+            {
+                "p": "mode",
+                "v": "7201.1.value.mode",
+                "vt": "flow"
+            },
+            {
+                "p": "severity",
+                "v": "severity",
+                "vt": "flow"
+            }
+        ],
+        "repeat": ".1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 55,
+        "y": 480,
+        "wires": [
+            [
+                "6660e56e1a4e3abc",
+                "9a478729e0489950"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "ffe72e76842acbc6",
+        "type": "ui_template",
+        "z": "b5a6b1728e41b187",
+        "group": "a1eb8ecf83f023ab",
+        "name": "touch.indicator",
+        "order": 2,
+        "width": "6",
+        "height": "1",
+        "format": "\n<style>\n    #tos {\n        table-layout: fixed;        \n    }\n\n    #tos td {\n        text-align: center;\n        color: gray;\n        vertical-align: middle;\n        line-height: 24px;    \n        padding-left:24px;    \n    }\n\n    #tos .title {\n        font-size: 80%;\n    }\n</style>\n\n<div>\n    <table id=\"tos\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" height=\"100%\">\n        <tr>\n            <td ng-repeat=\"item in msg.payload\" class=\"title\">{{item.title}}</td>\n        </tr>\n        <tr>\n            <td ng-repeat=\"item in msg.payload\" title=\"{{item.title}}\" ng-click=\"send({topic:item.topic,payload:item.payload})\">\n                <i class=\"{{item.icon}}\" style=\"color:{{item.color}};cursor:pointer;\" />\n            </td>\n        </tr>\n    </table>\n</div>\n",
+        "storeOutMessages": false,
+        "fwdInMessages": false,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 205,
+        "y": 1170,
+        "wires": [
+            [
+                "1683a2e5f7a2175d"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "146dce32acfae401",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "touch.indicator",
+        "func": "\nlet ss = msg.touch.status.text.split(\",\");\n\nlet out = {\n    topic: 'status',\n    payload: []\n};\n\nlet colors = ['#360', '#666', '#666', '#360'];\nlet titles = ['enable', 'positive', 'negative', 'input'];\nlet cc = ['ENABLE', 'POS', 'NEG', 'INPUT'];\n\ncc.forEach(function (c, i) {\n    let enabled = ss.filter(s => s.includes(c)).length > 0;\n    out.payload.push({        \n        key: c,\n        index: i + 1,\n        title: titles[i],\n        enabled: enabled,\n        icon: 'fa ' + (enabled ? 'fa-circle' : 'fa-circle-thin'),\n        color: enabled ? colors[i] : 'gray',        \n        topic: c,\n        payload: enabled\n    });    \n});\n\nreturn out;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 155,
+        "y": 1170,
+        "wires": [
+            [
+                "ffe72e76842acbc6"
+            ]
+        ],
+        "icon": "font-awesome/fa-flash",
+        "l": false
+    },
+    {
+        "id": "1683a2e5f7a2175d",
+        "type": "function",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "func": "\nlet valid = true;\n\nlet payload = [];\n\nif (msg.topic == 'ENABLE') {\n    if (msg.payload) {\n        payload = [\n            { \"touchprobe\": \"0000000000000000\" }\n        ];\n    }\n    else {\n        payload = [\n            { \"touchprobe\": \"0000000100000001\" },\n            { \"touchprobe\": \"0000001100000011\" },\n            { \"touchprobe\": \"0011001100110011\" }\n        ];\n    }\n}\n\nif (payload.length > 0) {\n    let delay = 0;\n    payload.forEach(function(p,i) {\n        node.send({\n                topic: \"touch\",\n                payload: JSON.stringify(p),\n                delay: delay\n            });\n        delay += 200;\n    });\n}\n\nnode.done();\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 255,
+        "y": 1170,
+        "wires": [
+            [
+                "adfaf6a30f624d8d"
+            ]
+        ],
+        "icon": "font-awesome/fa-flash",
+        "l": false
+    },
+    {
+        "id": "5e9ce6111d370ad4",
+        "type": "rbe",
+        "z": "b5a6b1728e41b187",
+        "name": "touch.probe2",
+        "func": "rbe",
+        "gap": "",
+        "start": "",
+        "inout": "out",
+        "septopics": true,
+        "property": "touch.status.value",
+        "topi": "topic",
+        "x": 105,
+        "y": 1170,
+        "wires": [
+            [
+                "146dce32acfae401"
+            ]
+        ],
+        "l": false
+    },
+    {
+        "id": "adfaf6a30f624d8d",
+        "type": "delay",
+        "z": "b5a6b1728e41b187",
+        "name": "",
+        "pauseType": "delayv",
+        "timeout": "100",
+        "timeoutUnits": "milliseconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 255,
+        "y": 1210,
+        "wires": [
+            [
+                "d87af39ee2c2232b"
+            ]
+        ],
+        "l": false
     },
     {
         "id": "77022da14e3f6db7",
