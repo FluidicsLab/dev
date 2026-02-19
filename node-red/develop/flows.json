@@ -391,8 +391,8 @@
         "name": "spacer",
         "group": "a1eb8ecf83f023ab",
         "order": 1,
-        "width": 1,
-        "height": 1
+        "width": "1",
+        "height": "1"
     },
     {
         "id": "59cfc14c97d720a2",
@@ -401,7 +401,7 @@
         "name": "spacer",
         "group": "a1eb8ecf83f023ab",
         "order": 4,
-        "width": "1",
+        "width": "2",
         "height": "1"
     },
     {
@@ -452,7 +452,7 @@
         "name": "spacer",
         "group": "a1eb8ecf83f023ab",
         "order": 3,
-        "width": "8",
+        "width": "7",
         "height": "1"
     },
     {
@@ -472,7 +472,7 @@
         "name": "spacer",
         "group": "a1eb8ecf83f023ab",
         "order": 10,
-        "width": "1",
+        "width": "2",
         "height": "1"
     },
     {
@@ -502,7 +502,7 @@
         "name": "spacer",
         "group": "a1eb8ecf83f023ab",
         "order": 9,
-        "width": "2",
+        "width": "1",
         "height": "1"
     },
     {
@@ -772,6 +772,16 @@
         "height": 1
     },
     {
+        "id": "fd4fdb37a8086f0e",
+        "type": "ui_spacer",
+        "z": "b5a6b1728e41b187",
+        "name": "spacer",
+        "group": "a1eb8ecf83f023ab",
+        "order": 13,
+        "width": 1,
+        "height": 1
+    },
+    {
         "id": "80b68c34364943a4",
         "type": "mqtt out",
         "z": "b5a6b1728e41b187",
@@ -929,7 +939,7 @@
         "onceDelay": 0.1,
         "topic": "",
         "x": 55,
-        "y": 270,
+        "y": 220,
         "wires": [
             [
                 "4a3db1ddef7aa9e6",
@@ -1270,7 +1280,7 @@
         "order": 1,
         "width": "1",
         "height": "1",
-        "format": "\n<style>\n\n.drive-position p.value { font-size:150%;color:#536878; }\n\n.drive-status p.value { font-size:100%;color:gray; }\n.drive-status-text p.label { font-size:100%;color:gray; }\n\n.drive-probe-value p.label { font-size:150%;color:gray; }\n\n.drive-setpoint-label p.label { font-size:100%;color:gray; }\n\n.drive-raw p.label { font-size:100%;color:gray; }\n.drive-current p.label { font-size:100%;color:gray; }\n\n.drive-info1-text p.label { font-size:100%; background-color:#800000; padding:8px; }\n.drive-info1-text p.value { font-size:100%; background-color:transparent; }\n\n.drive-info2-text p.label { font-size:100%; background-color:#996515; padding:8px; }\n.drive-info2-text p.value { font-size:100%; background-color:transparent; }\n\n.drive-severity p.label { font-size:100%;color:gray; }\n\n.drive-processvalue p.label { font-size:150%;color:gray; }\n.drive-setpoint { font-size:150%; text-align:right; }\n\n.drive-label p.label { color:gray; }\n.drive-value-label p.value { color:gray; }\n\n.drive-mode p.value { color:gray; }\n\n#drive_mode md-card     { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_machine md-card   { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n#drive_debug md-card    { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_position md-card { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_velocity md-card { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_control md-card  { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_torque md-card   { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_label md-card   { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_touch md-card { background-color:transparent; overflow:hidden; border:dashed 1px #666; opacity: 100 !important; }\n\ninput[type=\"number\"] { text-align: right; background-color:#536878; }\ninput[type=\"number\"]:disabled { background-color: #3e4e5a; color: #888; opacity: 0.7; }\n\n</style>",
+        "format": "\n<style>\n\n.drive-position p.value { font-size:150%;color:#536878; }\n\n.drive-status p.value { font-size:100%;color:gray; }\n.drive-status-text p.label { font-size:100%;color:gray; }\n\n.drive-probe-value p.label { font-size:150%;color:gray; }\n\n.drive-setpoint-label p.label { font-size:100%;color:gray; }\n\n.drive-raw p.label { font-size:100%;color:gray; }\n.drive-current p.label { font-size:100%;color:gray; }\n\n.drive-info1-text p.label { font-size:100%; background-color:#800000; padding:8px; }\n.drive-info1-text p.value { font-size:100%; background-color:transparent; }\n\n.drive-info2-text p.label { font-size:100%; background-color:#996515; padding:8px; }\n.drive-info2-text p.value { font-size:100%; background-color:transparent; }\n\n.drive-severity p.label { font-size:100%;color:gray; }\n\n.drive-processvalue p.label { font-size:150%;color:gray; }\n.drive-setpoint { font-size:150%; text-align:right; }\n\n.drive-label p.label { color:gray; }\n.drive-value-label p.value { color:gray; }\n\n.drive-mode p.value { color:gray; }\n\n#drive_mode md-card     { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_machine md-card   { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_debug md-card    { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_position md-card { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_velocity md-card { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_control md-card  { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_torque md-card   { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n#drive_label md-card   { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\n#drive_touch md-card { background-color:transparent; overflow:hidden; border:dashed 0px #666; opacity: 100 !important; }\n\ninput[type=\"number\"] { text-align: right; background-color:#536878; }\ninput[type=\"number\"]:disabled { background-color: #3e4e5a; color: #888; opacity: 0.7; }\n\n</style>",
         "storeOutMessages": false,
         "fwdInMessages": false,
         "resendOnRefresh": false,
@@ -1544,7 +1554,7 @@
         "onvalue": "1",
         "onvalueType": "num",
         "onicon": "fa-square",
-        "oncolor": "#4682b4",
+        "oncolor": "#536878",
         "offvalue": "0",
         "offvalueType": "num",
         "officon": "fa-square-o",
@@ -1912,7 +1922,7 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "laser.position",
-        "func": "\nlet fxl = flow.get(\"fxl\");\n\nlet mm = fxl.amp2cm(msg.payload) * 10;\n\nmsg.payload = Number(mm).toFixed(3) + \"mm (\" + Number(msg.payload).toFixed(2) + \"mA)\";\n\nmsg.gradient = 100 - Math.floor(100 * (mm - 81.3) / (131.1 - 81.3));\n\nreturn msg;",
+        "func": "\nlet fxl = flow.get(\"fxl\");\n\nlet mm = fxl.amp2cm(msg.payload) * 10;\n\nmsg.payload = Number(mm).toFixed(3) + \" (\" + Number(msg.payload).toFixed(2) + \")\";\n\nmsg.gradient = 100 - Math.floor(100 * (mm - 81.3) / (131.1 - 81.3));\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -2499,7 +2509,7 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "fxl",
-        "func": "\nlet fxl = {\n\n    laserUnit: {\n        mba: 5,         // cm Messbereichsanfang\n        mb: 10,         // cm Messbereich\n        mbe: 15,        // cm Messbereichsende\n        ampRange: 16\n    },\n\n    driveUnit: {\n        mode: 'AM8111',                                             // AM8111, ED1F\n        gearBoxGearRatio: 1000.0,\n        spindlePitch: 5.0,\n        timingBeltTransmissionGearRatio: 2.0,\n        motorIncrementPositions: 1048576,                           // AM8111: 1048576; ED1F: 8388608\n        cylinderDiameter: 15.0,\n        cylinderVolume: 10.0,\n        cylinderArea: 176.7146                                      // cm^2 cylinderDiameter ** 2 * Math.PI / 4.\n    },\n\n    position: {\n\n        limit: {\n            max: 13.11,     // cm top\n            min: 8.13,      // cm bottom\n            dev: 0.050\n        },\n\n        unit: \"cm\",\n        digits: 3,\n\n        valid: function (value, direction) {\n            if (direction == -1 && value < this.limit.min - this.limit.dev)\n                return false;\n            if (direction == 1 && value > this.limit.max + this.limit.dev)\n                return false;\n            return true;\n        }\n    },\n\n    volume: {\n        limit: {\n            min: 0.0,   // top (1ml)\n            max: 9.0    // bottom (1ml + 8ml) \n        },\n        unit: \"ml\",\n        digits: 3,\n        valid: function (value) {\n            return value >= this.limit.min && value <= this.limit.max;\n        }\n    },\n\n    speed: {\n        unit: \"µl/min\",\n        digits: 3\n    },\n\n    amp2cm: function (value) {\n        return this.laserUnit.mba + this.laserUnit.mb * value / this.laserUnit.ampRange;\n    },\n\n    amp2ml: function (value) {\n        return this.volume.limit.min + (this.position.limit.max - this.amp2cm(value)) * this.driveUnit.cylinderArea / 100.0;\n    },\n\n    incs2mulmin: function (value) {\n        // mm/r\n        let transmission = this.driveUnit.spindlePitch / (this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio);\n        // mm³/r ~ µl/r\n        let injectionRateRotation = transmission * this.driveUnit.cylinderArea;\n        // µl/inc\n        let injectionRateIncrement = injectionRateRotation / this.driveUnit.motorIncrementPositions;\n        return value * injectionRateIncrement * 60;\n    },\n\n    incs2nalmin: function (value) {\n        return this.incs2mulmin(value) * 1000;\n    },\n\n    mulmin2incs: function (value) {\n        // mm/r\n        let transmission = this.driveUnit.spindlePitch / (this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio);\n        // µl/r\n        let injectionRateRotation = transmission * this.driveUnit.cylinderArea;\n        // µl/inc\n        let injectionRateIncrement = injectionRateRotation / this.driveUnit.motorIncrementPositions;\n        // µl/min\n        return value / (injectionRateIncrement * 60);\n    },\n\n    nalmin2incs: function (value) {\n        return this.mulmin2incs(value / 1000.0);\n    },\n    \n    severity2string: function (value, sep=\" \") {\n\n        let severity = value.slice(0, 4);\n        let reason = value.slice(4, 8);\n\n        let ignore = parseInt(reason, 2) & 1;\n\n        severity = parseInt(severity, 2);\n        reason = parseInt(reason, 2) & ~1;\n\n        let payload = [];\n\n        let severities = ['INFORMATION', 'WARNING', 'ERROR', 'CRITICAL'];\n        ['1000', '0100', '0010', '0001'].forEach(function (s, i) {\n            let a = parseInt(s, 2);\n            let b = severity;\n            if (a == b) {\n                payload.push(severities[i]);\n            }\n        });\n\n        let reasons = ['TEMPERATURE', 'LOCK', 'PRESSURE', 'TIME', 'DISTANCE', 'SYSTEM'];\n\n        ['1100', '1010', '1000', '0110', '0100', '0010'].forEach(function (r, i) {\n            let a = parseInt(r, 2)\n            let b = reason;\n            if (a == b) {\n                payload.push(reasons[i]);\n            }\n        });\n\n        if (ignore) {\n            payload.push(\"IGNORE\");\n        }\n\n        if (payload.length == 0) {\n            payload.push(\"NONE\");\n        }\n\n        return payload.join(sep).toLowerCase();\n\n    },\n\n    profile: {\n\n        value: function(value, range) {\n            return value < 0 ? Math.pow(2, range) - 1 + value : value;\n        },\n\n        merge: function(value, bits, range = 32) {\n            return this.value(parseInt(\n                value[0].toString(2).padStart(bits, '0') +\n                value[1].toString(2).padStart(range - bits, '0'), 2)\n            );\n        },\n\n        split: function(value, bits, range = 32) {\n            value = value.toString(2).padStart(range, '0');\n            return [parseInt(value.slice(0, bits), 2), parseInt(value.slice(bits), 2)];\n        }\n\n    }\n\n}\n\nflow.set(\"fxl\", fxl);",
+        "func": "\nlet fxl = {\n\n    laserUnit: {\n        mba: 5,         // cm Messbereichsanfang\n        mb: 10,         // cm Messbereich\n        mbe: 15,        // cm Messbereichsende\n        ampRange: 16\n    },\n\n    driveUnit: {\n        mode: 'AM8111',                                             // AM8111, ED1F\n        gearBoxGearRatio: 1000.0,\n        spindlePitch: 5.0,\n        timingBeltTransmissionGearRatio: 2.0,\n        motorIncrementPositions: 1048576,                           // AM8111: 1048576; ED1F: 8388608\n        cylinderDiameter: 15.0,\n        cylinderVolume: 10.0,\n        cylinderArea: 176.7146                                      // cm^2 cylinderDiameter ** 2 * Math.PI / 4.\n    },\n\n    position: {\n\n        limit: {\n            max: 13.11,     // cm top\n            min: 8.13,      // cm bottom\n            dev: 0.050\n        },\n\n        unit: \"cm\",\n        digits: 3,\n\n        valid: function (value, direction) {\n            if (direction == -1 && value < this.limit.min - this.limit.dev)\n                return false;\n            if (direction == 1 && value > this.limit.max + this.limit.dev)\n                return false;\n            return true;\n        }\n    },\n\n    volume: {\n        limit: {\n            min: 0.0,   // top (~0ml)\n            max: 9.0    // bottom (~0ml+9ml) \n        },\n        unit: \"ml\",\n        digits: 3,\n        valid: function (value) {\n            return value >= this.limit.min && value <= this.limit.max;\n        }\n    },\n\n    speed: {\n        unit: \"µl/min\",\n        digits: 3\n    },\n\n    amp2cm: function (value) {\n        return this.laserUnit.mba + this.laserUnit.mb * value / this.laserUnit.ampRange;\n    },\n\n    amp2ml: function (value) {\n        return this.volume.limit.min + (this.position.limit.max - this.amp2cm(value)) * this.driveUnit.cylinderArea / 100.0;\n    },\n\n    incs2mulmin: function (value) {\n        // mm/r\n        let transmission = this.driveUnit.spindlePitch / (this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio);\n        // mm³/r ~ µl/r\n        let injectionRateRotation = transmission * this.driveUnit.cylinderArea;\n        // µl/inc\n        let injectionRateIncrement = injectionRateRotation / this.driveUnit.motorIncrementPositions;\n        return value * injectionRateIncrement * 60;\n    },\n\n    incs2nalmin: function (value) {\n        return this.incs2mulmin(value) * 1000;\n    },\n\n    mulmin2incs: function (value) {\n        // mm/r\n        let transmission = this.driveUnit.spindlePitch / (this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio);\n        // µl/r\n        let injectionRateRotation = transmission * this.driveUnit.cylinderArea;\n        // µl/inc\n        let injectionRateIncrement = injectionRateRotation / this.driveUnit.motorIncrementPositions;\n        // µl/min\n        return value / (injectionRateIncrement * 60);\n    },\n\n    nalmin2incs: function (value) {\n        return this.mulmin2incs(value / 1000.0);\n    },\n    \n    severity2string: function (value, sep=\" \") {\n\n        let severity = value.slice(0, 4);\n        let reason = value.slice(4, 8);\n\n        let ignore = parseInt(reason, 2) & 1;\n\n        severity = parseInt(severity, 2);\n        reason = parseInt(reason, 2) & ~1;\n\n        let payload = [];\n\n        let severities = ['INFORMATION', 'WARNING', 'ERROR', 'CRITICAL'];\n        ['1000', '0100', '0010', '0001'].forEach(function (s, i) {\n            let a = parseInt(s, 2);\n            let b = severity;\n            if (a == b) {\n                payload.push(severities[i]);\n            }\n        });\n\n        let reasons = ['TEMPERATURE', 'LOCK', 'PRESSURE', 'TIME', 'DISTANCE', 'SYSTEM'];\n\n        ['1100', '1010', '1000', '0110', '0100', '0010'].forEach(function (r, i) {\n            let a = parseInt(r, 2)\n            let b = reason;\n            if (a == b) {\n                payload.push(reasons[i]);\n            }\n        });\n\n        if (ignore) {\n            payload.push(\"IGNORE\");\n        }\n\n        if (payload.length == 0) {\n            payload.push(\"NONE\");\n        }\n\n        return payload.join(sep).toLowerCase();\n\n    },\n\n    profile: {\n\n        value: function(value, range) {\n            return value < 0 ? Math.pow(2, range) - 1 + value : value;\n        },\n\n        merge: function(value, bits, range = 32) {\n            return this.value(parseInt(\n                value[0].toString(2).padStart(bits, '0') +\n                value[1].toString(2).padStart(range - bits, '0'), 2)\n            );\n        },\n\n        split: function(value, bits, range = 32) {\n            value = value.toString(2).padStart(range, '0');\n            return [parseInt(value.slice(0, bits), 2), parseInt(value.slice(bits), 2)];\n        }\n\n    }\n\n}\n\nflow.set(\"fxl\", fxl);",
         "outputs": 0,
         "noerr": 0,
         "initialize": "",
@@ -3195,7 +3205,7 @@
         "onvalue": "1",
         "onvalueType": "num",
         "onicon": "fa-square",
-        "oncolor": "#4682b4",
+        "oncolor": "#536878",
         "offvalue": "0",
         "offvalueType": "num",
         "officon": "fa-square-o",
@@ -3815,7 +3825,7 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "laser.position",
-        "func": "\nlet fxl = flow.get(\"fxl\");\n\nmsg.payload = msg.touch.probe1.positive.raw;\n\nreturn msg;",
+        "func": "\nlet fxl = flow.get(\"fxl\");\n\nlet limit = fxl.position.limit;\nlet bits = 16;\n\nlet low = fxl.profile.merge([0, 0], bits);\nlet high = fxl.profile.merge([19935, 0], bits);\n\nlet raw = msg.touch.probe1.positive.raw;\n\nlet ratio = (raw - low) / (high - low);\n\nmsg.payload = Number(10.0 * (limit.max + (limit.min - limit.max) * ratio)).toFixed(6);\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -3853,8 +3863,8 @@
             [
                 "6e1978dee374efee",
                 "4183e846bbe6bd50",
-                "32b66002a250352f",
-                "5e9ce6111d370ad4"
+                "5e9ce6111d370ad4",
+                "09739450676129cb"
             ]
         ],
         "l": false
@@ -3863,8 +3873,8 @@
         "id": "09739450676129cb",
         "type": "function",
         "z": "b5a6b1728e41b187",
-        "name": "laser.position",
-        "func": "\nlet fxl = flow.get(\"fxl\");\n\nmsg.payload = msg.touch.probe2.positive.raw;\n\nreturn msg;",
+        "name": "probe.position",
+        "func": "\nlet fxl = flow.get(\"fxl\");\n\nlet limit = fxl.position.limit;\nlet bits = 16;\nlet low = fxl.profile.merge([0,0],bits);\nlet high = fxl.profile.merge([19935, 0], bits);\nlet raw = msg.touch.probe2.positive.raw;\nlet ratio = (raw - low) / (high - low);\n\nmsg.payload = Number(10.0 * (limit.max + (limit.min - limit.max) * ratio)).toFixed(6);\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -3985,7 +3995,7 @@
         "group": "a1eb8ecf83f023ab",
         "name": "touch.indicator",
         "order": 2,
-        "width": "6",
+        "width": "7",
         "height": "1",
         "format": "\n<style>\n    #tos {\n        table-layout: fixed;        \n    }\n\n    #tos td {\n        text-align: center;\n        color: gray;\n        vertical-align: middle;\n        line-height: 24px;    \n        padding-left:24px;    \n    }\n\n    #tos .title {\n        font-size: 80%;\n    }\n</style>\n\n<div>\n    <table id=\"tos\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" height=\"100%\">\n        <tr>\n            <td ng-repeat=\"item in msg.payload\" class=\"title\">{{item.title}}</td>\n        </tr>\n        <tr>\n            <td ng-repeat=\"item in msg.payload\" title=\"{{item.title}}\" ng-click=\"send({topic:item.topic,payload:item.payload})\">\n                <i class=\"{{item.icon}}\" style=\"color:{{item.color}};cursor:pointer;\" />\n            </td>\n        </tr>\n    </table>\n</div>\n",
         "storeOutMessages": false,
