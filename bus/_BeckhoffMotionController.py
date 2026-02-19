@@ -24,10 +24,14 @@ class AM8111PidController(object):
 
     _scaler = {
         'input': {
-            'p': { "low": 0, "high": 700 },     # bar   (pressure)         
+            'p': { "low": 0, "high": 700 },         # bar   (pressure)         
             'd': { "low": 0, "high": 1306460160 }   # cycle (distance)         
         },
         'output': { "low": 0, "high": 24_185_993 }  # inc/s (velocity)
+    }
+
+    _limit = {
+        'output': { "low": -24_185_993*8/9, "high": 24_185_993*8/9 }  # inc/s (velocity)
     }
 
     _lock: Lock = Lock()
@@ -58,7 +62,7 @@ class AM8111PidController(object):
     # Kp, Ki, Kd, dt
     _params = {
         'p': [0.5, 0.001, 0.0001, 0.1],
-        'd': [0.8, 0.0, 0.0, 0.1]
+        'd': [10.0, 0.001, 0.0001, 0.1]
     }
 
     _factor = {
@@ -148,6 +152,9 @@ class AM8111PidController(object):
         def unscale(value):
             return self._scaler['output']['low'] + (self._scaler['output']['high'] - self._scaler['output']['low']) * value
 
+        def limit(value): 
+            return max(self._limit['output']['low'], min(self._limit['output']['high'], value))
+
         enabled = False
 
         while not self._exit.is_set():
@@ -180,6 +187,7 @@ class AM8111PidController(object):
 
                     dv = kp + ki + kd
                     dv = unscale(dv)
+                    dv = limit(dv)
                 
                     if self._callback is not None:
                         if self._demand != dv:
@@ -1056,68 +1064,39 @@ class AM8111MotionController(BeckhoffMotionController):
                 'position': {
                     'raw': position,
                     'value': AM8111ProfilePosition.split(position, bits),
-                    'setpoint': {
-                        'raw': self.PositionSetpoint,
-                        'value': AM8111ProfilePosition.split(self.PositionSetpoint, bits) if self.PositionSetpoint is not None else None
-                    },
-                    'offset': {
-                        'raw': self.PositionOffset,
-                        'value': AM8111ProfilePosition.split(self.PositionOffset, bits)
-                    }                    
+                    'setpoint': { 'raw': self.PositionSetpoint, 'value': AM8111ProfilePosition.split(self.PositionSetpoint, bits) if self.PositionSetpoint is not None else None },
+                    'offset': { 'raw': self.PositionOffset, 'value': AM8111ProfilePosition.split(self.PositionOffset, bits) }                    
                 },
                 'velocity':{
                     'raw': buff.velocity,
                     'limit': self.VelocityLimit,
                     'setpoint': self.VelocitySetpoint
                 },
-                'torque': {
-                    'raw': buff.torque,
-                    'value': torque,
-                    'limit': self.TorqueLimit
-                },
                 'info': {
-                    'error': buff.info1,
-                    'error_text': AM8111Profile.__info__(buff.info1, 'e'),
-                    'warning': buff.info2,
-                    'warning_text': AM8111Profile.__info__(buff.info2, 'w')
+                    'error': buff.info1, 'error_text': AM8111Profile.__info__(buff.info1, 'e'),
+                    'warning': buff.info2, 'warning_text': AM8111Profile.__info__(buff.info2, 'w')
+                },
+                'torque': {
+                    'raw': buff.torque, 'value': torque, 'limit': self.TorqueLimit
                 },
                 'touch': {
-                    'status': {
-                        'value': buff.tpstatus,
-                        'text': AM8111Profile.__info__(buff.tpstatus, 't')
-                    },
+                    'status': { 'value': buff.tpstatus, 'text': AM8111Profile.__info__(buff.tpstatus, 't') },
                     'probe1': {
-                        'positive': {
-                            'raw': buff.tp1pos,
-                            'value': AM8111ProfilePosition.split(buff.tp1pos, bits)
-                        },
-                        'negative': {
-                            'raw': buff.tp1neg,
-                            'value': AM8111ProfilePosition.split(buff.tp1neg, bits)
-                        }
+                        'positive': { 'raw': buff.tp1pos, 'value': AM8111ProfilePosition.split(buff.tp1pos, bits) },
+                        'negative': { 'raw': buff.tp1neg, 'value': AM8111ProfilePosition.split(buff.tp1neg, bits) }
                     },
                     'probe2': {
-                        'positive': {
-                            'raw': buff.tp2pos,
-                            'value': AM8111ProfilePosition.split(buff.tp2pos, bits)
-                        },
-                        'negative': {
-                            'raw': buff.tp2neg,
-                            'value': AM8111ProfilePosition.split(buff.tp2neg, bits)
-                        }
+                        'positive': { 'raw': buff.tp2pos, 'value': AM8111ProfilePosition.split(buff.tp2pos, bits) },
+                        'negative': { 'raw': buff.tp2neg, 'value': AM8111ProfilePosition.split(buff.tp2neg, bits) }
                     }
                 },
                 'status': {
-                    'value':status,
-                    'text': AM8111Profile.__str__(int(status,2)),
+                    'value':status, 'text': AM8111Profile.__str__(int(status,2)),
                 },
                 'transition': AM8111Profile.__transit__(int(status,2)),
-                'encoder': {
-                    'bits': self.Turnbits
-                },
-                '0x01': {
-                    'd': position
-                }
+                'encoder': { 'bits': self.Turnbits },
+                # severity callback position
+                '0x01': { 'd': position }
             }
 
             return data
@@ -1228,11 +1207,17 @@ class AM8111MotionController(BeckhoffMotionController):
                                     self._controller.update(key, data[key])                    
 
     def controllerFunc(self, value):
+        """
+        call back from PID
+        
+        :param self: 
+        :param value: velocity inc/s
+        """
         self._lock.acquire()
         try:  
-            EcatLogger.debug(f"update velocity {math.floor(value)} inc/s")
+            EcatLogger.debug(f"callback {round(value)} ({value})")
             self._data.update({
-                'velocity': math.floor(value)
+                'velocity': round(value)
             })
         finally:
             self._lock.release()
@@ -1242,6 +1227,11 @@ class AM8111MotionController(BeckhoffMotionController):
     
     _severity = False
     def severityFunc(self, value):
+        """
+                
+        :param self: 
+        :param value: 
+        """
         self._severity = value        
         if not self.isValid():
             self._data = { 
