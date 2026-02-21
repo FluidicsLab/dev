@@ -12,6 +12,16 @@
             "console": "integratedTerminal",
             "args": ["_EcatSettingsDEV"],
             "justMyCode": false
+        },
+
+        {
+            "name": "ED1-drive",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "_EcatMaster.py",
+            "console": "integratedTerminal",
+            "args": ["_EcatSettingsED1"],
+            "justMyCode": false
         }
 
     ]

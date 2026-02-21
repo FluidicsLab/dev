@@ -18,7 +18,7 @@ from _EcatStates import EcatStates
 
 class AM8111PidController(object):
 
-    TIMEOUT_CONTROL = 0.25
+    TIMEOUT_CONTROL = 0.2
     FRACTION = 20
     MODE_DEFAULT = 'p'
 
@@ -514,6 +514,9 @@ class BeckhoffMotionController(object):
 
     def input(self):
         return None
+    
+    def toggle(self):
+        pass
 
     def write(self, data):        
         pass
@@ -1026,6 +1029,8 @@ class AM8111MotionController(BeckhoffMotionController):
             self.PositionOffsetEnabled = 2
             _ = self.PositionOffset
 
+            self.Mode = AM8111ProfileMode.MODE_NONE
+
             self._initialized = True
 
         except pysoem.SdoError as se:
@@ -1039,6 +1044,8 @@ class AM8111MotionController(BeckhoffMotionController):
         except Exception as ex:
             EcatLogger.error(f"Exception {ex}")  
 
+    _detected = False
+
     def input(self):
 
         # pdo read
@@ -1048,12 +1055,23 @@ class AM8111MotionController(BeckhoffMotionController):
                 self.init()          
 
             buff =  AM8111MotionController.TxMap.from_buffer_copy(self.Device.input)
+            
             status = bin(buff.status)[2:].zfill(16)  
+            status_text = AM8111Profile.__str__(int(status,2))
 
             bits = self.Turnbits[1]
 
             position = AM8111ProfilePosition.value(buff.position)
             torque = AM8111ProfileTorque.get(buff.torque, self.TorqueConfig)
+            
+            error = buff.info1
+            error_text = AM8111Profile.__info__(error, 'e')
+            if "WATCHDOG" in error_text.split(","):
+                if not self._detected:
+                    EcatLogger.warning(f"watchdog {error_text} {status_text}")
+                self._detected = True
+            else:
+                self._detected = False
             
             data  = {
                 'mode': {
@@ -1073,7 +1091,7 @@ class AM8111MotionController(BeckhoffMotionController):
                     'setpoint': self.VelocitySetpoint
                 },
                 'info': {
-                    'error': buff.info1, 'error_text': AM8111Profile.__info__(buff.info1, 'e'),
+                    'error': error, 'error_text': error_text,
                     'warning': buff.info2, 'warning_text': AM8111Profile.__info__(buff.info2, 'w')
                 },
                 'torque': {
@@ -1091,7 +1109,7 @@ class AM8111MotionController(BeckhoffMotionController):
                     }
                 },
                 'status': {
-                    'value':status, 'text': AM8111Profile.__str__(int(status,2)),
+                    'value':status, 'text': status_text,
                 },
                 'transition': AM8111Profile.__transit__(int(status,2)),
                 'encoder': { 'bits': self.Turnbits },
@@ -1104,6 +1122,28 @@ class AM8111MotionController(BeckhoffMotionController):
         except Exception as ex:
             EcatLogger.error(f"{ex}")
             return None
+        
+    _toggleState = True
+    def toggle(self, byte_offset=2, bit_mask=0x01):
+        
+        self.DeviceLock.acquire()
+        try:
+            
+            current = bytearray(self.Device.output)
+            
+            if len(current) > byte_offset:
+                if self._toggleState:
+                    current[byte_offset] |= bit_mask
+                else:
+                    current[byte_offset] &= ~bit_mask
+                
+                self.Device.output = bytes(current)
+                self._toggleState = not self._toggleState
+                
+        except Exception as ex:
+            EcatLogger.error(f"toggle {ex}")
+        finally:
+            self.DeviceLock.release()     
             
     def write(self, data):
         # pdo write
@@ -1168,7 +1208,7 @@ class AM8111MotionController(BeckhoffMotionController):
                     self._data['control'] = None
 
         except Exception as ex:
-            EcatLogger.error(f"-- run {ex}")
+            EcatLogger.error(f"run {ex}")
         
         finally:
             self._lock.release()
@@ -1215,7 +1255,6 @@ class AM8111MotionController(BeckhoffMotionController):
         """
         self._lock.acquire()
         try:  
-            EcatLogger.debug(f"callback {round(value)} ({value})")
             self._data.update({
                 'velocity': round(value)
             })

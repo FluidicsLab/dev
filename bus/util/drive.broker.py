@@ -16,7 +16,8 @@ baumBrokerLogger.name = "__baumBrokerLogger__"
 def loggingFilter(record: logging.Filter): return True
 baumBrokerLogger.addFilter(loggingFilter)
 
-BROKER = [('localhost',10098)]
+BROKER = [('localhost',10097),
+          ('localhost',10098)]
 
 class BrokerWorker(threading.Thread):
     

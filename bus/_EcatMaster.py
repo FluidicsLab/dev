@@ -68,8 +68,10 @@ DELAY_ALIVE_LOOP        = 0.5
 DELAY_INPUT_LOOP        = 0.1
 DELAY_OUTPUT_LOOP       = 0.1
 
-DELAY_PROCESS_LOOP      = 0.01      # 0.01
-DELAY_CHECK_LOOP        = 0.10      # 0.01
+DELAY_PROCESS_LOOP      = 0.010      # 0.01
+DELAY_CHECK_LOOP        = 0.05      # 0.01
+
+DELAY_TOGGLE_LOOP       = 0.015
 
 DELAY_DEBUG_LOOP        = 0.01
 
@@ -219,12 +221,19 @@ class EcatMaster(EcatObject):
 
     pd = pd ms
     sm = sm ms
-    
+
+    example
+
+        10_000 * 100µs ~ 1s
+        
     """
     def setWatchDog(self, slave, pd=None, sm=None):
 
+        rc = [0,0]
+
         try:
             if PYSOEM_VERSION[-1] < 6:
+
                 # multiplier
                 slave._fpwr(0x400, struct.pack('H',self.Watchdog["mp"]), timeout_us=TIMEOUT_FPWR)
                 # process data
@@ -233,7 +242,11 @@ class EcatMaster(EcatObject):
                 # sync manager
                 if sm is not None:
                     slave._fpwr(0x420, struct.pack('H',int(sm*10)), timeout_us=TIMEOUT_FPWR)
-            else:                
+            else:          
+                
+                EcatLogger.info(f"SM-watchdog  {slave.get_watchdog('processdata')} <-- {self.Watchdog['sm']:.2f}ms")
+                EcatLogger.info(f"PDI-watchdog {slave.get_watchdog('pdi')} <-- {self.Watchdog['pd']:.2f}ms")
+
                 # process data
                 if pd is not None:
                     slave.set_watchdog('pdi', int(pd))
@@ -244,7 +257,7 @@ class EcatMaster(EcatObject):
             rc = self.getWatchDog(slave)
                         
         except Exception as ex:
-            EcatLogger.error(f"set watchdog failed {sm} {pd} {ex}")
+            EcatLogger.error(f"set watchdog failed {sm} {pd} {ex} @ {slave.name}")
         
         finally:
             return rc
@@ -1038,6 +1051,9 @@ class EcatMaster(EcatObject):
         self._checkThread = Thread(target=self._checkLoop)
         self._checkThread.start()
 
+        self._toggleThread = Thread(target=self._toggleLoop)
+        self._toggleThread.start()
+
         EcatLogger.debug(f"done")
             
         self._runningLoop()
@@ -1049,12 +1065,15 @@ class EcatMaster(EcatObject):
 
         self._inputEvent.set()
         self._outputEvent.set()
+        self._toggleEvent.set()
 
         self._checkThread.join()
         self._processThread.join()
 
         self._inputThread.join()
         self._outputThread.join()
+
+        self._toggleThread.join()
 
         EcatLogger.debug(f"done")
 
@@ -1341,7 +1360,38 @@ class EcatMaster(EcatObject):
 
         if self.SeverityController is not None and \
             self.SeverityLimit.enabled == 1:
-                self.SeverityController.push(args[0], args[1], args[2], self.SeverityLimit.config)            
+                self.SeverityController.push(args[0], args[1], args[2], self.SeverityLimit.config)        
+
+
+    _toggleEvent = Event()
+    _toggleThread = None
+
+    def _toggleLoop(self):
+
+        EcatLogger.debug("start toggle loop")
+                    
+        keys = self.Indizes.__dict__.keys()
+        slaves = self.Master.slaves
+        nn = sorted(self.Layout, key=lambda n: (self.Layout[n].priority, n), reverse=False)
+                
+        while not self._toggleEvent.is_set():
+            
+            for n in nn:
+
+                slave = slaves[n]
+                state = slave.state
+
+                if (pysoem.OP_STATE & state) != state:
+                    continue
+
+                if 'EL7201' in keys and n in self.Indizes.EL7201:
+                    # motion control
+                    if n in self._beckhoffMotionController.keys():
+                        self._beckhoffMotionController[n].toggle()
+
+            self._inputEvent.wait(DELAY_TOGGLE_LOOP)
+
+        EcatLogger.debug("end toggle loop")                    
 
     # --------------------------------------
     # input / publish 
@@ -1975,7 +2025,7 @@ def instance(mandant:str="STD"):
 
 def main():
     
-    import os
+    import os, psutil
     os.system('cls')
 
     rc = 0
@@ -2003,6 +2053,15 @@ def main():
             EcatLogger.error(f"relais ports not found")   
             rc = -2
         EcatLogger.debug(f"{'done' if rc == 0 else 'failed'}")
+
+    # cpu affinity
+    if rc == 0:
+        
+        pid = os.getpid()
+        process = psutil.Process(pid)        
+        process.cpu_affinity(config.Master.affinity)
+        EcatLogger.debug(f"affinity {process.cpu_affinity()}")
+
 
     if rc == 0:
 

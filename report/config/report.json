@@ -1,0 +1,48 @@
+{
+
+    "001": {
+        "name": "report.0.ps1",
+        "filename": "C:\\Develop\\py\\FluidicsLab\\Drafts\\report\\template\\report.0.ps1",
+        "desc": "f(q(1..4),p(a,d),T(1..5),12h)",
+        "enabled": 1,
+        "preview": 0,
+        "param": ["pSystem","12"]
+    },
+
+    "002": {
+        "name": "report.1.ps1",
+        "filename": "C:\\Develop\\py\\FluidicsLab\\Drafts\\report\\template\\report.1.ps1",
+        "desc": "f(p,T,12h,pump01)",
+        "enabled": 1,
+        "preview": 0,
+        "param": ["pT","pump01","12"]
+    },
+
+    "003": {
+        "name": "report.2.ps1",
+        "filename": "C:\\Develop\\py\\FluidicsLab\\Drafts\\report\\template\\report.2.ps1",
+        "desc": "f(p,T,,12h,pump02)",
+        "enabled": 1,
+        "preview": 0,
+        "param": ["pT","pump02","12"]
+    },
+
+    "004": {
+        "name": "report.3.ps1",
+        "filename": "C:\\Develop\\py\\FluidicsLab\\Drafts\\report\\template\\report.3.ps1",
+        "desc": "f(p,T,12h,pump03)",
+        "enabled": 1,
+        "preview": 0,
+        "param": ["pT","pump03","12"]
+    },
+
+    "005": {
+        "name": "report.4.ps1",
+        "filename": "C:\\Develop\\py\\FluidicsLab\\Drafts\\report\\template\\report.4.ps1",
+        "desc": "f(p,T,12h,pump04)",
+        "enabled": 1,
+        "preview": 0,
+        "param": ["pT","pump04","12"]
+    }
+
+}

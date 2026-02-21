@@ -128,6 +128,7 @@ class EcatConfig:
                 platform=EcatSettings(self._name).value('master/platform','STD',str),
                 ports=list(map(int,filter(None,list(map(str,EcatSettings(self._name).value("master/ports",[],list)))))),
                 hosts=list(map(str,filter(None,list(map(str,EcatSettings(self._name).value("master/hosts",[],list)))))),
+                affinity=list(map(int,filter(None,list(map(int,EcatSettings(self._name).value("master/affinity",[],list)))))),
                 ))
         return self._master
     Master = property(fget=_get_master)
