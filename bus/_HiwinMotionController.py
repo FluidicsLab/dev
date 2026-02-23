@@ -534,7 +534,32 @@ class Ed1fMotionController(HiwinMotionController):
                 self.Device.sdo_write(Ed1fMotionController.RxMapEx.register, 0, 
                                     bytes(ctypes.c_uint8(len(Ed1fMotionController.RxMapEx.address)))) 
         except Exception as ex:
-            EcatLogger.error(f"{ex}")        
+            EcatLogger.error(f"{ex}")    
+
+    def reset(self):    
+        try:
+            self.Device.sdo_write(0x3215, 0x00, bytes(ctypes.c_int16(1)))            
+        except Exception as ex:        
+            EcatLogger.error(f"{ex}")  
+
+    def clear(self):
+        try:
+            rc = -1
+            self.Device.sdo_write(0x3200, 0x00, bytes(ctypes.c_int32(1)))
+
+            t = time.time_ns()
+            while ((time.time_ns() - t) / 10 ** 9) < 5.0:
+                v = ctypes.c_int32.from_buffer_copy(self.Device.sdo_read(0x3200,0x00)).value
+                if v == 4:
+                    rc = 0
+                    break
+                time.sleep(0.1)
+            
+            if rc == 0:
+                pass#self.reset()#
+
+        except Exception as ex:        
+            EcatLogger.error(f"{ex}")  
     
     def initConfig(self): 
         
@@ -543,6 +568,8 @@ class Ed1fMotionController(HiwinMotionController):
         """
         
         try:
+
+            #self.clear()
 
             self.Device.sdo_write(0x6060, 0x0, bytes(ctypes.c_int8(Ed1fProfileMode.MODE_CSV)))
             # accel
@@ -711,7 +738,7 @@ class Ed1fMotionController(HiwinMotionController):
             status = bin(buff.status)[2:].zfill(16)  
             status_text = Ed1fProfile.__status__(int(status,2))
 
-            EcatLogger.debug(f"{buff.velocity}")
+            EcatLogger.debug(f"{buff.position} :: {buff.position / 8_388_608}")
 
             data  = {
                 'mode': {

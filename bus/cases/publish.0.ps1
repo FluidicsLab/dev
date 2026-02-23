@@ -51,7 +51,7 @@ function mulmin2incs {
 # 1 enable voltage
 # 0 switch on
 
-$speed = mulmin2incs(0)
+$speed = mulmin2incs(1)
 $speed = $speed.ToString()
 
 Write-Host $speed
@@ -83,8 +83,8 @@ Write-Host $speed
 
 #$payloads = $DISABLE
 #$payloads = $ENABLE
-$payloads = $CONTROL
-#$payloads = $RUN
+#$payloads = $CONTROL
+$payloads = $RUN
 
 foreach ($payload in $payloads) 
 {
