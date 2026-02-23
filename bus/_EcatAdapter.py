@@ -93,13 +93,13 @@ class EcatAdapter(EcatObject):
                     else:
                         if active == mac:
                             items.append(item)
-                            EcatLogger.debug(f"{shift}using no {i:02d} mac {mac} {desc} address {address}")
+                            EcatLogger.info(f"{shift}using no {i:02d} mac {mac} {desc} address {address}")
                             break
                 else:
                     if active == desc or active == name:
                         item = dict(key=desc, value=EcatAdapter(name=name, desc=desc, mac=None, address=address))
                         items.append(item)
-                        EcatLogger.debug(f"{shift}using no {i:02d} {desc} address {address}")
+                        EcatLogger.info(f"{shift}using no {i:02d} {desc} address {address}")
                         break
         return items
         

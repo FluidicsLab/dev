@@ -1,1 +1,1 @@
-{ "source": "ed1fWorker", "target": 0, "value": { "control": "0000000000000100" } }
+{ "source": "ed1fWorker", "target": 0, "value": { "control": { "mode": "p", "enabled": 1, "setpoint": 100, "processvalue": 100 } } }

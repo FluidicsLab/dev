@@ -156,6 +156,7 @@ class AM8111PidController(object):
             return max(self._limit['output']['low'], min(self._limit['output']['high'], value))
 
         enabled = False
+        zero = False        # zero quick stop
 
         while not self._exit.is_set():
 
@@ -192,6 +193,11 @@ class AM8111PidController(object):
                     if self._callback is not None:
                         if self._demand != dv:
                             self._callback(dv)
+                            zero = False
+                        else:
+                            if dv == 0.0 and not zero:
+                                self._callback(dv)
+                                zero = True
 
                     self._demand = dv
 
@@ -212,13 +218,16 @@ class AM8111ProfileMode:
     MODE_CST                = 10    # cyclic synchronous torque
     MODE_CSTCA              = 11    # cyclic synchronous torque with commutation angle
 
-    name = ['cyclic synchronous position', 'cyclic synchronous velocity', 
-            'cyclic synchronous torque', 'cyclic synchronous torque with commutation angle']
+    name = ['none'] + ['unknown'] * 7 + [
+        'cyclic synchronous position', 
+        'cyclic synchronous velocity', 
+        'cyclic synchronous torque', 
+        'cyclic synchronous torque with commutation angle'
+        ]
     
     @staticmethod
-    def __str__(value: int):
-        i = value - AM8111ProfileMode.MODE_CSP
-        return AM8111ProfileMode.name[i] if i >=0 and i < len(AM8111ProfileMode.name) else 'unknown'
+    def __str__(value: int):        
+        return AM8111ProfileMode.name[value] if value >=0 and value < len(AM8111ProfileMode.name) else 'unknown'
     
     @staticmethod
     def valid(value):
@@ -364,7 +373,7 @@ class AM8111Profile:
         'FAULT', 'QUICK_STOP', 'SWITCH_ON_DISABLED', 'WARNING', 'LIMIT_ACTIVE']
     
     @staticmethod
-    def __str__(state):
+    def __status__(state):
         return ",".join([f"{AM8111Profile.status_name[i]}" 
                         for i,s in enumerate(AM8111Profile.status) 
                             if ((s & state) == s) and (s not in [0])
@@ -613,6 +622,13 @@ class AM8111MotionController(BeckhoffMotionController):
         if self._controller is not None:
             self._controller.release()
 
+    _firmware = None
+    def _get_firmware(self):
+        if self._firmware is not None:
+            self._firmware = [0, 0]
+        return self._firmware
+    Firmware = property(fget=_get_firmware)            
+
     _torqueConfig = None       # feature, constant, mA
     def _get_torqueConfig(self):
         try:
@@ -711,8 +727,8 @@ class AM8111MotionController(BeckhoffMotionController):
         return self._velocitySetpoint
     def _set_velocitySetpoint(self,value):
         self._velocitySetpoint = value
-    VelocitySetpoint = property(fget=_get_velocitySetpoint, fset=_set_velocitySetpoint)    
-
+    VelocitySetpoint = property(fget=_get_velocitySetpoint, fset=_set_velocitySetpoint) 
+     
     def _get_positionLimit(self):
         return AM8111MotionController.UINT32_MAX
     PositionLimit = property(fget=_get_positionLimit)
@@ -994,11 +1010,10 @@ class AM8111MotionController(BeckhoffMotionController):
             _ = self.TorqueConfig
             _ = self.TorqueLimit
 
-
             self.Turnbits = AM8111MotionController.ENCODER_TURNBITS   
             _ = self.Turnbits
-
-            _ = self.VelocityLimit                     
+            _ = self.VelocityLimit
+            _ = self.Firmware                  
 
             self.debug()
 
@@ -1045,6 +1060,7 @@ class AM8111MotionController(BeckhoffMotionController):
             EcatLogger.error(f"Exception {ex}")  
 
     _detected = False
+    _watchTime = 0
 
     def input(self):
 
@@ -1057,7 +1073,7 @@ class AM8111MotionController(BeckhoffMotionController):
             buff =  AM8111MotionController.TxMap.from_buffer_copy(self.Device.input)
             
             status = bin(buff.status)[2:].zfill(16)  
-            status_text = AM8111Profile.__str__(int(status,2))
+            status_text = AM8111Profile.__status__(int(status,2))
 
             bits = self.Turnbits[1]
 
@@ -1068,7 +1084,7 @@ class AM8111MotionController(BeckhoffMotionController):
             error_text = AM8111Profile.__info__(error, 'e')
             if "WATCHDOG" in error_text.split(","):
                 if not self._detected:
-                    EcatLogger.warning(f"watchdog {error_text} {status_text}")
+                    EcatLogger.warning(f"watchdog {error_text} {status_text} {(time.time_ns() - self._watchTime) / 1e9:.3f}")                    
                 self._detected = True
             else:
                 self._detected = False
@@ -1111,8 +1127,10 @@ class AM8111MotionController(BeckhoffMotionController):
                 'status': {
                     'value':status, 'text': status_text,
                 },
-                'transition': AM8111Profile.__transit__(int(status,2)),
-                'encoder': { 'bits': self.Turnbits },
+                'encoder': { 
+                    'bits': self.Turnbits,
+                    'firmware': self.Firmware
+                },
                 # severity callback position
                 '0x01': { 'd': position }
             }
@@ -1123,7 +1141,7 @@ class AM8111MotionController(BeckhoffMotionController):
             EcatLogger.error(f"{ex}")
             return None
         
-    _toggleState = True
+    _toggleState = False
     def toggle(self, byte_offset=2, bit_mask=0x01):
         
         self.DeviceLock.acquire()
@@ -1156,7 +1174,7 @@ class AM8111MotionController(BeckhoffMotionController):
             EcatLogger.error(f"{ex}")
         finally:
             self.DeviceLock.release()        
-   
+
     _data = None
 
     def run(self):
@@ -1176,6 +1194,7 @@ class AM8111MotionController(BeckhoffMotionController):
 
                 if 'command' in self._data.keys() and self._data['command'] is not None:                    
                     self.ControlWord = self._data['command']
+                    self._watchTime = time.time_ns()
                     self._data['command'] = None
 
                 if 'mode' in self._data.keys() and self._data['mode'] is not None:   
@@ -1188,8 +1207,7 @@ class AM8111MotionController(BeckhoffMotionController):
                     self._data['velocity'] = None
 
                 if 'position' in self._data.keys() and self._data['position'] is not None:   
-                    #self.PositionSetpoint = AM8111ProfilePosition.merge(self._data['position'], self.Turnbits[1])
-                    #self.Position = self.PositionSetpoint
+                    # unused
                     self._data['position'] = None
 
                 if 'touchprobe' in self._data.keys() and self._data['touchprobe'] is not None:
@@ -1202,6 +1220,7 @@ class AM8111MotionController(BeckhoffMotionController):
                         enabled = self._controller.Enabled
                         self._controller.config(self._data['control'])   
                         if enabled and not self._controller.Enabled:
+                            # disable velocity
                             self.VelocitySetpoint = 0
                             self.Velocity = self.VelocitySetpoint
                             self.ControlWord = AM8111Profile.SWITCH_ON
@@ -1226,7 +1245,7 @@ class AM8111MotionController(BeckhoffMotionController):
             self._data.update(data)
             rc = True
         except Exception as ex:
-            pass            
+            EcatLogger.error(f"output {ex}")
         finally:
             self._lock.release()        
         return rc

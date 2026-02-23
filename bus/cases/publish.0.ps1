@@ -13,7 +13,7 @@ $url = "localhost:10097"
 $topic = "/hot/ecat/value"
 $h,$p = $url -split ":"
 
-$sleep = 10
+$sleep = 200
 
 $out = @()
 $wrn = @()
@@ -51,29 +51,40 @@ function mulmin2incs {
 # 1 enable voltage
 # 0 switch on
 
-$speed = mulmin2incs(100)
+$speed = mulmin2incs(0)
 $speed = $speed.ToString()
 
 Write-Host $speed
 
-[array]$OFF = @(
-    "{ ""source"": ""ed1fWorker"", ""target"": 0, ""value"": { ""control"": ""0000000000000111"" } }",
-    '{ "source": "ed1fWorker", "target": 0, "value": { "control": "0000000000000101" } }',
-    '{ "source": "ed1fWorker", "target": 0, "value": { "control": "0000000000000100" } }'
+[array]$RUN = @(
+    '{ "source": "ed1fWorker", "target": 0, "value": { "command": "10000000" } }',
+    '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00000111" } }'
+    "{ ""source"": ""ed1fWorker"", ""target"": 0, ""value"": { ""velocity"": $($speed) } }",
+    '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00001111" } }'
 )
 
-[array]$SP = @(
-    '{ "source": "ed1fWorker", "target": 0, "value": { "control": "0000000000000100" } }',
-    '{ "source": "ed1fWorker", "target": 0, "value": { "control": "0000000000000110" } }',
-    "{ ""source"": ""ed1fWorker"", ""target"": 0, ""value"": { ""control"": ""0000000000000111"", ""velocity"": $($speed) } }",
-    '{ "source": "ed1fWorker", "target": 0, "value": { "control": "0000000000001111" } }'
+[array]$ENABLE = @(
+    '{ "source": "ed1fWorker", "target": 0, "value": { "command": "10000000" } }',
+    '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00000110" } }',
+    '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00000111" } }',
+    '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00001111" } }'
 )
 
-[array]$ON = @(
-    '{ "source": "ed1fWorker", "target": 0, "value": { "control": "0000000000001111" } }'
+[array]$DISABLE = @(
+    '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00000111" } }',
+    '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00000110" } }',
+    '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00000000" } }',
+    '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00000010" } }'
 )
 
-$payloads = $OFF
+[array]$CONTROL = @(
+    '{ "source": "ed1fWorker", "target": 0, "value": { "control": { "mode": "p", "enabled": 1, "setpoint": 100, "processvalue": 100 } } }'
+)
+
+#$payloads = $DISABLE
+#$payloads = $ENABLE
+$payloads = $CONTROL
+#$payloads = $RUN
 
 foreach ($payload in $payloads) 
 {

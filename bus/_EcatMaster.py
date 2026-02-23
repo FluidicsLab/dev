@@ -5,7 +5,7 @@ from numpy import indices, int32
 from functools import reduce
 import pysoem
 import time, datetime
-from time import perf_counter_ns, perf_counter
+from time import perf_counter_ns, perf_counter, time_ns
 import struct,ctypes
 
 from types import SimpleNamespace
@@ -25,7 +25,7 @@ from _EcatBrokerController import EcatBrokerController, EcatCallbackController
 
 from _ModbusController import KellerModbusController, Sth01ModbusController, Wt901cModbusController
 from _SerialController import GscSerialController
-from _MotionController import NanotecMotionController, HiwinMotionController
+from _HiwinMotionController import Ed1fMotionController
 from _LightController import CcsLightController
 
 from _DisplayController import BeckhoffDisplayController
@@ -63,17 +63,17 @@ TIMEOUT_STATE_CHECK     = 50_000
 TIMEOUT_MASTER_STATE    = 2.0       # s
 TIMEOUT_SLAVE_STATE     = 2.0       # s
 
-DELAY_RUNNING_LOOP      = 0.1
-DELAY_ALIVE_LOOP        = 0.5
+DELAY_RUNNING_LOOP      = 0.10
+DELAY_ALIVE_LOOP        = 1.0
 DELAY_INPUT_LOOP        = 0.1
 DELAY_OUTPUT_LOOP       = 0.1
 
 DELAY_PROCESS_LOOP      = 0.010      # 0.01
-DELAY_CHECK_LOOP        = 0.05      # 0.01
+DELAY_CHECK_LOOP        = 0.125      # 0.01
 
-DELAY_TOGGLE_LOOP       = 0.015
+DELAY_TOGGLE_LOOP       = 0.005
 
-DELAY_DEBUG_LOOP        = 0.01
+DELAY_DEBUG_LOOP        = 0.125
 
 DEBUG = 1
 VERBOSE = 1
@@ -244,8 +244,8 @@ class EcatMaster(EcatObject):
                     slave._fpwr(0x420, struct.pack('H',int(sm*10)), timeout_us=TIMEOUT_FPWR)
             else:          
                 
-                EcatLogger.info(f"SM-watchdog  {slave.get_watchdog('processdata')} <-- {self.Watchdog['sm']:.2f}ms")
-                EcatLogger.info(f"PDI-watchdog {slave.get_watchdog('pdi')} <-- {self.Watchdog['pd']:.2f}ms")
+                EcatLogger.info(f"SM-watchdog  {slave.get_watchdog('processdata')} <-- {sm:.2f}ms")
+                EcatLogger.info(f"PDI-watchdog {slave.get_watchdog('pdi')} <-- {pd:.2f}ms")
 
                 # process data
                 if pd is not None:
@@ -950,8 +950,9 @@ class EcatMaster(EcatObject):
     
         self.Master.write_state()
     
-    def writeSlaveState(self, state):
-        for slave in self.Master.slaves:
+    def writeSlaveState(self, state, slave=None):
+        slaves = [slave] if slave is not None else self.Master.slaves
+        for slave in slaves:
             slave.state = state
             slave.write_state()
             start_time = time.time()
@@ -1384,12 +1385,15 @@ class EcatMaster(EcatObject):
                 if (pysoem.OP_STATE & state) != state:
                     continue
 
-                if 'EL7201' in keys and n in self.Indizes.EL7201:
-                    # motion control
+                # motion control
+                if 'EL7201' in keys and n in self.Indizes.EL7201:                    
                     if n in self._beckhoffMotionController.keys():
                         self._beckhoffMotionController[n].toggle()
+                elif 'ED1F' in keys and n in self.Indizes.ED1F:
+                    if n in self._hiwinMotionController.keys():
+                        self._hiwinMotionController[n].toggle()                        
 
-            self._inputEvent.wait(DELAY_TOGGLE_LOOP)
+            self._toggleEvent.wait(DELAY_TOGGLE_LOOP)
 
         EcatLogger.debug("end toggle loop")                    
 
@@ -1632,7 +1636,7 @@ class EcatMaster(EcatObject):
                         'index': n,
                         'value': data
                     })
-
+                
             # severity
 
             if self.SeverityLimit.enabled == 1:
@@ -2030,18 +2034,17 @@ def main():
 
     rc = 0
 
-    EcatLogger.debug(f"pysoem {pysoem.__version__} ({PYSOEM_VERSION})") 
-    EcatLogger.debug(f"process {DELAY_PROCESS_LOOP}s check {DELAY_CHECK_LOOP}") 
+    EcatLogger.info(f"pysoem {pysoem.__version__} ({PYSOEM_VERSION})") 
 
     config = EcatConfig(name=sys.argv[1] if len(sys.argv) >1 else "_EcatSettings")
 
-    EcatLogger.debug(f"connect adapter {config.Application.display} ({config.Application.version})")   
-    
-    adapters = EcatAdapter.adapters2(config.Adapter.exclude, active=config.Adapter.active, shift='    ')     
+    EcatLogger.debug(f"connect adapter {config.Application.display} ({config.Application.version})")
+    adapters = EcatAdapter.adapters2(config.Adapter.exclude, active=config.Adapter.active, shift='')     
     if len(adapters) == 0:
-        EcatLogger.error(f"adapter {config.Adapter.active + ' ' if config.Adapter.active is not None else ''}not found")   
+        EcatLogger.error(f"adapter {config.Adapter.active + ' ' if config.Adapter.active is not None else ''}not found") 
+        EcatLogger.error(f"cannot start") 
         rc = -1
-    EcatLogger.debug(f"{'done' if rc == 0 else 'failed'}")
+     
 
     if rc == 0:
 
@@ -2057,12 +2060,15 @@ def main():
     # cpu affinity
     if rc == 0:
         
+        
         pid = os.getpid()
         process = psutil.Process(pid)        
-        process.cpu_affinity(config.Master.affinity)
-        EcatLogger.debug(f"affinity {process.cpu_affinity()}")
-
-
+        
+        if len(config.Master.affinity) > 0:
+            process.cpu_affinity(config.Master.affinity)
+        
+        EcatLogger.debug(f"affinity {pid} {process.cpu_affinity()}")
+        
     if rc == 0:
 
         EcatLogger.debug(f"using template {config.Master.template}; mandant {config.Master.mandant}; topic {config.Master.topic}")   

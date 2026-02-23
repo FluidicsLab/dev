@@ -9,16 +9,6 @@ import pysoem, time, ctypes
 
 class EcatMasterDEV(EcatMaster):
 
-    #
-    #
-    #
-
-    def __init__(self):
-        pass
-
-    #
-    #
-    #
     def describe(self):
 
         EcatLogger.debug(f"{self.Master.__class__.__name__}")
@@ -32,7 +22,9 @@ class EcatMasterDEV(EcatMaster):
         EcatLogger.debug(f"sdo read timeout     {self.Master.sdo_read_timeout}")
         EcatLogger.debug(f"sdo write timeout    {self.Master.sdo_write_timeout}")
         EcatLogger.debug(f"state                {self.Master.state}")
-        EcatLogger.debug(f"slaves               {len(self.Master.slaves)}")
+
+    def __init__(self):
+        self.describe()
 
     #
     # severity section
@@ -105,6 +97,8 @@ class EcatMasterDEV(EcatMaster):
                             SeverityLogger.debug(f"3124.{target} {addr} {key} {raw}")                            
 
         return severity
+    
+    # motion control
 
     def severityEL7201(self, source, data, current, config: dict):
         severity = current.copy()
@@ -143,7 +137,9 @@ class EcatMasterDEV(EcatMaster):
 
                             SeverityLogger.debug(f"1100.{target} {addr} {key} {value[addr][key]}")                               
 
-        return severity          
+        return severity
+
+    #          
 
     def severityFunc(self, source, data, current):
 
@@ -214,8 +210,10 @@ class EcatMasterDEV(EcatMaster):
                     ])
                 self._beckhoffMotionController[pos].initConfig()
 
-                self.SeverityController.register(f"EL7201.{pos}", self._beckhoffMotionController[pos].severityFunc)                
+                self.SeverityController.register(f"EL7201.{pos}", self._beckhoffMotionController[pos].severityFunc) 
+                # pressure controller               
                 self.CallbackController.register(f"EL7201.{pos}", "EL6021.3", self._beckhoffMotionController[pos].callback)
+                # position controller
                 self.CallbackController.register(f"EL7201.{pos}", f"EL7201.{pos}", self._beckhoffMotionController[pos].callback)
 
                 EcatLogger.debug(f"init EL7201 MotionController @ {pos}")
