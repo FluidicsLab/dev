@@ -41,6 +41,7 @@ from _CouplerController import BeckhoffCouplerController
 from _IOLinkController import ifmIOLinkController
 
 from _BeckhoffMotionController import AM8111MotionController
+from _BeckhoffMemoryController import NOVRAMMemoryController
 
 """
 
@@ -302,6 +303,7 @@ class EcatMaster(EcatObject):
     _beckhoffAnalogController = {}
 
     _beckhoffCouplerController = {}
+    _beckhoffMemoryController = {}
     
     #
     # terminal
@@ -794,9 +796,6 @@ class EcatMaster(EcatObject):
 
             case "EK1100":
                 self.configEK1100(pos, slave)
-                if 0 == pos:
-                    self.configSeverity()
-
             case 'EL1008':
                 self.configEL1008(pos, slave)
             case 'EL1809':
@@ -1312,6 +1311,10 @@ class EcatMaster(EcatObject):
                     if n in self._ccsLightController.keys():
                         self._ccsLightController[n].output(data)
 
+                elif 'EL6080' in keys and n in self.Indizes.EL6080:
+                    if n in self._beckhoffMemoryController.keys():
+                        self._beckhoffMemoryController[n].output(data)
+
                 #
                 # motion
                 #                
@@ -1620,7 +1623,13 @@ class EcatMaster(EcatObject):
 
                 elif 'EK1100' in keys and n in self.Indizes.EK1100:
                     if n in self._beckhoffCouplerController.keys():
-                        data = self._beckhoffCouplerController[n].run()                        
+                        data = self._beckhoffCouplerController[n].run()        
+
+                # memory
+
+                elif 'EL6080' in keys and n in self.Indizes.EL6080:
+                    if n in self._beckhoffMemoryController.keys():
+                        data = self._beckhoffMemoryController[n].run()                
 
                 else:
                     pass
@@ -1944,6 +1953,11 @@ class EcatMaster(EcatObject):
             if self._beckhoffCouplerController[key] is not None:
                 self._beckhoffCouplerController[key].release()
                 self._beckhoffCouplerController[key] = None               
+
+        for key in self._beckhoffMemoryController.keys():
+            if self._beckhoffMemoryController[key] is not None:
+                self._beckhoffMemoryController[key].release()
+                self._beckhoffMemoryController[key] = None  
 
         for key in self._ifmIOLinkController.keys():
             if self._ifmIOLinkController[key] is not None:

@@ -1,0 +1,46 @@
+{
+    "enabled": 1,
+    "version": "20260125",
+    
+    "config": {
+        
+        "control": {
+            "item": "SEVERITY",
+            "channel": 16,
+            "initial": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            "reset": 0,
+            "ignore": 1
+        },
+
+        "subscription": {
+
+            "ED1F": { 
+
+                "0": { "topic": [ "p", "d" ], "channel": [0], "severity": [0] }
+
+            }
+
+        },
+
+        "digits": {
+            "p": 3,
+            "T": 2,
+            "d": 6,
+            "b": 0,
+            "t": 0
+        }
+
+    },
+
+    "EK1100": {
+        "1": {
+            "cpu": {
+                "p": { "low": 0.0, "high": 100.0, "def": null, "topic": "p", "channel": [ 0,1, 8,9 ] }
+            }
+        }
+    },
+    
+    "ED1F": {},
+    "SEVERITY": { }
+
+}

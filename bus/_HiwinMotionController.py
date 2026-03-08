@@ -737,9 +737,7 @@ class Ed1fMotionController(HiwinMotionController):
             
             status = bin(buff.status)[2:].zfill(16)  
             status_text = Ed1fProfile.__status__(int(status,2))
-
-            EcatLogger.debug(f"{buff.position} :: {buff.position / 8_388_608}")
-
+            
             data  = {
                 'mode': {
                     'raw': buff.mode,
@@ -771,7 +769,7 @@ class Ed1fMotionController(HiwinMotionController):
 
         except Exception as ex:
             EcatLogger.error(f"input {ex}")
-            return None    
+            return None   
 
     _data = None
 
@@ -798,7 +796,7 @@ class Ed1fMotionController(HiwinMotionController):
                     self.ControlWord = self._data['command']
                     self._data['command'] = None
 
-                if 'velocity' in self._data.keys() and self._data['velocity'] is not None:   
+                if 'velocity' in self._data.keys() and self._data['velocity'] is not None: 
                     self.VelocitySetpoint = self._data['velocity']
                     self.Velocity = self.VelocitySetpoint
                     self._data['velocity'] = None

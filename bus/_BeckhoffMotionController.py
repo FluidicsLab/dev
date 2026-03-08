@@ -3,8 +3,6 @@ import ctypes, time, struct
 from turtle import position
 from types import SimpleNamespace
 
-from matplotlib.pylab import poisson
-from narwhals import UInt32
 import pysoem
 import numpy as np
 from threading import Lock, Event, Thread
@@ -509,7 +507,7 @@ class BeckhoffMotionController(object):
 
     PdoOutput = property(fget=_get_pdoOutput,fset=_set_pdoOutput)    
 
-    _severity = SEVERITY_VERBOSE
+    _severity = []
     
     def __init__(self, index, device, lock, debug=False) -> None:   
         super().__init__()   
@@ -1283,10 +1281,9 @@ class AM8111MotionController(BeckhoffMotionController):
     def isValid(self):
         return EcatSeverityController.isValid(self._severity)
     
-    _severity = False
+    _severity = []
     def severityFunc(self, value):
-        """
-                
+        """                
         :param self: 
         :param value: 
         """
@@ -1296,7 +1293,4 @@ class AM8111MotionController(BeckhoffMotionController):
                 'velocity': 0,
                 'command': AM8111Profile.SHUTDOWN
             }
-            self._severity = True
-        else:
-            self._severity = False
 

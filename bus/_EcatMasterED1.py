@@ -1,4 +1,4 @@
-from _EcatMaster import EcatMaster, EcatLogger, Ed1fMotionController
+from _EcatMaster import EcatMaster, EcatLogger, Ed1fMotionController, BeckhoffCouplerController, NOVRAMMemoryController
 from _EcatSeverity import SEVERITY_VERBOSE, SEVERITY_CRITICAL, SEVERITY_REASON_SYSTEM, \
     SEVERITY_REASON_PRESSURE, SEVERITY_REASON_TEMPERATURE, SEVERITY_REASON_TIME, SEVERITY_REASON_DISTANCE, SeverityLogger
 from _EcatStates import EcatStates
@@ -29,6 +29,26 @@ class EcatMasterED1(EcatMaster):
     # severity section
     #
 
+    # coupler; several external
+    
+    def severityEK1100(self, source, data, current, config: dict):        
+        severity = current.copy()
+        value = data['value']['value']
+        if value:
+            for addr in list(config.keys()):
+                key = "p"
+                targets = config[f"{addr}"][key]["channel"]
+                limit = self.SeverityLimit.find(f"{source}.{addr}.{key}")
+                if limit is not None:
+                    critical = (value[addr][key] < limit["low"] or value[addr][key] > limit["high"])
+                    if critical:
+                        for target in targets:
+                            severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_SYSTEM
+
+                            SeverityLogger.debug(f"1100.{target} {addr} {key} {value[addr][key]}")                               
+
+        return severity
+
     def severityFunc(self, source, data, current):
 
         config = self.SeverityLimit
@@ -42,7 +62,8 @@ class EcatMasterED1(EcatMaster):
         if pos in list(config._raw[alias].keys()):
 
             match alias:
-                
+                case "EK1100":
+                    severity = self.severityEK1100(source, data, severity, config._raw[alias][pos])
                 case _:
                     pass
         
@@ -51,6 +72,10 @@ class EcatMasterED1(EcatMaster):
                 current[channel] = severity[channel]
 
         return current    
+        
+    #
+    # config section
+    #
 
     # motion control
 
@@ -59,20 +84,66 @@ class EcatMasterED1(EcatMaster):
         rc = super().configED1F(pos, slave)
 
         if rc:
-
-            if self.isSlot("drive", (0, pos)):
+            slot = 0
+            if self.isSlot("drive", (slot, pos)):
                 
                 self._hiwinMotionController[pos] = Ed1fMotionController(pos, slave, self.ProcessLock)
                 self._hiwinMotionController[pos].initEx(source=[
                     { "key": "p", "name": "EL6021.3", "addr": 0x0C, "low": 0, "high": 700 }
                     ])
-                self._hiwinMotionController[pos].initConfig()
+                self._hiwinMotionController[pos].initConfig()                
                 self.SeverityController.register(f"ED1F.{pos}", self._hiwinMotionController[pos].severityFunc)
 
                 EcatLogger.debug(f"init Ed1fMotionController @ {pos}; {EcatStates.desc(slave.state, desc=True)}")
                     
         EcatLogger.debug(f"done with {rc}")
         
-        return rc      
+        return rc 
+        
+    # coupler; system
+
+    def configEK1100(self, pos, slave):
+
+        rc = super().configEK1100(pos, slave)
+
+        if rc:
+            slot = 1
+            if self.isSlot("drive", (slot, pos)): 
+                
+                self.configSeverity()
+                
+                self._beckhoffCouplerController[pos] = BeckhoffCouplerController(pos, slave, self.ProcessLock)           
+                self.SeverityController.register(f"EK1100.{pos}")
+                EcatLogger.debug(f"init BeckhoffCouplerController @ {pos}")
+            
+        EcatLogger.debug(f"done with {rc}")
+
+        return rc    
+
+    
+    def configEL6080(self, pos, slave):
+
+        rc = super().configEL6080(pos, slave)
+
+        if rc:
+            slot = 2
+            if self.isSlot("drive", (slot, pos)):                               
+                self._beckhoffMemoryController[pos] = NOVRAMMemoryController(pos, slave, self.ProcessLock)
+                self._beckhoffMemoryController[pos].initConfig()
+                self.CallbackController.register(f"EL6080.{pos}", "ED1F.0", self._beckhoffMemoryController[pos].callback)
+                EcatLogger.debug(f"init NOVRAMController")
+
+        EcatLogger.debug(f"done with {rc}")
+
+        return rc
+    
+    def configSeverity(self):
+        if self.SeverityLimit.enabled == 1:
+            config = self.SeverityLimit.config
+            # severity channel
+            for target in range(config.control.channel):
+                self.SeverityController.register(f"{config.control.item}.{target}", self.SeverityController.controlFunc)
+            # severity limit data reload
+            self.SeverityController.register(f"{config.control.item}.99")    
    
     
