@@ -13,16 +13,15 @@ $url = "localhost:10097"
 $topic = "/hot/ecat/value"
 $h,$p = $url -split ":"
 
-$sleep = 200
+$sleep = 50
 
 $out = @()
 $wrn = @()
 $err = @()
 
-function mulmin2incs {
-    param(
-        $value
-    )
+function set-IRI {
+
+    $electronicGearRatio = 1.0/1.0
 
     $gearBoxGearRatio = 1000.
     $spindlePitch = 5.
@@ -35,7 +34,20 @@ function mulmin2incs {
     $transmission = $spindlePitch / ($timingBeltTransmissionGearRatio * $gearBoxGearRatio)
     $injectionRateRotation = $transmission * $cylinderArea
     $injectionRateIncrement = $injectionRateRotation / $motorIncrementPositions
-    return [int]($value / ($injectionRateIncrement * 60))
+
+    Set-Variable -Name "IRI" -Value ($injectionRateIncrement * 60) -Scope Global
+
+    Write-Host $IRI
+}
+
+function mulmin2incs {
+    param($value)    
+    return [int]($value / $IRI)
+}
+
+function incs2mulmin {
+    param($value)
+    return [int]($value * $IRI)
 }
 
 # control word 
@@ -51,13 +63,17 @@ function mulmin2incs {
 # 1 enable voltage
 # 0 switch on
 
-$speed = mulmin2incs(0)
+set-IRI
+$speed = mulmin2incs(200)
+$velo = incs2mulmin($speed)
+
 $speed = $speed.ToString()
 
-Write-Host $speed
+Write-Host $speed " " $velo
 
 [array]$RUN = @(
     '{ "source": "ed1fWorker", "target": 0, "value": { "command": "10000000" } }',
+    '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00000110" } }',
     '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00000111" } }'
     "{ ""source"": ""ed1fWorker"", ""target"": 0, ""value"": { ""velocity"": $($speed) } }",
     '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00001111" } }'
@@ -77,14 +93,10 @@ Write-Host $speed
     '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00000010" } }'
 )
 
-[array]$CONTROL = @(
-    '{ "source": "ed1fWorker", "target": 0, "value": { "control": { "mode": "p", "enabled": 1, "setpoint": 100, "processvalue": 100 } } }'
-)
-
 $payloads = $DISABLE
 $payloads = $ENABLE
-#$payloads = $CONTROL
 #$payloads = $RUN
+#$payloads = @()
 
 foreach ($payload in $payloads) 
 {

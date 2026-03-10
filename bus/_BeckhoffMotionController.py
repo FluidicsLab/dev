@@ -22,14 +22,14 @@ class AM8111PidController(object):
 
     _scaler = {
         'input': {
-            'p': { "low": 0, "high": 700 },         # bar   (pressure)         
-            'd': { "low": 0, "high": 1306460160 }   # cycle (distance)         
+            'p': { "low": 0, "high": 700 },             # bar   (pressure)         
+            'd': { "low": 0, "high": 1_306_460_160 }    # cycle (distance)         
         },
-        'output': { "low": 0, "high": 24_185_993 }  # inc/s (velocity)
+        'output': { "low": 0, "high": 24_185_993 }      # inc/s (velocity)
     }
 
     _limit = {
-        'output': { "low": -24_185_993*8/9, "high": 24_185_993*8/9 }  # inc/s (velocity)
+        'output': { "low": -24_185_993 * 8/9, "high": 24_185_993 * 8/9 }  # inc/s (velocity)
     }
 
     _lock: Lock = Lock()
@@ -40,7 +40,7 @@ class AM8111PidController(object):
     _processvalue = {}
     _setpoint = {}
 
-    _mode = MODE_DEFAULT              # p,d
+    _mode = MODE_DEFAULT              # p, d
     def _get_mode(self):
         return self._mode
     def _set_mode(self, value):
@@ -121,7 +121,7 @@ class AM8111PidController(object):
                 self._updatable = config['updatable']
 
             if 'processvalue' in config.keys() and config['processvalue'] is not None:
-                pass                
+                self._processvalue[self.Mode] = config['processvalue']
 
         finally:
             self._lock.release()
@@ -190,11 +190,11 @@ class AM8111PidController(object):
                 
                     if self._callback is not None:
                         if self._demand != dv:
-                            self._callback(dv)
+                            self._callback(dv, err)
                             zero = False
                         else:
                             if dv == 0.0 and not zero:
-                                self._callback(dv)
+                                self._callback(dv, err)
                                 zero = True
 
                     self._demand = dv
@@ -606,8 +606,9 @@ class AM8111MotionController(BeckhoffMotionController):
         ]  
 
     UINT32_MAX = 4_294_967_295
+
     INT32_MAX = 2_147_483_647
-    INT32_MIN = -2_147_483_647
+    INT32_MIN = -2_147_483_648
     
     _controller: AM8111PidController = None
     
@@ -1126,6 +1127,7 @@ class AM8111MotionController(BeckhoffMotionController):
                     'value':status, 'text': status_text,
                 },
                 'encoder': { 
+                    'type': 'multiturn',
                     'bits': self.Turnbits,
                     'firmware': self.Firmware
                 },
@@ -1263,12 +1265,13 @@ class AM8111MotionController(BeckhoffMotionController):
                                 if key in data.keys():                    
                                     self._controller.update(key, data[key])                    
 
-    def controllerFunc(self, value):
+    def controllerFunc(self, value, error=0):
         """
         call back from PID
         
         :param self: 
         :param value: velocity inc/s
+        :param error: error py pid controller calc.
         """
         self._lock.acquire()
         try:  

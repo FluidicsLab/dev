@@ -88,12 +88,18 @@ class EcatMasterED1(EcatMaster):
             if self.isSlot("drive", (slot, pos)):
                 
                 self._hiwinMotionController[pos] = Ed1fMotionController(pos, slave, self.ProcessLock)
+                                
                 self._hiwinMotionController[pos].initEx(source=[
-                    { "key": "p", "name": "EL6021.3", "addr": 0x0C, "low": 0, "high": 700 }
+                    { "key": "p", "name": "EL6021.3", "addr": 0x0B, "low": 0, "high": 700 },
+                    { "key": "d", "name": "ED1F.0", "addr": '0x01', "low": 0, "high": 4_294_967_295_000 }
                     ])
+                
                 self._hiwinMotionController[pos].initConfig()                
                 self.SeverityController.register(f"ED1F.{pos}", self._hiwinMotionController[pos].severityFunc)
 
+                self.CallbackController.register(f"ED1F.{pos}", "EL6080.2", self._hiwinMotionController[pos].callback)
+                self.CallbackController.register(f"ED1F.{pos}", f"ED1F.{pos}", self._hiwinMotionController[pos].callback)
+                
                 EcatLogger.debug(f"init Ed1fMotionController @ {pos}; {EcatStates.desc(slave.state, desc=True)}")
                     
         EcatLogger.debug(f"done with {rc}")

@@ -13,17 +13,24 @@ $url = "localhost:10097"
 $topic = "/hot/ecat/value"
 $h,$p = $url -split ":"
 
-$sleep = 200
+$sleep = 50
 
 $out = @()
 $wrn = @()
 $err = @()
 
-[array]$MEM = @(
-    '{ "source": "el6080", "target": 2, "value": { "data": [0, 0, 0] } }'
+[array]$CONTROL = @(
+    '{ "source": "ed1fWorker", "target": 0, "value": { "control": { "mode": "p", "enabled": 1, "setpoint": 100.0, "processvalue": 100.0 } } }'
 )
 
-$payloads = $MEM
+$setpoint = 4294967295 * 30
+$setpoint = [int64]$setpoint
+
+[array]$CONTROL = @(
+    "{ ""source"": ""ed1fWorker"", ""target"": 0, ""value"": { ""control"": { ""mode"": ""d"", ""enabled"": 1, ""setpoint"": $($setpoint), ""params"": [200.0, 0.01, 0.0, 0.1] } } }"
+)
+
+$payloads = $CONTROL
 
 foreach ($payload in $payloads) 
 {

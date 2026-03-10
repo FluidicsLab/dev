@@ -1,4 +1,6 @@
+from math import trunc
 import ctypes, time
+from typing import final
 import pysoem
 import numpy as np
 from threading import Lock,Event,Thread
@@ -9,17 +11,19 @@ from _EcatObject import EcatLogger
 from _EcatSeverity import SEVERITY_VERBOSE, EcatSeverityController, SeverityLogger
 from _EcatStates import EcatStates
 
+
 class Ed1fPidController(object):
 
-    TIMEOUT_CONTROL = 0.2
-    FRACTION = 20
+    TIMEOUT_CONTROL = 0.1
+    FRACTION = 50
     MODE_DEFAULT = 'p'
 
     _scaler = {
         'input': {
-            'p': { "low": 0, "high": 700 },         # bar   (pressure)         
+            'p': { "low": 0, "high": 700 },                 # bar   (pressure)
+            'd': { "low": 0, "high": 4_294_967_295_000 }    # cycle (distance)         
         },
-        'output': { "low": 0, "high": 838_633_324 }  # inc/s (velocity)
+        'output': { "low": 0, "high": 838_633_324 }         # inc/s (velocity)
     }
 
     _limit = {
@@ -34,7 +38,7 @@ class Ed1fPidController(object):
     _processvalue = {}
     _setpoint = {}
 
-    _mode = MODE_DEFAULT              # p
+    _mode = MODE_DEFAULT                                # p
     def _get_mode(self):
         return self._mode
     def _set_mode(self, value):
@@ -53,11 +57,13 @@ class Ed1fPidController(object):
 
     # Kp, Ki, Kd, dt
     _params = {
-        'p': [0.5, 0.001, 0.0001, 0.1]
+        'p': [0.5, 0.001, 0.0001, 0.1],
+        'd': [10.0, 0.001, 0.0001, 0.1]
     }
 
     _factor = {
-        'p': +1
+        'p': +1,
+        'd': -1
     }
 
     _updatable = True
@@ -182,14 +188,17 @@ class Ed1fPidController(object):
                 
                     if self._callback is not None:
                         if self._demand != dv:
-                            self._callback(dv)
+                            self._callback(dv, err)
                             zero = False
                         else:
                             if dv == 0.0 and not zero:
-                                self._callback(dv)
+                                self._callback(dv, err)
                                 zero = True
 
                     self._demand = dv
+
+                except Exception as ex:
+                    EcatLogger.error(f"pid compute {ex}")
 
                 finally:
                     self._lock.release()
@@ -197,6 +206,7 @@ class Ed1fPidController(object):
             self._exit.wait(Ed1fPidController.TIMEOUT_CONTROL)
 
             enabled = self._enabled
+
 
 class Ed1fProfileMode:
 
@@ -296,6 +306,54 @@ class Ed1fProfile:
                         for i,s in enumerate(Ed1fProfile.status) 
                             if ((s & value) == s) and (s not in [0])
                         ])
+    
+    @staticmethod
+    def __translate__(value, src, dst):
+        
+        def constant(f):
+            def fset(self, value):
+                raise TypeError
+            def fget(self):
+                return f()
+            return property(fget, fset)
+
+        class _iri(object):
+            @constant
+            def value():
+                gearBoxGearRatio = 1_000.
+                spindlePitch = 5.
+                timingBeltTransmissionGearRatio = 2.
+                motorIncrementPositions = 8_388_608
+                cylinderDiameter = 15.                
+                cylinderArea = cylinderDiameter**2 * np.pi / 4.
+                transmission = spindlePitch / (timingBeltTransmissionGearRatio * gearBoxGearRatio)
+                injectionRateRotation = transmission * cylinderArea
+                return injectionRateRotation / motorIncrementPositions
+
+        iri = _iri()  
+        
+        if src == 'mulmin' and dst == 'incs':
+            return round(value / iri.value, 0)
+        if src == 'incs' and dst == 'mulmin':
+            return value * iri.value
+
+
+class Ed1fProfilePosition:
+
+    UINT32_MAX = 4_294_967_295
+
+    INT32_MAX = 2_147_483_647
+    INT32_MIN = -2_147_483_648
+
+    @staticmethod
+    def merge(value):
+        return value[0] * Ed1fProfilePosition.UINT32_MAX + value[1] + Ed1fProfilePosition.INT32_MAX
+    
+    @staticmethod
+    def split(value):
+        mtb = trunc(value / Ed1fProfilePosition.UINT32_MAX)
+        stb = (value - mtb) * Ed1fProfilePosition.UINT32_MAX - Ed1fProfilePosition.INT32_MAX
+        return [mtb, stb]
 
 
 class HiwinMotionController(object):
@@ -426,7 +484,7 @@ class Ed1fMotionController(HiwinMotionController):
             else:
                 self._mode = Ed1fProfileMode.MODE_CSV
         except Exception as ex:
-            EcatLogger.error(f"{ex}")
+            EcatLogger.error(f"mode {ex}")
         return self._mode    
     def _set_mode(self, value):
         try:                        
@@ -436,7 +494,7 @@ class Ed1fMotionController(HiwinMotionController):
             out.mode = ctypes.c_uint8(value)
             self.write(out)            
         except Exception as ex:
-            EcatLogger.error(f"{ex}")
+            EcatLogger.error(f"mode {ex}")
     Mode = property(fget=_get_mode,fset=_set_mode)             
 
     def _get_controlWord(self):
@@ -444,7 +502,7 @@ class Ed1fMotionController(HiwinMotionController):
             buff =  Ed1fMotionController.RxMap.from_buffer_copy(self.Device.output)                
             return bin(buff.control)[2:].zfill(16)
         except Exception as ex:
-            EcatLogger.error(f"{ex}")
+            EcatLogger.error(f"control {ex}")
             return None
     def _set_controlWord(self, value):
         try:            
@@ -455,7 +513,7 @@ class Ed1fMotionController(HiwinMotionController):
             out.mode = self.Mode
             self.write(out)            
         except Exception as ex:
-            EcatLogger.error(f"{ex}")
+            EcatLogger.error(f"control {ex}")
     ControlWord = property(fget=_get_controlWord, fset=_set_controlWord) 
 
     def _get_velocity(self):
@@ -463,7 +521,7 @@ class Ed1fMotionController(HiwinMotionController):
             buff = Ed1fMotionController.TxMap.from_buffer_copy(self.Device.input)                
             return buff.velocity
         except Exception as ex:
-            EcatLogger.error(f"{ex}")
+            EcatLogger.error(f"velocity {ex}")
             return None
     def _set_velocity(self, value):
         try:
@@ -473,7 +531,7 @@ class Ed1fMotionController(HiwinMotionController):
             out.mode = self.Mode
             self.write(out)            
         except Exception as ex:            
-            EcatLogger.error(f"{ex}")
+            EcatLogger.error(f"velocity {ex}")
     Velocity = property(fset=_set_velocity,fget=_get_velocity)
 
     _velocitySetpoint = 0
@@ -485,7 +543,7 @@ class Ed1fMotionController(HiwinMotionController):
 
     _firmware = None
     def _get_firmware(self):
-        if self._firmware is not None:
+        if self._firmware is None:
             # firmware major.medium.minor
             self._firmware = [                
                 ctypes.c_uint32.from_buffer_copy(self.Device.sdo_read(0x4097,0x00)).value,
@@ -494,24 +552,39 @@ class Ed1fMotionController(HiwinMotionController):
         return self._firmware
     Firmware = property(fget=_get_firmware)
 
-    _turnbits = None
-    def _get_turnbits(self):
-        if self._turnbits is None:
-            self._turnbits = [0, 0]
-        return self._turnbits
-    def _set_turnbits(self, value):        
-        self._turnbits = None
-    Turnbits = property(fget=_get_turnbits,fset=_set_turnbits) 
-
     _velocityLimit = None # inc/s
     def _get_velocityLimit(self):
         if self._velocityLimit is None:
-            try:                
-                self._velocityLimit = 838_633_324
-            except Exception as ex:
-                EcatLogger.error(f"{ex}")
+            self._velocityLimit = 838_633_324            
         return self._velocityLimit    
-    VelocityLimit = property(fget=_get_velocityLimit)       
+    VelocityLimit = property(fget=_get_velocityLimit)  
+
+    _multiturn = 0
+    def _get_multiturn(self):
+        return self._multiturn
+    def _set_multiturn(self, value):
+        self._multiturn = value
+    Multiturn = property(fget=_get_multiturn, fset=_set_multiturn)
+
+    _singleTurn = 0
+    def _get_singleTurn(self):
+        return self._singleTurn - Ed1fProfilePosition.INT32_MAX
+    def _set_singleTurn(self, value):
+        self._singleTurn = value + Ed1fProfilePosition.INT32_MAX
+    Singleturn = property(fget=_get_singleTurn, fset=_set_singleTurn)
+
+    _positionOffset = 0
+    def _get_positionOffset(self):        
+        return self._positionOffset - Ed1fProfilePosition.INT32_MAX
+    def _set_positionOffset(self, value):
+        self._positionOffset = value + Ed1fProfilePosition.INT32_MAX
+    PositionOffset = property(fget=_get_positionOffset,fset=_set_positionOffset)    
+    
+    def _get_position(self):        
+        return Ed1fProfilePosition.merge([self.Multiturn, self.Singleturn])
+    def _set_position(self, value):
+        self._multiturn, self._singleTurn = Ed1fProfilePosition.split(value)
+    Position = property(fget=_get_position,fset=_set_position)
 
     def initEx(self, source=[]): 
         """                
@@ -534,32 +607,19 @@ class Ed1fMotionController(HiwinMotionController):
                 self.Device.sdo_write(Ed1fMotionController.RxMapEx.register, 0, 
                                     bytes(ctypes.c_uint8(len(Ed1fMotionController.RxMapEx.address)))) 
         except Exception as ex:
-            EcatLogger.error(f"{ex}")    
+            EcatLogger.error(f"pdo {ex}")    
 
     def reset(self):    
         try:
-            self.Device.sdo_write(0x3215, 0x00, bytes(ctypes.c_int16(1)))            
+            pass
         except Exception as ex:        
-            EcatLogger.error(f"{ex}")  
+            EcatLogger.error(f"reset {ex}")  
 
     def clear(self):
         try:
-            rc = -1
-            self.Device.sdo_write(0x3200, 0x00, bytes(ctypes.c_int32(1)))
-
-            t = time.time_ns()
-            while ((time.time_ns() - t) / 10 ** 9) < 5.0:
-                v = ctypes.c_int32.from_buffer_copy(self.Device.sdo_read(0x3200,0x00)).value
-                if v == 4:
-                    rc = 0
-                    break
-                time.sleep(0.1)
-            
-            if rc == 0:
-                pass#self.reset()#
-
+            pass
         except Exception as ex:        
-            EcatLogger.error(f"{ex}")  
+            EcatLogger.error(f"clear {ex}")  
     
     def initConfig(self): 
         
@@ -568,8 +628,6 @@ class Ed1fMotionController(HiwinMotionController):
         """
         
         try:
-
-            #self.clear()
 
             self.Device.sdo_write(0x6060, 0x0, bytes(ctypes.c_int8(Ed1fProfileMode.MODE_CSV)))
             # accel
@@ -617,7 +675,6 @@ class Ed1fMotionController(HiwinMotionController):
                                 sync1_cycle_time=cycle_time
                                 )
             
-            _ = self.Turnbits
             _ = self.VelocityLimit
             _ = self.Firmware
             
@@ -638,103 +695,17 @@ class Ed1fMotionController(HiwinMotionController):
         except Exception as ex:
             self._initialized = False
             EcatLogger.error(f"Exception {ex}")  
-        
-    _initialized = False
-    def init(self): 
 
-        self._initialized = True
-
-    """
-    def input(self):
-
-        step = -1
-
-        try:
-
-            cw = bin(ctypes.c_uint16.from_buffer_copy(self.Device.sdo_read(0x6040,0x00)).value)[2:].zfill(16)
-            sw = bin(ctypes.c_uint16.from_buffer_copy(self.Device.sdo_read(0x6041,0x00)).value)[2:].zfill(16)
-
-            step = 0
-
-            vv = [ctypes.c_int32.from_buffer_copy(self.Device.sdo_read(a,0x00)).value for a in [0x606C,0x606B,0x60FF,0x607F]]
-            pp = [ctypes.c_int32.from_buffer_copy(self.Device.sdo_read(a,0x00)).value for a in [0x6064,0x6062,0x607A]]
-
-            step = 1
-
-            tt = [ctypes.c_int16.from_buffer_copy(self.Device.sdo_read(a,0x00)).value for a in [0x6077,0x6074,0x6071,0x6072]]
-
-            step = 2
-
-            # motor rated current mA, motor rated torque mNm
-            mo = [ctypes.c_int32.from_buffer_copy(self.Device.sdo_read(a,0x00)).value for a in [0x6075,0x6076]]
-
-            step = 3
-
-            # Ut054 motor current
-            ut054 = ctypes.c_float.from_buffer_copy(self.Device.sdo_read(0x4054,0x00)).value
-            mo = mo + [np.nan_to_num(ut054)]
-
-            step = 4
-
-            # device
-            dv = [
-                # firmware major.medium.minor
-                ctypes.c_uint32.from_buffer_copy(self.Device.sdo_read(0x4097,0x00)).value,
-                ctypes.c_uint16.from_buffer_copy(self.Device.sdo_read(0x2502,0x00)).value
-                ]
-
-            step = 5
-
-            md = self.Mode
-
-            ec = bin(ctypes.c_uint16.from_buffer_copy(self.Device.sdo_read(0x603f,0x00)).value)[2:].zfill(16)
-            em = f'0x{hex(int(ec,2))[2:].zfill(4)}'
-
-            step = 6
-
-            wc, wm = 0,'0x0000'
-            for a in [0x3110,0x3111]:
-                wc = bin(ctypes.c_uint16.from_buffer_copy(self.Device.sdo_read(a,0x00)).value)[2:].zfill(16)        
-                wm = f'0x{hex(a+int(wc,2))[2:].zfill(4)}'
-
-            step = 7
-
-            if wm == '0x3111':
-                wc, wm = 0,'0x0000'
-
-            return {
-
-                'mode': md,
-
-                'status': sw,
-                'control': cw,
-
-                'error': em,
-                'warn': wm,
-
-                'velocity': vv,
-                'position': pp,
-                'torque': tt,
-                'motor': mo,
-
-                'device': dv
-            }
-
-        except Exception as ex:
-            EcatLogger.error(f"-- Ed1fMotionController.input {step} {ex}")
-            return None
-    """
 
     def input(self):
 
         # pdo read
         try:
 
-            if not self._initialized:      
-                self.init()          
-
             buff =  Ed1fMotionController.TxMap.from_buffer_copy(self.Device.input)
-            
+
+            self.Singleturn = buff.position
+                        
             status = bin(buff.status)[2:].zfill(16)  
             status_text = Ed1fProfile.__status__(int(status,2))
             
@@ -744,10 +715,12 @@ class Ed1fMotionController(HiwinMotionController):
                     'text': Ed1fProfileMode.__str__(buff.mode)
                 },
                 'position': {
-                    'raw': buff.position
+                    'raw': buff.position,
+                    'value': [self.Multiturn, self.Singleturn]
                 },
                 'velocity':{
-                    'raw': buff.velocity                    
+                    'raw': buff.velocity,
+                    'value': Ed1fProfile.__translate__(buff.velocity, 'incs', 'mulmin')
                 },
                 'info': {
                     'error': buff.errorcode
@@ -760,9 +733,12 @@ class Ed1fMotionController(HiwinMotionController):
                     'text': status_text,
                 },
                 'encoder': { 
-                    'bits': self.Turnbits,
+                    'type': 'singleturn',
+                    'turnbits': [0, 32],
                     'firmware': self.Firmware
                 },
+                # severity callback position
+                '0x01': { 'd': self.Position }
             }
 
             return data
@@ -780,9 +756,6 @@ class Ed1fMotionController(HiwinMotionController):
         data = None
 
         try:
-
-            if not self._initialized:
-                self.init()
 
             data = self.input()
         
@@ -804,6 +777,10 @@ class Ed1fMotionController(HiwinMotionController):
                 if 'position' in self._data.keys() and self._data['position'] is not None:   
                     # unused
                     self._data['position'] = None
+
+                if 'offset' in self._data.keys() and self._data['offset'] is not None:   
+                    self.PositionOffset = self._data['offset']
+                    self._data['offset'] = None
 
                 # pid controller
                 if 'control' in self._data.keys() and self._data['control'] is not None:
@@ -832,10 +809,8 @@ class Ed1fMotionController(HiwinMotionController):
             self.DeviceLock.release()
 
     def output(self, data):
-
         if not self.Enabled:
-            return False
-        
+            return False        
         self._lock.acquire()
         try:
             if self._data is None:
@@ -844,22 +819,60 @@ class Ed1fMotionController(HiwinMotionController):
         except Exception as ex:
             EcatLogger.error(f"output {ex}")
         finally:
-            self._lock.release()
-        
+            self._lock.release()        
         return True
             
-    def callback(self, *args):
-        pass
+    _callbackData = None
 
-    def controllerFunc(self, value):
+    def callback(self, *args):
+        """          
+        update controller data      
+        :param self: 
+        :param args: 
+        """        
+        self._lock.acquire()
+        try:            
+            
+            name = f"{args[0]['name']}.{args[0]['index']}"            
+            value = args[0]['value']['value'] if 'value' in args[0]['value'].keys() else None            
+            if value is not None:
+
+                if 'data' in value.keys() and len(value['data']) > 0:
+                    self._callbackData = value['data'].copy()[:2]
+                    self.Multiturn = value['data'][0]
+                    self.Singleturn = value['data'][1]
+                                            
+                if self._controller is not None and self._controller._updatable and len(self._controller.Source) != 0:
+                    for source in self._controller.Source:
+                        if name == source.name:
+                            addr = source.addr
+                            key = source.key
+                            if 'value' in list(args[0]['value']):
+                                if value:
+                                    if addr in value.keys():
+                                        data = value[addr]
+                                        if key in data.keys():                                            
+                                            if 'd' == key:
+                                                if self._callbackData is not None:
+                                                    self._controller.update(key, Ed1fProfilePosition.merge(self._callbackData))
+                                            else:
+                                                self._controller.update(key, data[key])   
+                                        
+        except Exception as ex:
+            EcatLogger.error(f"callback {ex}")
+        finally:
+            self._lock.release()
+
+    def controllerFunc(self, value, error=0):
         """
-        callback from PID        
+        call back from PID        
         :param self: 
         :param value: velocity inc/s
+        :param error: error py pid controller calc.
         """
         self._lock.acquire()
         try:  
-            EcatLogger.debug(f"{value}")
+            #EcatLogger.debug(f"{value} {error}")
             self._data.update({
                 'velocity': round(value)
             })
