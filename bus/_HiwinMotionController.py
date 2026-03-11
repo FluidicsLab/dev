@@ -457,7 +457,7 @@ class Ed1fMotionController(HiwinMotionController):
             ('position', ctypes.c_int32),
             ('velocity', ctypes.c_int32),
             ('torque', ctypes.c_int16),
-            ('digital', ctypes.c_uint32),
+            ('digital', ctypes.c_uint32)
         ]  
    
     UINT32_MAX  = 4_294_967_295
@@ -872,7 +872,7 @@ class Ed1fMotionController(HiwinMotionController):
         """
         self._lock.acquire()
         try:  
-            #EcatLogger.debug(f"{value} {error}")
+            EcatLogger.debug(f"{value} {error} {self.Multiturn} {self.Singleturn}")
             self._data.update({
                 'velocity': round(value)
             })

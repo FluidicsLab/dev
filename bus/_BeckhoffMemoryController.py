@@ -166,12 +166,18 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
     class RxMapEx:
         register = 0x1C12
-        address = [0x1601]
+        address = [0x1601,
+                   0x1600
+                   ]
   
     class RxMap(ctypes.Structure):
         _pack_ = 1
         _fields_ = [
-            ('control', ctypes.c_uint16)
+            ('control', ctypes.c_uint16),
+
+            ('multiturn', ctypes.c_int32),
+            ('singleturn', ctypes.c_int32),
+            ('velocity', ctypes.c_int32)
         ]
 
     #
@@ -185,12 +191,18 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
     class TxMapEx:
         register = 0x1C13
-        address = [0x1A01]
+        address = [0x1A01,
+                   0x1A00
+                   ]
 
     class TxMap(ctypes.Structure):
         _pack_ = 1
         _fields_ = [
-            ('status', ctypes.c_uint16)
+            ('status', ctypes.c_uint16),
+
+            ('multiturn', ctypes.c_int32),
+            ('singleturn', ctypes.c_int32),
+            ('velocity', ctypes.c_int32)
         ]  
     
     def __init__(self, index, device, lock, debug=False) -> None:
@@ -249,7 +261,7 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         """
         
         try:
-               
+
             self._enablePdoAssignment(False)   
 
             #
@@ -265,6 +277,9 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
             addr = NOVRAMMemoryController.RxMapEx.register            
             for i,value in enumerate(NOVRAMMemoryController.RxMapEx.address): 
                 self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)))
+
+            #self.Device.sdo_write(0x1600, 0x00, bytes.fromhex("70000160"), True)
+            #self.Device.sdo_write(0x1A00, 0x00, bytes.fromhex("60000160"), True)
             
             self._enablePdoAssignment(True)
             # ESM PREOP -> SAFEOP TxPDO effective
@@ -276,11 +291,10 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
             if NOVRAMMemoryController.MODE == 'ACYCLIC':
 
-                ca = True
-                self.Device.sdo_write(0xF200, 0x02, bytes(ctypes.c_uint16(0)))  # unlock
+                self.Device.sdo_write(0xF200, 0x02, bytes(ctypes.c_uint16(0)))              # unlock                
                 # 3 items a 4 byte
-                self.Device.sdo_write(0x2F00, 0x00, bytes.fromhex("0300040004000400"), ca)
-                self.Device.sdo_write(0xF200, 0x02, bytes(ctypes.c_uint16(1)))      # lock                
+                self.Device.sdo_write(0x2F00, 0x00, bytes([0x03,0x00,0x04,0x00,0x04,0x00,0x04,0x00]), True)
+                self.Device.sdo_write(0xF200, 0x02, bytes(ctypes.c_uint16(1)))              # lock                
 
             #
             # timing
@@ -344,8 +358,6 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
             return None
     StatusWord = property(fget=_get_statusWord)
 
-    _memoryLock = Lock()
-
     _size = None
     def _get_size(self):
         if self._size is None:
@@ -354,7 +366,9 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
                 self._size[i] = ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(0x2F00,i+1)).value
         return self._size
     Size = property(fget=_get_size)
-    
+
+    _memoryLock = Lock()
+
     _input = []    
     def acyclicInput(self):
 
@@ -369,6 +383,8 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
                     for offset in self.Size:
                         self._input.append(ctypes.c_int32.from_buffer_copy(self.Device.sdo_read(addr,0x00)).value)
                         addr += 2 * offset
+            except Exception as ex:
+                EcatLogger.error(f"acyclicInput {ex}")
             finally:
                 self._memoryLock.release()   
 
@@ -385,13 +401,16 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
                 self._memoryLock.acquire()
                 try:
-                    
                     addr = 0x2000
                     for i,offset in enumerate(self.Size):
                         self.Device.sdo_write(addr, 0x00, bytes(ctypes.c_int32(self._output[i])))
                         addr += 2 * offset
+                    
                     self._output = []
                     self._input = []
+
+                except Exception as ex:
+                    EcatLogger.error(f"acyclicOutput {ex}")
 
                 finally:
                     self._memoryLock.release()

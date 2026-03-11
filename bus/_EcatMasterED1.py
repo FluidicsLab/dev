@@ -128,9 +128,7 @@ class EcatMasterED1(EcatMaster):
 
     
     def configEL6080(self, pos, slave):
-
         rc = super().configEL6080(pos, slave)
-
         if rc:
             slot = 2
             if self.isSlot("drive", (slot, pos)):                               
@@ -138,9 +136,19 @@ class EcatMasterED1(EcatMaster):
                 self._beckhoffMemoryController[pos].initConfig()
                 self.CallbackController.register(f"EL6080.{pos}", "ED1F.0", self._beckhoffMemoryController[pos].callback)
                 EcatLogger.debug(f"init NOVRAMController")
-
         EcatLogger.debug(f"done with {rc}")
-
+        return rc
+    
+    def configEL3314(self, pos, slave):
+        rc = super().configEL3314(pos, slave)
+        if rc:            
+            slot = 3
+            # Types; 0: K, 4: T            
+            if self.isSlot("drive", (slot, pos)):
+                t = [0, 0, 0, 0]
+                for i, a in enumerate([0x8000, 0x8010, 0x8020, 0x8030]):
+                    slave.sdo_write(a, 0x19, bytes(ctypes.c_uint16(t[i])))
+        EcatLogger.debug(f"done with {rc}")
         return rc
     
     def configSeverity(self):
