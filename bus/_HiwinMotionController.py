@@ -14,9 +14,50 @@ from _EcatStates import EcatStates
 
 class Ed1fPidController(object):
 
-    TIMEOUT_CONTROL = 0.1
+    def _apply_self_tuning(self, feedback_value):
+    
+        # Fehlerhistorie aktualisieren
+        error = self.setpoint - feedback_value
+        self.error_history.append(abs(error))
+        
+        # Systemparameter schätzen (vereinfacht)
+        if len(self.input_history) > 10 and len(self.output_history) > 10:
+            # ARX-Modell-Schätzung
+            y = np.array(list(self.output_history)[-10:])
+            u = np.array(list(self.input_history)[-10:])
+            
+            # Einfache Korrelationsanalyse
+            correlation = np.correlate(y - np.mean(y), u - np.mean(u))[0]
+            
+            # PID-Parameter basierend auf geschätzter Dynamik anpassen
+            if abs(correlation) > 0.1:
+                # Wenn System gut reagiert, Integralanteil erhöhen
+                self.Ki *= 1.01
+            else:
+                # Wenn System träge reagiert, Proportionalanteil erhöhen
+                self.Kp *= 1.01
+        
+        # Performance-Metriken aktualisieren
+        self._update_performance_metrics()
+    
+    def _update_performance_metrics(self):
+        """
+        Aktualisiert die Performance-Metriken
+        """
+        if len(self.error_history) > 10:
+            # Überschwingen schätzen
+            recent_errors = list(self.error_history)[-20:]
+            if max(recent_errors) > 2 * np.mean(recent_errors):
+                self.performance_metrics['overshoot'] = max(recent_errors)
+            
+            # Einschwingzeit schätzen
+            if abs(np.mean(recent_errors[-5:])) < 0.1 * abs(np.mean(recent_errors[:5])):
+                self.performance_metrics['settling_time'] = len(self.error_history) * self.sample_time
+
+    TIMEOUT_CONTROL = 0.01
     FRACTION = 50
     MODE_DEFAULT = 'p'
+    MODES = ['p','d']
 
     _scaler = {
         'input': {
@@ -35,10 +76,7 @@ class Ed1fPidController(object):
 
     _task: Thread = None
 
-    _processvalue = {}
-    _setpoint = {}
-
-    _mode = MODE_DEFAULT                                # p
+    _mode = MODE_DEFAULT                                    # p, d
     def _get_mode(self):
         return self._mode
     def _set_mode(self, value):
@@ -51,9 +89,12 @@ class Ed1fPidController(object):
         return self._enabled
     Enabled = property(fget=_get_enabled)
 
-    _error = 0.0
-    _demand = 0.0
-    _integral = []
+    _processvalue = {}
+    _setpoint = {}
+
+    _error = { 'p': 0.0, 'd': 0.0 }
+    _demand = { 'p': 0.0, 'd': 0.0 }
+    _integral = { 'p': [], 'd': [] }
 
     # Kp, Ki, Kd, dt
     _params = {
@@ -61,10 +102,7 @@ class Ed1fPidController(object):
         'd': [10.0, 0.001, 0.0001, 0.1]
     }
 
-    _factor = {
-        'p': +1,
-        'd': -1
-    }
+    _factor = { 'p': +1, 'd': -1 }
 
     _updatable = True
 
@@ -135,15 +173,16 @@ class Ed1fPidController(object):
             self._lock.release()
 
     def reset(self):
-        self._error = 0.0
-        self._demand = 0.0
-        self._integral = []
+        for mode in Ed1fPidController.MODES:
+            self._error[mode] = 0.0
+            self._demand[mode] = 0.0
+            self._integral[mode] = []
         self._mode = Ed1fPidController.MODE_DEFAULT
 
     def compute(self):
 
         def scale(value):
-            return (value - self._scaler['input'][self._mode]['low']) / (self._scaler['input'][self._mode]['high'] - self._scaler['input'][self._mode]['low'])
+            return (value - self._scaler['input'][self.Mode]['low']) / (self._scaler['input'][self.Mode]['high'] - self._scaler['input'][self.Mode]['low'])
         
         def unscale(value):
             return self._scaler['output']['low'] + (self._scaler['output']['high'] - self._scaler['output']['low']) * value
@@ -174,20 +213,20 @@ class Ed1fPidController(object):
 
                     kp = params[0] * err
                     ki = params[1] * err * params[3]
-                    kd = params[2] * (err - self._error) / params[3]
+                    kd = params[2] * (err - self._error[self.Mode]) / params[3]
 
-                    self._integral.append(ki)                    
-                    while len(self._integral) > Ed1fPidController.FRACTION:
-                        self._integral.pop(0)
-                    ki = sum(self._integral)
-                    self._error = err
+                    self._integral[self.Mode].append(ki)                    
+                    while len(self._integral[self.Mode]) > Ed1fPidController.FRACTION:
+                        self._integral[self.Mode].pop(0)
+                    ki = sum(self._integral[self.Mode])
+                    self._error[self.Mode] = err
 
                     dv = kp + ki + kd
                     dv = unscale(dv)
                     dv = limit(dv)
                 
                     if self._callback is not None:
-                        if self._demand != dv:
+                        if self._demand[self.Mode] != dv:
                             self._callback(dv, err)
                             zero = False
                         else:
@@ -195,7 +234,7 @@ class Ed1fPidController(object):
                                 self._callback(dv, err)
                                 zero = True
 
-                    self._demand = dv
+                    self._demand[self.Mode] = dv
 
                 except Exception as ex:
                     EcatLogger.error(f"pid compute {ex}")
@@ -738,7 +777,9 @@ class Ed1fMotionController(HiwinMotionController):
                     'firmware': self.Firmware
                 },
                 # severity callback position
-                '0x01': { 'd': self.Position }
+                '0x01': {                     
+                    'd': self.Position 
+                }
             }
 
             return data
@@ -822,7 +863,7 @@ class Ed1fMotionController(HiwinMotionController):
             self._lock.release()        
         return True
             
-    _callbackData = None
+    _positionData = None
 
     def callback(self, *args):
         """          
@@ -835,10 +876,12 @@ class Ed1fMotionController(HiwinMotionController):
             
             name = f"{args[0]['name']}.{args[0]['index']}"            
             value = args[0]['value']['value'] if 'value' in args[0]['value'].keys() else None            
+            
             if value is not None:
 
                 if 'data' in value.keys() and len(value['data']) > 0:
-                    self._callbackData = value['data'].copy()[:2]
+                    self._positionData = value['data'].copy()[:2]
+                    
                     self.Multiturn = value['data'][0]
                     self.Singleturn = value['data'][1]
                                             
@@ -853,8 +896,9 @@ class Ed1fMotionController(HiwinMotionController):
                                         data = value[addr]
                                         if key in data.keys():                                            
                                             if 'd' == key:
-                                                if self._callbackData is not None:
-                                                    self._controller.update(key, Ed1fProfilePosition.merge(self._callbackData))
+                                                if self._positionData is not None:
+                                                    self._controller.update(key, Ed1fProfilePosition.merge(self._positionData))
+                                                    self._positionData = None
                                             else:
                                                 self._controller.update(key, data[key])   
                                         
@@ -872,7 +916,7 @@ class Ed1fMotionController(HiwinMotionController):
         """
         self._lock.acquire()
         try:  
-            EcatLogger.debug(f"{value} {error} {self.Multiturn} {self.Singleturn}")
+            # EcatLogger.debug(f"{value} {error} {self.Multiturn} {self.Singleturn}")
             self._data.update({
                 'velocity': round(value)
             })

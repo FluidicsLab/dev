@@ -1800,7 +1800,7 @@ class EcatMaster(EcatObject):
         except Exception as ex:
             EcatError.error(ex)
         finally:
-            EcatLogger.debug(f"done {size} < 4096")
+            EcatLogger.info(f"done {size} < 4096")
         return size
 
     def config_dc(self):

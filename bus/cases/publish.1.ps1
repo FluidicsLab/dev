@@ -20,7 +20,8 @@ $wrn = @()
 $err = @()
 
 [array]$MEM = @(
-    '{ "source": "el6080", "target": 2, "value": { "data": [0, 0, 0] } }'
+    #'{ "source": "el6080", "target": 2, "value": { "data": [0, 0, 0] } }'
+    '{ "source": "el6080", "target": 2, "value": { "multiturn": 0 } }'
 )
 
 $payloads = $MEM

@@ -906,6 +906,7 @@ class AM8111MotionController(BeckhoffMotionController):
 
     def setState(self, state):
         rc = True
+        self.Device.state = state
         timeout = AM8111MotionController.TIMEOUT_SLAVE_STATE
         start_time = time.time()
         while self.Device.state_check(state, timeout=AM8111MotionController.TIMEOUT_STATE_CHECK) != state:

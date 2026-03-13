@@ -1,6 +1,6 @@
 
 from threading import Lock, Event, Thread
-import ctypes, time
+import ctypes, time, struct
 from types import SimpleNamespace
 import pysoem
 
@@ -8,6 +8,15 @@ import numpy as np
 
 from _EcatObject import EcatLogger
 from _EcatSeverity import SEVERITY_VERBOSE, EcatSeverityController
+
+class NOVRAMTypeStrokeMap(ctypes.Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('multiturn', ctypes.c_int32),
+        ('singleturn', ctypes.c_int32),
+        ('velocity', ctypes.c_int32),
+        ('modified', ctypes.c_uint32)
+    ]
 
 
 class NOVRAMProfile:
@@ -146,6 +155,8 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
     _reader: Thread = None
     _writer: Thread = None
 
+    _upload: Thread = None
+
     TIMEOUT_SLAVE_STATE = 5.0
     TIMEOUT_STATE_CHECK = 50_000
 
@@ -155,10 +166,14 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
     SHIFT_TIME = 250_000            # ns
     CYCLE_TIME = 10_000_000         # ns
 
-    MODE = 'ACYCLIC'
+    UPLOAD_BEGIN = 0x0001
+    UPLOAD_END = 0x0000
+    UPLOAD_TIMEOUT = 0.05     # s
+
+    MODE = 'CYCLIC'
 
     #
-    # outputs
+    # 
     # control   0x0001 store data
     #           0x0002 lock novram objects
     #           0x0004 unlock novram objects
@@ -169,19 +184,16 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         address = [0x1601,
                    0x1600
                    ]
-  
+      
     class RxMap(ctypes.Structure):
         _pack_ = 1
         _fields_ = [
-            ('control', ctypes.c_uint16),
-
-            ('multiturn', ctypes.c_int32),
-            ('singleturn', ctypes.c_int32),
-            ('velocity', ctypes.c_int32)
+            ('control', ctypes.c_uint16),            
+            ('stroke', NOVRAMTypeStrokeMap)
         ]
 
     #
-    # inputs
+    # 
     # status    0x0001 data stored
     #           0x0008 no data written
     #           0x0100 novram objects locked
@@ -199,10 +211,7 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         _pack_ = 1
         _fields_ = [
             ('status', ctypes.c_uint16),
-
-            ('multiturn', ctypes.c_int32),
-            ('singleturn', ctypes.c_int32),
-            ('velocity', ctypes.c_int32)
+            ('stroke', NOVRAMTypeStrokeMap)
         ]  
     
     def __init__(self, index, device, lock, debug=False) -> None:
@@ -211,9 +220,10 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
     def release(self):
         super().release()
 
-    _initialized = False
+    def _disablePdoAssignment(self):
+        self._enablePdoAssignment(False)
 
-    def _enablePdoAssignment(self, enable=False):
+    def _enablePdoAssignment(self, enable=True):
         try:
             if not enable:
                 # DISABLE pdo mapping assignment
@@ -222,14 +232,15 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
             else:
                 # ENABLE pdo mapping assignment
                 self.Device.sdo_write(NOVRAMMemoryController.TxMapEx.register, 0, 
-                                    bytes(ctypes.c_uint8(len(NOVRAMMemoryController.TxMapEx.address))))
+                                      bytes(ctypes.c_uint8(len(NOVRAMMemoryController.TxMapEx.address))))
                 self.Device.sdo_write(NOVRAMMemoryController.RxMapEx.register, 0, 
-                                    bytes(ctypes.c_uint8(len(NOVRAMMemoryController.RxMapEx.address)))) 
+                                      bytes(ctypes.c_uint8(len(NOVRAMMemoryController.RxMapEx.address)))) 
         except Exception as ex:
             EcatLogger.error(f"{ex}")
 
     def setState(self, state):
         rc = True
+        self.Device.state = state
         timeout = NOVRAMMemoryController.TIMEOUT_SLAVE_STATE
         start_time = time.time()
         while self.Device.state_check(state, timeout=NOVRAMMemoryController.TIMEOUT_STATE_CHECK) != state:
@@ -241,6 +252,10 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
     def hasState(self, state):
         return self.Device.state & state == state
     
+    _multiturn = None
+    _singleturn = None
+    _velocity = None
+    
     def _get_controlWord(self):
         try:
             buff =  NOVRAMMemoryController.RxMap.from_buffer_copy(self.Device.output)                
@@ -248,11 +263,27 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         except Exception as ex:
             EcatLogger.error(f"{ex}")
             return None
-    ControlWord = property(fget=_get_controlWord)    
+    def _set_controlWord(self, value):
+        try:
+            out = NOVRAMMemoryController.RxMap()   
+
+            out.stroke.multiturn = ctypes.c_int32(self._multiturn)
+            out.stroke.singleturn = ctypes.c_int32(self._singleturn)
+            out.stroke.velocity = ctypes.c_int32(self._velocity)
+            out.stroke.modified = time.time_ns()
+
+            out.control = ctypes.c_uint16(value)
+            self.write(out)   
+        except Exception as ex:
+            EcatLogger.error(f"{ex}")
+
+    ControlWord = property(fget=_get_controlWord,fset=_set_controlWord)    
 
     def _get_locked(self):
         return ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(0xF100,0x03)).value
     Locked = property(fget=_get_locked)
+
+    _initialized = False
 
     def initConfig(self): 
 
@@ -262,36 +293,37 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         
         try:
 
-            self._enablePdoAssignment(False)   
-
             #
             # PDO
             #
 
-            # inputs; read; slave-master
-            addr = NOVRAMMemoryController.TxMapEx.register            
-            for i,value in enumerate(NOVRAMMemoryController.TxMapEx.address):
-                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)))
+            self._disablePdoAssignment()
 
+            # RxPDO
             # outputs; write; master-slave  
+
             addr = NOVRAMMemoryController.RxMapEx.register            
             for i,value in enumerate(NOVRAMMemoryController.RxMapEx.address): 
-                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)))
+                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)), True)
 
-            #self.Device.sdo_write(0x1600, 0x00, bytes.fromhex("70000160"), True)
-            #self.Device.sdo_write(0x1A00, 0x00, bytes.fromhex("60000160"), True)
-            
-            self._enablePdoAssignment(True)
-            # ESM PREOP -> SAFEOP TxPDO effective
+            # TxPDO
+            # inputs; read; slave-master
+
+            addr = NOVRAMMemoryController.TxMapEx.register            
+            for i,value in enumerate(NOVRAMMemoryController.TxMapEx.address):
+                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)), True)  
+
+            self._enablePdoAssignment()
+            # ESM PREOP -> SAFEOP RxPDO effective
             # ESM SAFEOP -> OP TxPDO effective
-
+            
             #
             # startup
             #
 
             if NOVRAMMemoryController.MODE == 'ACYCLIC':
 
-                self.Device.sdo_write(0xF200, 0x02, bytes(ctypes.c_uint16(0)))              # unlock                
+                self.Device.sdo_write(0xF200, 0x02, bytes(ctypes.c_uint16(0)))              # unlock
                 # 3 items a 4 byte
                 self.Device.sdo_write(0x2F00, 0x00, bytes([0x03,0x00,0x04,0x00,0x04,0x00,0x04,0x00]), True)
                 self.Device.sdo_write(0xF200, 0x02, bytes(ctypes.c_uint16(1)))              # lock                
@@ -302,13 +334,13 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
             shift_time = NOVRAMMemoryController.SHIFT_TIME
             cycle_time = NOVRAMMemoryController.CYCLE_TIME
-            EcatLogger.debug(f"cycle time {cycle_time}; shift time {shift_time}")
+            EcatLogger.debug(f"cycle time {cycle_time}; shift time {shift_time} {self.__class__.__name__}")
             
             self.Device.dc_sync(act=True, 
                                 sync0_cycle_time=cycle_time, sync0_shift_time=shift_time, 
                                 sync1_cycle_time=cycle_time
-                                )
-    
+                                )            
+
         except pysoem.SdoError as se:
             self._initialized = False
             EcatLogger.error(f"SdoError {se}")  
@@ -324,17 +356,22 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         except Exception as ex:
             self._initialized = False
             EcatLogger.error(f"Exception {ex}")  
-
+    
     def init(self):
 
         self._initialized = False
         
         try:
-            
-            self._reader = Thread(target=self.acyclicInput)
-            self._reader.start()
-            self._writer = Thread(target=self.acyclicOutput)
-            self._writer.start()      
+
+            if NOVRAMMemoryController.MODE == 'ACYCLIC':
+
+                self._reader = Thread(target=self.acyclicInput)
+                self._reader.start()
+                self._writer = Thread(target=self.acyclicOutput)
+                self._writer.start()      
+
+            self._upload = Thread(target=self.upload)
+            self._upload.start()
 
             self._initialized = True
 
@@ -430,18 +467,38 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
             if ctypes.sizeof(NOVRAMMemoryController.TxMap) == len(self.Device.input):
 
                 buff =  NOVRAMMemoryController.TxMap.from_buffer_copy(self.Device.input)
+
+                if self._multiturn is None:
+                    self._multiturn = buff.stroke.multiturn
+                if self._singleturn is None:
+                    self._singleturn = buff.stroke.singleturn
+                if self._velocity is None:
+                    self._velocity = buff.stroke.velocity
                 
                 status = bin(buff.status)[2:].zfill(16)  
                 status_text = NOVRAMProfile.__status__(int(status,2))
                                             
                 data  = {
+
                     'status': {
                         'value':status, 
                         'text': status_text,
                     },
+
                     'mode': NOVRAMMemoryController.MODE,
-                    'data': self._input
+                    
+                    'stroke': {
+                        'multiturn': buff.stroke.multiturn, 
+                        'singleturn': buff.stroke.singleturn, 
+                        'velocity': buff.stroke.velocity,
+                    },
+
+                    'data': [buff.stroke.multiturn, buff.stroke.singleturn, buff.stroke.velocity],
+
+                    'modified': buff.stroke.modified
                 }
+
+                EcatLogger.debug(f"{buff.stroke.multiturn} {buff.stroke.singleturn} {buff.stroke.velocity}")
 
             return data
 
@@ -477,20 +534,28 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
             data = self.input()
 
             if self._data is not None:
-                
-                if 'data' in self._data.keys() and self._data['data'] is not None:   
-                    self._output = self._data['data'].copy()
+
+                if 'data' in self._data.keys() and self._data['data'] is not None:
+                    self._multiturn = self._data['data'][0]
+                    self._singleturn = self._data['data'][1]
+                    self._velocity = self._data['data'][2]
+                    self._update = True               
                     self._data['data'] = None
                 
-                if 'cycle' in self._data.keys() and self._data['cycle'] is not None:   
-                    self._output = self._input.copy()
-                    self._output[0] = self._data['cycle']
-                    self._data['cycle'] = None
-                
-                if 'position' in self._data.keys() and self._data['position'] is not None:   
-                    self._output = self._input.copy()
-                    self._output[1] = self._data['position']
-                    self._data['position'] = None
+                if 'multiturn' in self._data.keys() and self._data['multiturn'] is not None:
+                    self._multiturn = self._data['multiturn']
+                    self._update = True
+                    self._data['multiturn'] = None
+
+                if 'singleturn' in self._data.keys() and self._data['singleturn'] is not None:
+                    self._singleturn = self._data['singleturn']                    
+                    self._update = True
+                    self._data['singleturn'] = None
+
+                if 'velocity' in self._data.keys() and self._data['velocity'] is not None: 
+                    self._velocity = self._data['velocity']                    
+                    self._update = True                 
+                    self._data['velocity'] = None
                                     
         except Exception as ex:
             EcatLogger.error(f"run {ex}")
@@ -516,38 +581,52 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
             self._lock.release()        
         return rc
     
+    _update = False
+    def upload(self):
+
+        EcatLogger.debug(f"start computing cyclic write @ {self.__class__.__name__}")
+
+        while not self._exit.is_set():
+            
+            if self._update:
+                self.ControlWord = NOVRAMMemoryController.UPLOAD_BEGIN
+                self._exit.wait(NOVRAMMemoryController.UPLOAD_TIMEOUT)
+                self.ControlWord = NOVRAMMemoryController.UPLOAD_END
+                self._update = False
+            else:
+                self._exit.wait(NOVRAMMemoryController.UPLOAD_TIMEOUT)
+    
     def callback(self, *args):
 
-        self._memoryLock.acquire()
+        self._lock.acquire()
         
         try:
-            if len(self._input) > 0:
-        
-                name = f"{args[0]['name']}.{args[0]['index']}"
-                value = args[0]['value']['value'] if 'value' in args[0]['value'].keys() else None
+            name = f"{args[0]['name']}.{args[0]['index']}"
+            value = args[0]['value']['value'] if 'value' in args[0]['value'].keys() else None
+            
+            if value is not None:
+
+                status = value['status']['value']
+
+                if int(status, 2) != 0:
                 
-                if value is not None:
-                    
                     position = value['position']['raw']
                     velocity = value['velocity']['raw']
 
-                    o = self._input.copy()
-
                     sgn = np.sign(velocity)
-                    if (np.sign(position) == -1 and np.sign(self._input[1]) == 1 and sgn == 1):
-                        o[0] += sgn
-                    elif (np.sign(position) == 1 and np.sign(self._input[1]) == -1 and sgn == -1):
-                        o[0] += sgn
+                    if (np.sign(position) == -1 and np.sign(self._singleturn) == 1 and sgn == 1) or \
+                        (np.sign(position) == 1 and np.sign(self._singleturn) == -1 and sgn == -1):
+                        self._multiturn += sgn
 
-                    o[1] = position
-                    o[2] = velocity
+                    self._singleturn = position
+                    self._velocity = velocity
 
-                    self._output = o.copy()
+                    self._update = True
 
         except Exception as ex:
             EcatLogger.error(f"callback {ex}")
         finally:
-            self._memoryLock.release()
+            self._lock.release()
                             
     def controllerFunc(self, value):
         """
