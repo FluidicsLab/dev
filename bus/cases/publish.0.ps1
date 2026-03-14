@@ -93,7 +93,7 @@ Write-Host $speed " " $velo
     '{ "source": "ed1fWorker", "target": 0, "value": { "command": "00000010" } }'
 )
 
-$payloads = $DISABLE
+#$payloads = $DISABLE
 $payloads = $ENABLE
 #$payloads = $RUN
 #$payloads = @()

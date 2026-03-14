@@ -23,11 +23,12 @@ $err = @()
     '{ "source": "ed1fWorker", "target": 0, "value": { "control": { "mode": "p", "enabled": 1, "setpoint": 100.0, "processvalue": 100.0 } } }'
 )
 
-$setpoint = 4294967295 * 2.
+$setpoint = 4294967295 * 5.0
 $setpoint = [int64]$setpoint
 
 [array]$CONTROL = @(
-    "{ ""source"": ""ed1fWorker"", ""target"": 0, ""value"": { ""control"": { ""mode"": ""d"", ""enabled"": 1, ""setpoint"": $($setpoint), ""params"": [200.0, 0.01, 0.0, 0.1] } } }"
+    #"{ ""source"": ""ed1fWorker"", ""target"": 0, ""value"": { ""control"": { ""mode"": ""d"", ""target"": 0, ""enabled"": 1, ""setpoint"": $($setpoint), ""params"": [1000.0, 0.01, 0.001, 0.1] } } }"
+    "{ ""source"": ""ed1fWorker"", ""target"": 0, ""value"": { ""control"": { ""mode"": ""d"", ""target"": 0, ""enabled"": 1, ""setpoint"": $($setpoint) } } }"
 )
 
 $payloads = $CONTROL

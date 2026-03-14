@@ -9,7 +9,7 @@ import numpy as np
 from _EcatObject import EcatLogger
 from _EcatSeverity import SEVERITY_VERBOSE, EcatSeverityController
 
-class NOVRAMTypeStrokeMap(ctypes.Structure):
+class cStrokeMap(ctypes.Structure):
     _pack_ = 1
     _fields_ = [
         ('multiturn', ctypes.c_int32),
@@ -189,7 +189,8 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         _pack_ = 1
         _fields_ = [
             ('control', ctypes.c_uint16),            
-            ('stroke', NOVRAMTypeStrokeMap)
+            ('stroke1', cStrokeMap),
+            ('stroke2', cStrokeMap)
         ]
 
     #
@@ -211,7 +212,8 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         _pack_ = 1
         _fields_ = [
             ('status', ctypes.c_uint16),
-            ('stroke', NOVRAMTypeStrokeMap)
+            ('stroke1', cStrokeMap),
+            ('stroke2', cStrokeMap)
         ]  
     
     def __init__(self, index, device, lock, debug=False) -> None:
@@ -267,10 +269,15 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         try:
             out = NOVRAMMemoryController.RxMap()   
 
-            out.stroke.multiturn = ctypes.c_int32(self._multiturn)
-            out.stroke.singleturn = ctypes.c_int32(self._singleturn)
-            out.stroke.velocity = ctypes.c_int32(self._velocity)
-            out.stroke.modified = time.time_ns()
+            out.stroke1.multiturn = ctypes.c_int32(self._multiturn[0])
+            out.stroke1.singleturn = ctypes.c_int32(self._singleturn[0])
+            out.stroke1.velocity = ctypes.c_int32(self._velocity[0])
+            out.stroke1.modified = time.time_ns()
+
+            out.stroke2.multiturn = ctypes.c_int32(self._multiturn[1])
+            out.stroke2.singleturn = ctypes.c_int32(self._singleturn[1])
+            out.stroke2.velocity = ctypes.c_int32(self._velocity[1])
+            out.stroke2.modified = time.time_ns()
 
             out.control = ctypes.c_uint16(value)
             self.write(out)   
@@ -469,11 +476,11 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
                 buff =  NOVRAMMemoryController.TxMap.from_buffer_copy(self.Device.input)
 
                 if self._multiturn is None:
-                    self._multiturn = buff.stroke.multiturn
+                    self._multiturn = [buff.stroke1.multiturn, buff.stroke2.multiturn]
                 if self._singleturn is None:
-                    self._singleturn = buff.stroke.singleturn
+                    self._singleturn = [buff.stroke1.singleturn, buff.stroke2.singleturn]
                 if self._velocity is None:
-                    self._velocity = buff.stroke.velocity
+                    self._velocity = [buff.stroke1.velocity, buff.stroke2.velocity]
                 
                 status = bin(buff.status)[2:].zfill(16)  
                 status_text = NOVRAMProfile.__status__(int(status,2))
@@ -487,18 +494,16 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
                     'mode': NOVRAMMemoryController.MODE,
                     
-                    'stroke': {
-                        'multiturn': buff.stroke.multiturn, 
-                        'singleturn': buff.stroke.singleturn, 
-                        'velocity': buff.stroke.velocity,
-                    },
+                    'target': [
+                        { 'multiturn': buff.stroke1.multiturn, 'singleturn': buff.stroke1.singleturn, 'velocity': buff.stroke1.velocity, },
+                        { 'multiturn': buff.stroke2.multiturn, 'singleturn': buff.stroke2.singleturn, 'velocity': buff.stroke2.velocity, }
+                    ],
 
-                    'data': [buff.stroke.multiturn, buff.stroke.singleturn, buff.stroke.velocity],
+                    'data': [buff.stroke1.multiturn, buff.stroke1.singleturn, buff.stroke1.velocity,
+                             buff.stroke2.multiturn, buff.stroke2.singleturn, buff.stroke2.velocity],
 
-                    'modified': buff.stroke.modified
+                    'modified': [buff.stroke1.modified, buff.stroke2.modified]
                 }
-
-                EcatLogger.debug(f"{buff.stroke.multiturn} {buff.stroke.singleturn} {buff.stroke.velocity}")
 
             return data
 
@@ -535,25 +540,27 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
             if self._data is not None:
 
+                target = 0
+
                 if 'data' in self._data.keys() and self._data['data'] is not None:
-                    self._multiturn = self._data['data'][0]
-                    self._singleturn = self._data['data'][1]
-                    self._velocity = self._data['data'][2]
+                    self._multiturn[target] = self._data['data'][0]
+                    self._singleturn[target] = self._data['data'][1]
+                    self._velocity[target] = self._data['data'][2]
                     self._update = True               
                     self._data['data'] = None
                 
                 if 'multiturn' in self._data.keys() and self._data['multiturn'] is not None:
-                    self._multiturn = self._data['multiturn']
+                    self._multiturn[target] = self._data['multiturn']
                     self._update = True
                     self._data['multiturn'] = None
 
                 if 'singleturn' in self._data.keys() and self._data['singleturn'] is not None:
-                    self._singleturn = self._data['singleturn']                    
+                    self._singleturn[target] = self._data['singleturn']                    
                     self._update = True
                     self._data['singleturn'] = None
 
                 if 'velocity' in self._data.keys() and self._data['velocity'] is not None: 
-                    self._velocity = self._data['velocity']                    
+                    self._velocity[target] = self._data['velocity']                    
                     self._update = True                 
                     self._data['velocity'] = None
                                     
@@ -609,17 +616,19 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
                 status = value['status']['value']
 
                 if int(status, 2) != 0:
+
+                    target = 0
                 
                     position = value['position']['raw']
                     velocity = value['velocity']['raw']
 
                     sgn = np.sign(velocity)
-                    if (np.sign(position) == -1 and np.sign(self._singleturn) == 1 and sgn == 1) or \
-                        (np.sign(position) == 1 and np.sign(self._singleturn) == -1 and sgn == -1):
-                        self._multiturn += sgn
+                    if (np.sign(position) == -1 and np.sign(self._singleturn[target]) == 1 and sgn == 1) or \
+                        (np.sign(position) == 1 and np.sign(self._singleturn[target]) == -1 and sgn == -1):
+                        self._multiturn[target] += sgn
 
-                    self._singleturn = position
-                    self._velocity = velocity
+                    self._singleturn[target] = position
+                    self._velocity[target] = velocity
 
                     self._update = True
 

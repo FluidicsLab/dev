@@ -1,1 +1,1 @@
-{ "source": "ed1fWorker", "target": 0, "value": { "command": "00001111" } }
+{ "source": "ed1fWorker", "target": 0, "value": { "control": { "mode": "d", "target": 0, "enabled": 1, "setpoint": 21474836475 } } }

@@ -3,8 +3,11 @@ import ctypes, time
 from typing import final
 import pysoem
 import numpy as np
+from scipy.signal import correlate
 from threading import Lock,Event,Thread
 from types import SimpleNamespace
+
+from collections import deque
 
 from _EcatObject import EcatLogger
 
@@ -14,47 +17,7 @@ from _EcatStates import EcatStates
 
 class Ed1fPidController(object):
 
-    def _apply_self_tuning(self, feedback_value):
-    
-        # Fehlerhistorie aktualisieren
-        error = self.setpoint - feedback_value
-        self.error_history.append(abs(error))
-        
-        # Systemparameter schätzen (vereinfacht)
-        if len(self.input_history) > 10 and len(self.output_history) > 10:
-            # ARX-Modell-Schätzung
-            y = np.array(list(self.output_history)[-10:])
-            u = np.array(list(self.input_history)[-10:])
-            
-            # Einfache Korrelationsanalyse
-            correlation = np.correlate(y - np.mean(y), u - np.mean(u))[0]
-            
-            # PID-Parameter basierend auf geschätzter Dynamik anpassen
-            if abs(correlation) > 0.1:
-                # Wenn System gut reagiert, Integralanteil erhöhen
-                self.Ki *= 1.01
-            else:
-                # Wenn System träge reagiert, Proportionalanteil erhöhen
-                self.Kp *= 1.01
-        
-        # Performance-Metriken aktualisieren
-        self._update_performance_metrics()
-    
-    def _update_performance_metrics(self):
-        """
-        Aktualisiert die Performance-Metriken
-        """
-        if len(self.error_history) > 10:
-            # Überschwingen schätzen
-            recent_errors = list(self.error_history)[-20:]
-            if max(recent_errors) > 2 * np.mean(recent_errors):
-                self.performance_metrics['overshoot'] = max(recent_errors)
-            
-            # Einschwingzeit schätzen
-            if abs(np.mean(recent_errors[-5:])) < 0.1 * abs(np.mean(recent_errors[:5])):
-                self.performance_metrics['settling_time'] = len(self.error_history) * self.sample_time
-
-    TIMEOUT_CONTROL = 0.01
+    TIMEOUT_CONTROL = 0.1
     FRACTION = 50
     MODE_DEFAULT = 'p'
     MODES = ['p','d']
@@ -68,7 +31,7 @@ class Ed1fPidController(object):
     }
 
     _limit = {
-        'output': { "low": -838_633_324 * 8/9, "high": 838_633_324 * 8/9 }  # inc/s (velocity)
+        'output': { "low": -838_633_324 * 5/9, "high": 838_633_324 * 5/9 }  # inc/s (velocity)
     }
 
     _lock: Lock = Lock()
@@ -88,6 +51,8 @@ class Ed1fPidController(object):
     def _get_enabled(self):
         return self._enabled
     Enabled = property(fget=_get_enabled)
+
+    _target = 0
 
     _processvalue = {}
     _setpoint = {}
@@ -141,6 +106,9 @@ class Ed1fPidController(object):
             if 'mode' in config.keys() and config['mode'] is not None:
                 self.Mode = config['mode']
 
+            if 'target' in config.keys() and config['target'] is not None:
+                self._target = config['target']
+
             if 'setpoint' in config.keys() and config['setpoint'] is not None:
                 self._setpoint[self.Mode] = config['setpoint']
 
@@ -179,6 +147,8 @@ class Ed1fPidController(object):
             self._integral[mode] = []
         self._mode = Ed1fPidController.MODE_DEFAULT
 
+    _errors = deque(maxlen=1000)
+
     def compute(self):
 
         def scale(value):
@@ -189,7 +159,47 @@ class Ed1fPidController(object):
 
         def limit(value): 
             return max(self._limit['output']['low'], min(self._limit['output']['high'], value))
+                
+        def tune(setpoint, error, params):
 
+            self._errors.append(error)
+
+            recent_errors = list(self._errors)[-50:]
+            if len(recent_errors) < 10:
+                return None
+            
+            error_trend = np.polyfit(range(len(recent_errors)), recent_errors, 1)[0]
+            error_mean = np.mean(np.abs(recent_errors))
+            error_amplitude = np.std(recent_errors)
+
+            fi = 0.95
+            fd = 1.05
+
+            # oszilate
+            zero_crossings = sum(1 for i in range(1, len(recent_errors)) if recent_errors[i-1] * recent_errors[i] < 0)
+            
+            if zero_crossings > 5 and error_amplitude > 0.1 * abs(setpoint):
+                params[0] *= fi
+                                
+            # to slow
+            elif abs(error_trend) < 0.01 and error_mean > 0.2 * abs(setpoint):
+                params[0] *= fd
+                                
+            # error decreases - increase slighly
+            elif abs(error) < 0.5 * error_mean and error_mean > 0:
+                params[0] *= fd
+                
+            # error to high
+            elif abs(error) > 0.5 * abs(setpoint):
+                params[0] *= fd
+
+            else:
+                params[0] *= fi
+
+            params[0] = np.clip(params[0], 200.0, 2000.0)
+
+            return params
+        
         enabled = False
         zero = False
 
@@ -209,7 +219,7 @@ class Ed1fPidController(object):
 
                     err = (pv - sp) * self._factor[self.Mode]
 
-                    params = self._params[self.Mode]
+                    params = self._params[self.Mode].copy()
 
                     kp = params[0] * err
                     ki = params[1] * err * params[3]
@@ -222,16 +232,21 @@ class Ed1fPidController(object):
                     self._error[self.Mode] = err
 
                     dv = kp + ki + kd
+
+                    params = tune(sp, err, params)
+                    if params is not None:
+                        self._params[self.Mode] = params.copy()
+
                     dv = unscale(dv)
                     dv = limit(dv)
-                
+
                     if self._callback is not None:
                         if self._demand[self.Mode] != dv:
-                            self._callback(dv, err)
+                            self._callback(dv, err, params)
                             zero = False
                         else:
                             if dv == 0.0 and not zero:
-                                self._callback(dv, err)
+                                self._callback(dv, err, params)
                                 zero = True
 
                     self._demand[self.Mode] = dv
@@ -633,7 +648,10 @@ class Ed1fMotionController(HiwinMotionController):
         if self._controller is not None:
             self._controller.Source = source.copy()
 
-    def _enablePdoAssignment(self, enable=False):
+    def _disablePdoAssignment(self):
+        self._enablePdoAssignment(False)
+
+    def _enablePdoAssignment(self, enable=True):
         try:
             if not enable:
                 # DISABLE pdo mapping assignment
@@ -682,7 +700,7 @@ class Ed1fMotionController(HiwinMotionController):
             self.Device.sdo_write(0x6067, 0, bytes(ctypes.c_uint32(value)))
             self.Device.sdo_write(0x6068, 0, bytes(ctypes.c_uint32(value)))
 
-            self._enablePdoAssignment(False) 
+            self._disablePdoAssignment() 
 
             #
             # PDO
@@ -698,7 +716,7 @@ class Ed1fMotionController(HiwinMotionController):
             for i,value in enumerate(Ed1fMotionController.RxMapEx.address): 
                 self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)))
             
-            self._enablePdoAssignment(True)
+            self._enablePdoAssignment()
             # ESM PREOP -> SAFEOP TxPDO effective
             # ESM SAFEOP -> OP TxPDO effective
 
@@ -804,7 +822,7 @@ class Ed1fMotionController(HiwinMotionController):
 
                 if 'mode' in self._data.keys() and self._data['mode'] is not None:   
                     self.Mode = self._data['mode']
-                    self._data['mode'] = None
+                    self._data['mode'] = None               
 
                 if 'command' in self._data.keys() and self._data['command'] is not None:                    
                     self.ControlWord = self._data['command']
@@ -880,6 +898,7 @@ class Ed1fMotionController(HiwinMotionController):
             if value is not None:
 
                 if 'data' in value.keys() and len(value['data']) > 0:
+
                     self._positionData = value['data'].copy()[:2]
                     
                     self.Multiturn = value['data'][0]
@@ -907,7 +926,7 @@ class Ed1fMotionController(HiwinMotionController):
         finally:
             self._lock.release()
 
-    def controllerFunc(self, value, error=0):
+    def controllerFunc(self, value, err=0, params=[]):
         """
         call back from PID        
         :param self: 
@@ -916,7 +935,7 @@ class Ed1fMotionController(HiwinMotionController):
         """
         self._lock.acquire()
         try:  
-            # EcatLogger.debug(f"{value} {error} {self.Multiturn} {self.Singleturn}")
+            EcatLogger.debug(f"{value:.6f} {err:.6f} {params}")
             self._data.update({
                 'velocity': round(value)
             })
