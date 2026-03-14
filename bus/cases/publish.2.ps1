@@ -28,7 +28,7 @@ $setpoint = [int64]$setpoint
 
 [array]$CONTROL = @(
     #"{ ""source"": ""ed1fWorker"", ""target"": 0, ""value"": { ""control"": { ""mode"": ""d"", ""target"": 0, ""enabled"": 1, ""setpoint"": $($setpoint), ""params"": [1000.0, 0.01, 0.001, 0.1] } } }"
-    "{ ""source"": ""ed1fWorker"", ""target"": 0, ""value"": { ""control"": { ""mode"": ""d"", ""target"": 0, ""enabled"": 1, ""setpoint"": $($setpoint) } } }"
+    "{ ""source"": ""ed1fWorker"", ""target"": 0, ""value"": { ""control"": { ""mode"": ""d"", ""target"": 0, ""enabled"": 0, ""setpoint"": $($setpoint) } } }"
 )
 
 $payloads = $CONTROL

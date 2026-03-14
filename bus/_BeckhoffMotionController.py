@@ -1,7 +1,8 @@
 
 import ctypes, time, struct
-from turtle import position
 from types import SimpleNamespace
+
+from collections import deque
 
 import pysoem
 import numpy as np
@@ -19,6 +20,7 @@ class AM8111PidController(object):
     TIMEOUT_CONTROL = 0.2
     FRACTION = 20
     MODE_DEFAULT = 'p'
+    MODES = ['d', 'p']
 
     _scaler = {
         'input': {
@@ -29,7 +31,7 @@ class AM8111PidController(object):
     }
 
     _limit = {
-        'output': { "low": -24_185_993 * 8/9, "high": 24_185_993 * 8/9 }  # inc/s (velocity)
+        'output': { "low": -24_185_993 * 5/9, "high": 24_185_993 * 5/9 }  # inc/s (velocity)
     }
 
     _lock: Lock = Lock()
@@ -53,9 +55,11 @@ class AM8111PidController(object):
         return self._enabled
     Enabled = property(fget=_get_enabled)
 
-    _error = 0.0
-    _demand = 0.0
-    _integral = []
+    _target = 0
+
+    _error = { 'p': 0.0, 'd': 0.0 }
+    _demand = { 'p': 0.0, 'd': 0.0 }
+    _integral = { 'p': [], 'd': [] }
 
     # Kp, Ki, Kd, dt
     _params = {
@@ -63,10 +67,7 @@ class AM8111PidController(object):
         'd': [10.0, 0.001, 0.0001, 0.1]
     }
 
-    _factor = {
-        'p': +1,
-        'd': -1
-    }
+    _factor = { 'p': +1, 'd': -1 }
 
     _updatable = True
 
@@ -105,6 +106,9 @@ class AM8111PidController(object):
             if 'mode' in config.keys() and config['mode'] is not None:
                 self.Mode = config['mode']
 
+            if 'target' in config.keys() and config['target'] is not None:
+                self._target = config['target']
+
             if 'setpoint' in config.keys() and config['setpoint'] is not None:
                 self._setpoint[self.Mode] = config['setpoint']
 
@@ -137,10 +141,13 @@ class AM8111PidController(object):
             self._lock.release()
 
     def reset(self):
-        self._error = 0.0
-        self._demand = 0.0
-        self._integral = []
+        for mode in AM8111PidController.MODES:
+            self._error[mode] = 0.0
+            self._demand[mode] = 0.0
+            self._integral[mode] = []
         self._mode = AM8111PidController.MODE_DEFAULT
+
+    _errors = deque(maxlen=100)
 
     def compute(self):
 
@@ -152,6 +159,46 @@ class AM8111PidController(object):
 
         def limit(value): 
             return max(self._limit['output']['low'], min(self._limit['output']['high'], value))
+
+        def tune(setpoint, error, params):
+
+            self._errors.append(error)
+
+            recent_errors = list(self._errors)[-50:]
+            if len(recent_errors) < 10:
+                return None
+            
+            error_trend = np.polyfit(range(len(recent_errors)), recent_errors, 1)[0]
+            error_mean = np.mean(np.abs(recent_errors))
+            error_amplitude = np.std(recent_errors)
+
+            fi = 0.95
+            fd = 1.05
+
+            # oszilate
+            zero_crossings = sum(1 for i in range(1, len(recent_errors)) if recent_errors[i-1] * recent_errors[i] < 0)
+            
+            if zero_crossings > 5 and error_amplitude > 0.1 * abs(setpoint):
+                params[0] *= fi
+                                
+            # to slow
+            elif abs(error_trend) < 0.01 and error_mean > 0.2 * abs(setpoint):
+                params[0] *= fd
+                                
+            # error decreases - increase slighly
+            elif abs(error) < 0.5 * error_mean and error_mean > 0:
+                params[0] *= fd
+                
+            # error to high
+            elif abs(error) > 0.5 * abs(setpoint):
+                params[0] *= fd
+
+            else:
+                params[0] *= fi
+
+            params[0] = np.clip(params[0], 0.1, 10.0)
+
+            return params
 
         enabled = False
         zero = False        # zero quick stop
@@ -176,20 +223,26 @@ class AM8111PidController(object):
 
                     kp = params[0] * err
                     ki = params[1] * err * params[3]
-                    kd = params[2] * (err - self._error) / params[3]
+                    kd = params[2] * (err - self._error[self.Mode]) / params[3]
 
-                    self._integral.append(ki)                    
-                    while len(self._integral) > AM8111PidController.FRACTION:
-                        self._integral.pop(0)
-                    ki = sum(self._integral)
-                    self._error = err
+                    self._integral[self.Mode].append(ki)                    
+                    while len(self._integral[self.Mode]) > AM8111PidController.FRACTION:
+                        self._integral[self.Mode].pop(0)
+                    ki = sum(self._integral[self.Mode])
+                    self._error[self.Mode] = err
 
                     dv = kp + ki + kd
+
+                    # TODO
+                    #params = tune(sp, err, params)
+                    #if params is not None:
+                    #    self._params[self.Mode] = params.copy()
+
                     dv = unscale(dv)
                     dv = limit(dv)
                 
                     if self._callback is not None:
-                        if self._demand != dv:
+                        if self._demand[self.Mode] != dv:
                             self._callback(dv, err)
                             zero = False
                         else:
@@ -197,7 +250,7 @@ class AM8111PidController(object):
                                 self._callback(dv, err)
                                 zero = True
 
-                    self._demand = dv
+                    self._demand[self.Mode] = dv
 
                 finally:
                     self._lock.release()
@@ -560,6 +613,9 @@ class AM8111MotionController(BeckhoffMotionController):
 
     ENCODER_TURNBITS = [16,16]              # multiturn, singleturn; default 12,20
     POSITION_OFFSET = [57_548, 0]           # [24_780, 0]  # 0x17 uint32
+
+    POSITION_OFFSET_DISABLED = 0x00
+    POSITION_OFFSET_DRIVE_MEMORY = 0x02
         
     class RxMapEx:
         register = 0x1C12
@@ -743,7 +799,7 @@ class AM8111MotionController(BeckhoffMotionController):
             self.Device.sdo_write(0x8000,0x17,bytes(ctypes.c_uint32(value)))
             self._positionOffset = None
         except Exception as ex:
-            EcatLogger.error(f"PositionOffset {ex}")
+            EcatLogger.error(f"PositionOffset {self.Device.state} {ex}")
     PositionOffset = property(fget=_get_positionOffset,fset=_set_positionOffset)
 
     _positionOffsetEnabled = None
@@ -917,6 +973,33 @@ class AM8111MotionController(BeckhoffMotionController):
     
     def hasState(self, state):
         return self.Device.state & state == state
+    
+    def initOffset(self):
+        try:
+
+            self.PositionOffsetEnabled = AM8111MotionController.POSITION_OFFSET_DISABLED
+            start = time.time()
+            while time.time() - start <= 5:
+                if self.PositionOffsetEnabled == AM8111MotionController.POSITION_OFFSET_DISABLED:
+                    break
+            self.PositionOffset = AM8111MotionController.POSITION_OFFSET
+            self.PositionOffsetEnabled = AM8111MotionController.POSITION_OFFSET_DRIVE_MEMORY
+            start = time.time()
+            while time.time() - start <= 5:
+                if self.PositionOffsetEnabled == AM8111MotionController.POSITION_OFFSET_DRIVE_MEMORY:
+                    break
+            _ = self.PositionOffset     
+
+        except pysoem.SdoError as se:
+            EcatLogger.error(f"SdoError {se}")  
+        except pysoem.PacketError as pe:
+            EcatLogger.error(f"PacketError {pe}")  
+        except pysoem.MailboxError as me:
+            EcatLogger.error(f"MailboxError {me}")  
+        except pysoem.WkcError as we:
+            EcatLogger.error(f"WkcError {we}")  
+        except Exception as ex:
+            EcatLogger.error(f"Exception {ex}")  
 
     def initConfig(self): 
 
@@ -950,9 +1033,8 @@ class AM8111MotionController(BeckhoffMotionController):
             # outputs; write; master-slave  
             addr = AM8111MotionController.RxMapEx.register            
             for i,value in enumerate(AM8111MotionController.RxMapEx.address): 
-                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)))
+                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)))      
 
-            
             self._enablePdoAssignment(True)
             # ESM PREOP -> SAFEOP TxPDO effective
             # ESM SAFEOP -> OP TxPDO effective
@@ -1013,7 +1095,9 @@ class AM8111MotionController(BeckhoffMotionController):
             self.Turnbits = AM8111MotionController.ENCODER_TURNBITS   
             _ = self.Turnbits
             _ = self.VelocityLimit
-            _ = self.Firmware                  
+            _ = self.Firmware      
+
+            self.initOffset()            
 
             self.debug()
 
@@ -1034,20 +1118,10 @@ class AM8111MotionController(BeckhoffMotionController):
             EcatLogger.error(f"Exception {ex}")  
 
     def init(self):
-
         self._initialized = False
-        
         try:
-
-            self.PositionOffsetEnabled = 0
-            self.PositionOffset = AM8111MotionController.POSITION_OFFSET
-            self.PositionOffsetEnabled = 2
-            _ = self.PositionOffset
-
             self.Mode = AM8111ProfileMode.MODE_NONE
-
             self._initialized = True
-
         except pysoem.SdoError as se:
             EcatLogger.error(f"SdoError {se}")  
         except pysoem.PacketError as pe:

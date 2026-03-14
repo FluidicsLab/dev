@@ -3,7 +3,6 @@ import ctypes, time
 from typing import final
 import pysoem
 import numpy as np
-from scipy.signal import correlate
 from threading import Lock,Event,Thread
 from types import SimpleNamespace
 
@@ -147,7 +146,7 @@ class Ed1fPidController(object):
             self._integral[mode] = []
         self._mode = Ed1fPidController.MODE_DEFAULT
 
-    _errors = deque(maxlen=1000)
+    _errors = deque(maxlen=100)
 
     def compute(self):
 
