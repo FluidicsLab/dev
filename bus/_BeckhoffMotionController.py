@@ -15,8 +15,109 @@ from _EcatSeverity import SEVERITY_VERBOSE, EcatSeverityController, SeverityLogg
 from _EcatStates import EcatStates
 
 
+class PidControllerTune:
+
+    _verbose = 0
+
+    _errors = deque(maxlen=100)
+    _rate = 0.01
+
+    def _reset(self):
+        self._errors.clear()
+        self._rate = 0.01
+
+    def _clip(kp, ki, kd):
+        return np.clip(kp, 10, 400), np.clip(ki, 0.0, 50.0), np.clip(kd, 0.0, 20.0)
+    
+    def _apply_rate(self, error, params):
+
+        """
+        
+        :param self: Description
+        :param error: Description
+        :param params: Description
+        """
+
+        self._errors.append(error)
+
+        if len(self._errors) < 50:            
+            return None
+
+        recent_errors = list(self._errors)[-20:]
+        previous_errors = list(self._errors)[-40:-20]
+
+        if len(previous_errors) == 0:
+            return None
+        
+        Kp = params[0]
+
+        recent_mse = np.mean(np.square(recent_errors))
+        previous_mse = np.mean(np.square(previous_errors))
+    
+        improvement = (previous_mse - recent_mse) / (previous_mse + 1e-6)
+
+        if improvement > 0.1:
+            self._rate *= 1.1
+        elif improvement < -0.1:
+            self._rate *= 0.9
+
+        self._rate = np.clip(self._rate, 0.001, 0.1)
+
+        if recent_mse > previous_mse * 1.1:
+            direction = -np.sign(self._change)
+        else:
+            direction = np.sign(self._change) if hasattr(self, '_change') else 1
+                
+        kp_ *= (1 + direction * self._rate)
+        kp_ = np.clip(kp_, 200.0, 2000.0)
+
+        self._change = kp_ - Kp
+
+        print(f"{self._rate} {kp_}")
+
+        return kp_
+    
+    def _apply_self_tuning(self, setpoint, integral, error, params):
+
+        self._errors.append(error)
+
+        if len(self._errors) < 50:
+            return None
+        
+        recent_errors = list(self._errors)[-20:]
+
+        error_std = np.std(recent_errors)
+        error_mean = np.mean(np.abs(recent_errors))        
+
+        kp, ki, kd = params[0], params[1], params[2]
+
+        # oszilate
+        zero_crossings = sum(1 for i in range(1, len(recent_errors)) if recent_errors[i-1] * recent_errors[i] < 0)
+        
+        if zero_crossings > 10 and error_std > 0.1 * abs(setpoint):
+            Kp *= 0.9
+            Kd *= 1.1
+        
+        elif error_mean > 0.2 * abs(setpoint) and zero_crossings < 3:
+            Kp *= 1.2
+            Ki *= 1.05
+        
+        elif error_mean < 0.05 * abs(setpoint) and integral > 0:
+            if abs(error) > 0:
+                Ki *= 0.95
+
+        return self._clip(kp, ki, kd)
+
+
 class AM8111PidController(object):
 
+    _tune: PidControllerTune = None
+    def _get_tune(self):
+        if self._tune is None:
+            self._tune = PidControllerTune()
+        return self._tune
+    Tune = property(fget=_get_tune)
+    
     TIMEOUT_CONTROL = 0.2
     FRACTION = 20
     MODE_DEFAULT = 'p'
@@ -147,8 +248,6 @@ class AM8111PidController(object):
             self._integral[mode] = []
         self._mode = AM8111PidController.MODE_DEFAULT
 
-    _errors = deque(maxlen=100)
-
     def compute(self):
 
         def scale(value):
@@ -159,47 +258,7 @@ class AM8111PidController(object):
 
         def limit(value): 
             return max(self._limit['output']['low'], min(self._limit['output']['high'], value))
-
-        def tune(setpoint, error, params):
-
-            self._errors.append(error)
-
-            recent_errors = list(self._errors)[-50:]
-            if len(recent_errors) < 10:
-                return None
-            
-            error_trend = np.polyfit(range(len(recent_errors)), recent_errors, 1)[0]
-            error_mean = np.mean(np.abs(recent_errors))
-            error_amplitude = np.std(recent_errors)
-
-            fi = 0.95
-            fd = 1.05
-
-            # oszilate
-            zero_crossings = sum(1 for i in range(1, len(recent_errors)) if recent_errors[i-1] * recent_errors[i] < 0)
-            
-            if zero_crossings > 5 and error_amplitude > 0.1 * abs(setpoint):
-                params[0] *= fi
-                                
-            # to slow
-            elif abs(error_trend) < 0.01 and error_mean > 0.2 * abs(setpoint):
-                params[0] *= fd
-                                
-            # error decreases - increase slighly
-            elif abs(error) < 0.5 * error_mean and error_mean > 0:
-                params[0] *= fd
-                
-            # error to high
-            elif abs(error) > 0.5 * abs(setpoint):
-                params[0] *= fd
-
-            else:
-                params[0] *= fi
-
-            params[0] = np.clip(params[0], 0.1, 10.0)
-
-            return params
-
+        
         enabled = False
         zero = False        # zero quick stop
 
@@ -214,43 +273,44 @@ class AM8111PidController(object):
                 self._lock.acquire()
                 try:
 
-                    sp = scale(self._setpoint[self.Mode])
-                    pv = scale(max(0, self._processvalue[self.Mode]))
+                    mode = self.Mode
 
-                    err = (pv - sp) * self._factor[self.Mode]
+                    sp = scale(self._setpoint[mode])
+                    pv = scale(max(0, self._processvalue[mode]))
 
-                    params = self._params[self.Mode]
+                    err = (pv - sp) * self._factor[mode]
+
+                    params = self._params[mode]
 
                     kp = params[0] * err
                     ki = params[1] * err * params[3]
-                    kd = params[2] * (err - self._error[self.Mode]) / params[3]
+                    kd = params[2] * (err - self._error[mode]) / params[3]
 
-                    self._integral[self.Mode].append(ki)                    
-                    while len(self._integral[self.Mode]) > AM8111PidController.FRACTION:
-                        self._integral[self.Mode].pop(0)
-                    ki = sum(self._integral[self.Mode])
-                    self._error[self.Mode] = err
+                    self._integral[mode].append(ki)                    
+                    while len(self._integral[mode]) > AM8111PidController.FRACTION:
+                        self._integral[mode].pop(0)
+                    ki = sum(self._integral[mode])
+                    self._error[mode] = err
 
                     dv = kp + ki + kd
 
-                    # TODO
-                    #params = tune(sp, err, params)
-                    #if params is not None:
-                    #    self._params[self.Mode] = params.copy()
-
+                    kp = self.Tune._apply_self_tuning(sp, sum(self._integral[mode]), err, params)
+                    if kp is not None:
+                        params[0] = kp
+                    
                     dv = unscale(dv)
                     dv = limit(dv)
                 
                     if self._callback is not None:
-                        if self._demand[self.Mode] != dv:
-                            self._callback(dv, err)
+                        if self._demand[mode] != dv:
+                            self._callback(dv, mode, err, params)
                             zero = False
                         else:
                             if dv == 0.0 and not zero:
-                                self._callback(dv, err)
+                                self._callback(dv, mode, err, params)
                                 zero = True
 
-                    self._demand[self.Mode] = dv
+                    self._demand[mode] = dv
 
                 finally:
                     self._lock.release()
@@ -612,7 +672,7 @@ class AM8111MotionController(BeckhoffMotionController):
     CYCLE_TIME = 10_000_000     # ns
 
     ENCODER_TURNBITS = [16,16]              # multiturn, singleturn; default 12,20
-    POSITION_OFFSET = [57_548, 0]           # [24_780, 0]  # 0x17 uint32
+    POSITION_OFFSET = [57_548, 0]           # [, 0]  # 0x17 uint32
 
     POSITION_OFFSET_DISABLED = 0x00
     POSITION_OFFSET_DRIVE_MEMORY = 0x02
@@ -799,7 +859,7 @@ class AM8111MotionController(BeckhoffMotionController):
             self.Device.sdo_write(0x8000,0x17,bytes(ctypes.c_uint32(value)))
             self._positionOffset = None
         except Exception as ex:
-            EcatLogger.error(f"PositionOffset {self.Device.state} {ex}")
+            EcatLogger.error(f"PositionOffset {EcatStates.desc(self.Device.state, desc=True)}; {ex}")
     PositionOffset = property(fget=_get_positionOffset,fset=_set_positionOffset)
 
     _positionOffsetEnabled = None
@@ -925,6 +985,14 @@ class AM8111MotionController(BeckhoffMotionController):
         self._toggle = None
     Toggle = property(fget=_get_toggle,fset=_set_toggle)
 
+    _controllerInfo = {}
+    def _get_controllerInfo(self):
+        return self._controllerInfo
+    def _set_controllerInfo(self, value:dict):
+        self._controllerInfo = {}
+        self._controllerInfo.update(value)
+    ControllerInfo = property(fget=_get_controllerInfo,fset=_set_controllerInfo)
+
     def debug(self):
 
         EcatLogger.debug(f"debug")
@@ -1044,37 +1112,35 @@ class AM8111MotionController(BeckhoffMotionController):
             #
 
             self.Device.sdo_write(0x8011, 0x13, bytes(ctypes.c_uint8(3)), ca)       # motor pole pairs
-            
-            self.Device.sdo_write(0x8011, 0x11, bytes(ctypes.c_uint32(8600)), ca)   # max. current
             self.Device.sdo_write(0x8011, 0x12, bytes(ctypes.c_uint32(2710)), ca)   # rated current
-            
-            self.Device.sdo_write(0x8011, 0x15, bytes(ctypes.c_int16(-90)), ca)     # commutation offset
+            self.Device.sdo_write(0x8011, 0x11, bytes(ctypes.c_uint32(8600)), ca)   # max. current
             self.Device.sdo_write(0x8011, 0x16, bytes(ctypes.c_uint32(70)), ca)     # torque const. mNm/A
-            self.Device.sdo_write(0x8011, 0x18, bytes(ctypes.c_uint32(33)), ca)     # rotor moment of inertia g cm^2
             self.Device.sdo_write(0x8011, 0x19, bytes(ctypes.c_uint16(15)), ca)     # winding inductance 0.1 mH
-            self.Device.sdo_write(0x8011, 0x1B, bytes(ctypes.c_uint32(5406)), ca)   # motor speed limitation 1/min          ~ 291_780 1/s
-            
+            self.Device.sdo_write(0x8011, 0x18, bytes(ctypes.c_uint32(33)), ca)     # rotor moment of inertia g cm^2
+            self.Device.sdo_write(0x8011, 0x2D, bytes(ctypes.c_uint16(341)), ca)    # motor thermal time constant 0.1s      ~ 
+            self.Device.sdo_write(0x8011, 0x15, bytes(ctypes.c_int16(270)), ca)     # commutation offset
+            self.Device.sdo_write(0x8011, 0x1B, bytes(ctypes.c_uint32(4855)), ca)   # motor speed limitation 1/min          ~ 291_780 1/s
             self.Device.sdo_write(0x8011, 0x2B, bytes(ctypes.c_uint16(1200)), ca)   # motor temperature warn level 0.1°C    ~ 120°C
             self.Device.sdo_write(0x8011, 0x2C, bytes(ctypes.c_uint16(1400)), ca)   # motor temperature error level 0.1°C   ~ 140°C
-            self.Device.sdo_write(0x8011, 0x2D, bytes(ctypes.c_uint16(5400)), ca)   # motor thermal time constant 0.1s      ~ 9min
-            self.Device.sdo_write(0x8010, 0x31, bytes(ctypes.c_uint32(262144)), ca)            
-            
-            # current controller
-            self.Device.sdo_write(0x8010, 0x13, bytes(ctypes.c_uint16(177)), ca)    # P 0.1 V/A
-            self.Device.sdo_write(0x8010, 0x12, bytes(ctypes.c_uint16(5)), ca)      # I 0.1 ms Tn   integral time
 
+            # current controller
+            self.Device.sdo_write(0x8010, 0x13, bytes(ctypes.c_uint16(100)), ca)    # P 0.1 V/A                     177
+            self.Device.sdo_write(0x8010, 0x12, bytes(ctypes.c_uint16(5)), ca)      # I 0.1 ms Tn   integral time   5
             # velocity controller
             self.Device.sdo_write(0x8010, 0x15, bytes(ctypes.c_uint32(43)), ca)     # P mA/(rad/s)  
             self.Device.sdo_write(0x8010, 0x14, bytes(ctypes.c_uint32(150)), ca)    # I 0.1 ms Tn   integral time
-
             # position controller
-            self.Device.sdo_write(0x8010, 0x17, bytes(ctypes.c_uint32(5)), ca)      # P (rad/s)/rad
-
+            self.Device.sdo_write(0x8010, 0x17, bytes(ctypes.c_uint32(2)), ca)      # P (rad/s)/rad
             # velocity limitation
-            self.Device.sdo_write(0x8010, 0x31, bytes(ctypes.c_uint32(262_144)), ca) 
-
+            self.Device.sdo_write(0x8010, 0x31, bytes(ctypes.c_uint32(262_144)), ca)
+            
             # torque limitation
             self.Device.sdo_write(0x7010, 0x0B, bytes(ctypes.c_uint16(0x02)), ca)
+
+            # enable TxPDO toggle
+            self.Device.sdo_write(0x8010, 0x01, bytes(ctypes.c_bool(1)))
+            # enable input cycle counter
+            self.Device.sdo_write(0x8010, 0x02, bytes(ctypes.c_bool(1)))
 
             shift_time = AM8111MotionController.SHIFT_TIME
             cycle_time = AM8111MotionController.CYCLE_TIME
@@ -1094,10 +1160,10 @@ class AM8111MotionController(BeckhoffMotionController):
 
             self.Turnbits = AM8111MotionController.ENCODER_TURNBITS   
             _ = self.Turnbits
-            _ = self.VelocityLimit
-            _ = self.Firmware      
+            self.initOffset()
 
-            self.initOffset()            
+            _ = self.VelocityLimit
+            _ = self.Firmware                 
 
             self.debug()
 
@@ -1153,12 +1219,17 @@ class AM8111MotionController(BeckhoffMotionController):
 
             position = AM8111ProfilePosition.value(buff.position)
             torque = AM8111ProfileTorque.get(buff.torque, self.TorqueConfig)
+
+            watchdog = 0
+            watchdog_time = 0
             
             error = buff.info1
             error_text = AM8111Profile.__info__(error, 'e')
             if "WATCHDOG" in error_text.split(","):
                 if not self._detected:
-                    EcatLogger.warning(f"watchdog {error_text} {status_text} {(time.time_ns() - self._watchTime) / 1e9:.3f}")                    
+                    watchdog = 1
+                    watchdog_time = (time.time_ns() - self._watchTime) / 1e9
+                    EcatLogger.warning(f"watchdog {error_text} {status_text} {watchdog_time:.3f}")                    
                 self._detected = True
             else:
                 self._detected = False
@@ -1182,7 +1253,8 @@ class AM8111MotionController(BeckhoffMotionController):
                 },
                 'info': {
                     'error': error, 'error_text': error_text,
-                    'warning': buff.info2, 'warning_text': AM8111Profile.__info__(buff.info2, 'w')
+                    'warning': buff.info2, 'warning_text': AM8111Profile.__info__(buff.info2, 'w'),
+                    'watchdog': watchdog, 'watchdog_time': watchdog_time
                 },
                 'torque': {
                     'raw': buff.torque, 'value': torque, 'limit': self.TorqueLimit
@@ -1199,13 +1271,15 @@ class AM8111MotionController(BeckhoffMotionController):
                     }
                 },
                 'status': {
-                    'value':status, 'text': status_text,
+                    'value':status, 
+                    'text': status_text,
                 },
                 'encoder': { 
                     'type': 'multiturn',
                     'bits': self.Turnbits,
                     'firmware': self.Firmware
                 },
+                'controller': self.ControllerInfo,
                 # severity callback position
                 '0x01': { 'd': position }
             }
@@ -1289,6 +1363,10 @@ class AM8111MotionController(BeckhoffMotionController):
                     self.TouchprobeWord = self._data['touchprobe']
                     self._data['touchprobe'] = None
 
+                if 'controller' in self._data.keys() and self._data['controller'] is not None:
+                    self.ControllerInfo = self._data['controller']
+                    self._data['controller'] = None
+
                 # pid controller
                 if 'control' in self._data.keys() and self._data['control'] is not None:
                     if self._controller is not None: 
@@ -1340,18 +1418,25 @@ class AM8111MotionController(BeckhoffMotionController):
                                 if key in data.keys():                    
                                     self._controller.update(key, data[key])                    
 
-    def controllerFunc(self, value, error=0):
+    def controllerFunc(self, value, mode='', error=0, params=[]):
         """
         call back from PID
         
         :param self: 
         :param value: velocity inc/s
+        :param mode: pid controller mode
         :param error: error py pid controller calc.
+        :param params: adaptive pid parameters
         """
         self._lock.acquire()
         try:  
             self._data.update({
-                'velocity': round(value)
+                'velocity': round(value),
+                'controller': {
+                    'mode': mode,
+                    'error': error,
+                    'params': params
+                }
             })
         finally:
             self._lock.release()

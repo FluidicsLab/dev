@@ -76,6 +76,8 @@ DELAY_TOGGLE_LOOP       = 0.005
 
 DELAY_DEBUG_LOOP        = 0.125
 
+ENABLE_TOGGLE           = False
+
 DEBUG = 1
 VERBOSE = 1
 
@@ -245,8 +247,8 @@ class EcatMaster(EcatObject):
                     slave._fpwr(0x420, struct.pack('H',int(sm*10)), timeout_us=TIMEOUT_FPWR)
             else:          
                 
-                EcatLogger.info(f"SM-watchdog  {slave.get_watchdog('processdata')} <-- {sm:.2f}ms")
-                EcatLogger.info(f"PDI-watchdog {slave.get_watchdog('pdi')} <-- {pd:.2f}ms")
+                EcatLogger.info(f"{slave.name:10s} SM-watchdog  {slave.get_watchdog('processdata')} <-- {sm:.2f}ms")
+                EcatLogger.info(f"{slave.name:10s} PDI-watchdog {slave.get_watchdog('pdi')} <-- {pd:.2f}ms")
 
                 # process data
                 if pd is not None:
@@ -1388,13 +1390,14 @@ class EcatMaster(EcatObject):
                 if (pysoem.OP_STATE & state) != state:
                     continue
 
-                # motion control
-                if 'EL7201' in keys and n in self.Indizes.EL7201:                    
-                    if n in self._beckhoffMotionController.keys():
-                        self._beckhoffMotionController[n].toggle()
-                elif 'ED1F' in keys and n in self.Indizes.ED1F:
-                    if n in self._hiwinMotionController.keys():
-                        self._hiwinMotionController[n].toggle()                        
+                if ENABLE_TOGGLE:
+                    
+                    if 'EL7201' in keys and n in self.Indizes.EL7201:                    
+                        if n in self._beckhoffMotionController.keys():
+                            self._beckhoffMotionController[n].toggle()
+                    elif 'ED1F' in keys and n in self.Indizes.ED1F:
+                        if n in self._hiwinMotionController.keys():
+                            self._hiwinMotionController[n].toggle()                        
 
             self._toggleEvent.wait(DELAY_TOGGLE_LOOP)
 

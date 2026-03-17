@@ -22,6 +22,16 @@
             "console": "integratedTerminal",
             "args": ["_EcatSettingsED1"],
             "justMyCode": false
+        },
+
+        {
+            "name": "tune",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "books/tune.0.py",
+            "console": "integratedTerminal",
+            "args": [],
+            "justMyCode": false
         }
 
     ]

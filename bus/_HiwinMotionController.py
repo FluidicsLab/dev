@@ -12,7 +12,7 @@ from _EcatObject import EcatLogger
 
 from _EcatSeverity import SEVERITY_VERBOSE, EcatSeverityController, SeverityLogger
 from _EcatStates import EcatStates
-
+   
 
 class Ed1fPidController(object):
 
@@ -146,8 +146,6 @@ class Ed1fPidController(object):
             self._integral[mode] = []
         self._mode = Ed1fPidController.MODE_DEFAULT
 
-    _errors = deque(maxlen=100)
-
     def compute(self):
 
         def scale(value):
@@ -158,46 +156,6 @@ class Ed1fPidController(object):
 
         def limit(value): 
             return max(self._limit['output']['low'], min(self._limit['output']['high'], value))
-                
-        def tune(setpoint, error, params):
-
-            self._errors.append(error)
-
-            recent_errors = list(self._errors)[-50:]
-            if len(recent_errors) < 10:
-                return None
-            
-            error_trend = np.polyfit(range(len(recent_errors)), recent_errors, 1)[0]
-            error_mean = np.mean(np.abs(recent_errors))
-            error_amplitude = np.std(recent_errors)
-
-            fi = 0.95
-            fd = 1.05
-
-            # oszilate
-            zero_crossings = sum(1 for i in range(1, len(recent_errors)) if recent_errors[i-1] * recent_errors[i] < 0)
-            
-            if zero_crossings > 5 and error_amplitude > 0.1 * abs(setpoint):
-                params[0] *= fi
-                                
-            # to slow
-            elif abs(error_trend) < 0.01 and error_mean > 0.2 * abs(setpoint):
-                params[0] *= fd
-                                
-            # error decreases - increase slighly
-            elif abs(error) < 0.5 * error_mean and error_mean > 0:
-                params[0] *= fd
-                
-            # error to high
-            elif abs(error) > 0.5 * abs(setpoint):
-                params[0] *= fd
-
-            else:
-                params[0] *= fi
-
-            params[0] = np.clip(params[0], 200.0, 2000.0)
-
-            return params
         
         enabled = False
         zero = False
@@ -231,10 +189,6 @@ class Ed1fPidController(object):
                     self._error[self.Mode] = err
 
                     dv = kp + ki + kd
-
-                    params = tune(sp, err, params)
-                    if params is not None:
-                        self._params[self.Mode] = params.copy()
 
                     dv = unscale(dv)
                     dv = limit(dv)
