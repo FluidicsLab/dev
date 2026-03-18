@@ -108,7 +108,7 @@ class EcatMasterDEV(EcatMaster):
                 targets = config[f"{addr}"][key]["channel"]            
                 limit = self.SeverityLimit.find(f"{source}.{addr}.{key}")
                 if limit is not None:
-                    raw = data['value']['value']['position']['raw']                                                            
+                    raw = data['value']['value']['position']['raw']                                                   
                     critical = (raw < limit["low"] or raw > limit["high"]) and \
                         1 == (1 if raw is None or (limit["def"] is not None and raw != limit["def"]) else 0)                    
                     if critical:
@@ -161,7 +161,7 @@ class EcatMasterDEV(EcatMaster):
                 case "EL3124":
                     severity = self.severityEL3124(source, data, severity, config._raw[alias][pos])
                 case "EL7201":
-                    severity = self.severityEL7201(source, data, severity, config._raw[alias][pos])
+                    pass #severity = self.severityEL7201(source, data, severity, config._raw[alias][pos])
                 case _:
                     pass
         
