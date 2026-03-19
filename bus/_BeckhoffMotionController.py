@@ -566,7 +566,7 @@ class AM8111Profile:
                             if n is not None and value[i] == 1
                         ])
         return ""
-
+    
 
 class BeckhoffMotionController(object):
 
@@ -662,6 +662,68 @@ class BeckhoffMotionController(object):
 
     def controllerFunc(self, value):
         pass    
+
+
+class AM811:
+
+    encoderUnit = SimpleNamespace(**{ 
+        'bits': [16, 16] # multiturn, singleturn
+    })
+
+    driveUnit = SimpleNamespace(**{ 
+        'gearBoxGearRatio': 1000.0,        
+        'timingBeltTransmissionGearRatio': 2.0,
+        'spindlePitch': 5.0,
+        'motorIncrementPositions': 262_144, 
+        'cylinderDiameter': 15.0,
+        'limit': {
+            'low': 0,
+            'high': 24_185_993 
+        }
+    })
+
+    cylinderUnit = SimpleNamespace(**{ 
+        'limit': {
+            'low':   81.3,  # mm bottom
+            'high': 131.1   # mm top
+        }
+    })
+
+    def gearRatio(self):
+        return self.driveUnit.timingBeltTransmissionGearRatio * self.driveUnit.gearBoxGearRatio
+
+    def cylinderArea(self):
+        return np.pow(self.driveUnit.cylinderDiameter,2) * np.pi / 4.
+    
+    def pitchVolume(self):
+        return self.driveUnit.spindlePitch * self.cylinderArea()
+
+    def mulmin2incs(self, value):        
+        transmission = AM811.driveUnit.spindlePitch / self.gearRatio() # mm/r        
+        injectionRateRotation = transmission * self.cylinderArea() # µl/r        
+        injectionRateIncrement = injectionRateRotation / self.driveUnit.motorIncrementPositions # µl/inc        
+        return np.clip(value / (injectionRateIncrement * 60), self.driveUnit.limit['low'], self.driveUnit.limit['high']) # µl/min
+    
+    def incs2mulmin(self, value):        
+        transmission = self.driveUnit.spindlePitch / self.gearRatio() # mm/r        
+        injectionRateRotation = transmission * self.cylinderArea() # mm³/r ~ µl/r        
+        injectionRateIncrement = injectionRateRotation / self.driveUnit.motorIncrementPositions # µl/inc
+        return (value * injectionRateIncrement * 60.0)
+    
+    def mms2mulmin(self, value):        
+        return value * self.cylinderArea() * 60 # mm³/s ~ µl/s
+    
+    def turn2ml(self, value):
+        bitRange = 2 ** self.encoderUnit.bits[1] -1        
+        mtb = value[0] * self.pitchVolume() / self.gearRatio()
+        stb = value[1] / bitRange * self.pitchVolume() / self.gearRatio()        
+        return (mtb + stb) / 1000
+
+    def ml2turn(self, value):
+        bitRange = 2 ** self.encoderUnit.bits[1] -1
+        mtb = round(np.trunc(value / self.pitchVolume() * self.gearRatio() * 1000), 0)
+        stb = round(bitRange * (value - self.turn2ml([mtb, 0])) / self.pitchVolume() * self.gearRatio() * 1000, 0)
+        return [mtb, stb]
 
 
 class AM8111MotionController(BeckhoffMotionController):
