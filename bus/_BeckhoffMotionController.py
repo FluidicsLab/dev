@@ -132,7 +132,7 @@ class AM8111PidController(object):
     }
 
     _limit = {
-        'output': { "low": -24_185_993 * 5/9, "high": 24_185_993 * 5/9 }  # inc/s (velocity)
+        'output': { "low": -24_185_993 * 3/4, "high": 24_185_993 * 3/4 }  # inc/s (velocity)
     }
 
     _lock: Lock = Lock()
@@ -863,11 +863,15 @@ class AM8111MotionController(BeckhoffMotionController):
             EcatLogger.error(f"PositionOffset {EcatStates.desc(self.Device.state, desc=True)}; {ex}")
     PositionOffset = property(fget=_get_positionOffset,fset=_set_positionOffset)
 
+    _positionOffsetEnabled = None
     def _get_positionOffsetEnabled(self):
-        return ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(0x8000,0x0D)).value
+        if self._positionOffsetEnabled is None:
+            self._positionOffsetEnabled = ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(0x8000,0x0D)).value
+        return self._positionOffsetEnabled
     def _set_positionOffsetEnabled(self, value):
         try:
             self.Device.sdo_write(0x8000, 0x0D, bytes(ctypes.c_uint8(value)))
+            self._positionOffsetEnabled = None
         except Exception as ex:
             EcatLogger.error(f"PositionOffsetEnabled {ex}")
     PositionOffsetEnabled = property(fget=_get_positionOffsetEnabled,fset=_set_positionOffsetEnabled)
@@ -1038,24 +1042,14 @@ class AM8111MotionController(BeckhoffMotionController):
     def hasState(self, state):
         return self.Device.state & state == state
     
-    def initOffset(self):
+    def updateOffset(self, value, enabled):
         try:
 
-            self.PositionOffsetEnabled = AM8111MotionController.POSITION_OFFSET_DISABLED
-            start = time.time()
-            while time.time() - start <= 5:
-                if self.PositionOffsetEnabled == AM8111MotionController.POSITION_OFFSET_DISABLED:
-                    break
-
-            self.PositionOffset = AM8111MotionController.POSITION_OFFSET
-            
-            self.PositionOffsetEnabled = AM8111MotionController.POSITION_OFFSET_DRIVE_MEMORY
-            start = time.time()
-            while time.time() - start <= 5:
-                if self.PositionOffsetEnabled == AM8111MotionController.POSITION_OFFSET_DRIVE_MEMORY:
-                    break
+            self.PositionOffset = value            
+            self.PositionOffsetEnabled = enabled
 
             _ = self.PositionOffset    
+            _ = self.PositionOffsetEnabled
  
         except pysoem.SdoError as se:
             EcatLogger.error(f"SdoError {se}")  
@@ -1160,10 +1154,8 @@ class AM8111MotionController(BeckhoffMotionController):
             _ = self.Turnbits
             
             _ = self.VelocityLimit
-            _ = self.Firmware                 
-
-            self.debug()
-
+            _ = self.Firmware           
+  
         except pysoem.SdoError as se:
             self._initialized = False
             EcatLogger.error(f"SdoError {se}")  
@@ -1184,7 +1176,8 @@ class AM8111MotionController(BeckhoffMotionController):
         self._initialized = False
         try:
             self.Mode = AM8111ProfileMode.MODE_NONE
-            self.initOffset()
+            self.updateOffset(AM8111MotionController.POSITION_OFFSET, AM8111MotionController.POSITION_OFFSET_DRIVE_MEMORY)
+            
             self._initialized = True
         except pysoem.SdoError as se:
             EcatLogger.error(f"SdoError {se}")  
@@ -1248,7 +1241,8 @@ class AM8111MotionController(BeckhoffMotionController):
                     },
                     'offset': { 
                         'raw': self.PositionOffset, 
-                        'value': AM8111ProfilePosition.split(self.PositionOffset, bits) 
+                        'value': AM8111ProfilePosition.split(self.PositionOffset, bits),
+                        'enabled': self.PositionOffsetEnabled 
                     }                    
                 },
                 'velocity':{
@@ -1385,6 +1379,13 @@ class AM8111MotionController(BeckhoffMotionController):
                 if 'position' in self._data.keys() and self._data['position'] is not None:   
                     # unused
                     self._data['position'] = None
+
+                if 'offset' in self._data.keys() and self._data['offset'] is not None:   
+                    self.updateOffset(
+                        self._data['offset']['value'], 
+                        self._data['offset']['enabled']
+                    )
+                    self._data['offset'] = None
 
                 if 'touchprobe' in self._data.keys() and self._data['touchprobe'] is not None:
                     self.TouchprobeWord = self._data['touchprobe']
