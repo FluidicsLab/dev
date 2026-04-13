@@ -2,12 +2,9 @@
 import ctypes, time, struct
 from types import SimpleNamespace
 
-from collections import deque
-
 import pysoem
 import numpy as np
 from threading import Lock, Event, Thread
-import math
 
 from _EcatObject import EcatLogger
 
@@ -15,114 +12,16 @@ from _EcatSeverity import SEVERITY_VERBOSE, EcatSeverityController, SeverityLogg
 from _EcatStates import EcatStates
 
 
-class PidControllerTune:
-
-    _verbose = 0
-
-    _errors = deque(maxlen=100)
-    _rate = 0.01
-
-    def _reset(self):
-        self._errors.clear()
-        self._rate = 0.01
-
-    def _clip(kp, ki, kd):
-        return np.clip(kp, 10, 400), np.clip(ki, 0.0, 50.0), np.clip(kd, 0.0, 20.0)
-    
-    def _apply_rate(self, error, params):
-
-        """
-        
-        :param self: Description
-        :param error: Description
-        :param params: Description
-        """
-
-        self._errors.append(error)
-
-        if len(self._errors) < 50:            
-            return None
-
-        recent_errors = list(self._errors)[-20:]
-        previous_errors = list(self._errors)[-40:-20]
-
-        if len(previous_errors) == 0:
-            return None
-        
-        Kp = params[0]
-
-        recent_mse = np.mean(np.square(recent_errors))
-        previous_mse = np.mean(np.square(previous_errors))
-    
-        improvement = (previous_mse - recent_mse) / (previous_mse + 1e-6)
-
-        if improvement > 0.1:
-            self._rate *= 1.1
-        elif improvement < -0.1:
-            self._rate *= 0.9
-
-        self._rate = np.clip(self._rate, 0.001, 0.1)
-
-        if recent_mse > previous_mse * 1.1:
-            direction = -np.sign(self._change)
-        else:
-            direction = np.sign(self._change) if hasattr(self, '_change') else 1
-                
-        kp_ *= (1 + direction * self._rate)
-        kp_ = np.clip(kp_, 200.0, 2000.0)
-
-        self._change = kp_ - Kp
-
-        print(f"{self._rate} {kp_}")
-
-        return kp_
-    
-    def _apply_self_tuning(self, setpoint, integral, error, params):
-
-        self._errors.append(error)
-
-        if len(self._errors) < 50:
-            return None
-        
-        recent_errors = list(self._errors)[-20:]
-
-        error_std = np.std(recent_errors)
-        error_mean = np.mean(np.abs(recent_errors))        
-
-        kp, ki, kd = params[0], params[1], params[2]
-
-        # oszilate
-        zero_crossings = sum(1 for i in range(1, len(recent_errors)) if recent_errors[i-1] * recent_errors[i] < 0)
-        
-        if zero_crossings > 10 and error_std > 0.1 * abs(setpoint):
-            kp *= 0.9
-            kd *= 1.1
-        
-        elif error_mean > 0.2 * abs(setpoint) and zero_crossings < 3:
-            kp *= 1.2
-            ki *= 1.05
-        
-        elif error_mean < 0.05 * abs(setpoint) and integral > 0:
-            if abs(error) > 0:
-                ki *= 0.95
-
-        return self._clip(kp, ki, kd)
-
-
 class AM8111PidController(object):
-
-    _tune: PidControllerTune = None
-    def _get_tune(self):
-        if self._tune is None:
-            self._tune = PidControllerTune()
-        return self._tune
-    Tune = property(fget=_get_tune)
     
-    TIMEOUT_CONTROL = 0.2
-    FRACTION = 20
+    TIMEOUT_CONTROL = 0.05
+    TIME_RANGE = (0.001, 1.0)
+
+    FRACTION = 50
     MODE_DEFAULT = 'p'
     MODES = ['d', 'p']
 
+    # scale by mode to compute in range of 0..1
     _scaler = {
         'input': {
             'p': { "low": 0, "high": 700 },             # bar   (pressure)         
@@ -131,19 +30,23 @@ class AM8111PidController(object):
         'output': { "low": 0, "high": 24_185_993 }      # inc/s (velocity)
     }
 
-    _limit = {
-        'output': { "low": -24_185_993 * 3/4, "high": 24_185_993 * 3/4 }  # inc/s (velocity)
+    _limit = {                                          # inc/s (velocity)
+        'output': { "low": -24_185_993 * 3/4, "high": 24_185_993 * 3/4 }  
     }
 
     _lock: Lock = Lock()
     _exit = Event()
 
+    # computation task loop
     _task: Thread = None
 
+    # by mode
     _processvalue = {}
     _setpoint = {}
 
-    _mode = MODE_DEFAULT              # p, d
+    # p pressure
+    # d distance / volume
+    _mode = MODE_DEFAULT              
     def _get_mode(self):
         return self._mode
     def _set_mode(self, value):
@@ -161,17 +64,19 @@ class AM8111PidController(object):
     _error = { 'p': 0.0, 'd': 0.0 }
     _demand = { 'p': 0.0, 'd': 0.0 }
     _integral = { 'p': [], 'd': [] }
-
-    # Kp, Ki, Kd, dt
+    _time = { 'p': time.monotonic(), 'd': time.monotonic() }
+    
+    # Kp, Ki, Kd
     _params = {
-        'p': [0.5, 0.001, 0.0001, 0.1],
-        'd': [10.0, 0.001, 0.0001, 0.1]
+        'p': [0.5, 0.001, 0.0001],
+        'd': [10.0, 0.001, 0.0001]
     }
 
+    # 'direction' factor for mode
     _factor = { 'p': +1, 'd': -1 }
-
+    # 
     _updatable = True
-
+    # callback function for demand value
     _callback = None
 
     _source = []
@@ -184,15 +89,15 @@ class AM8111PidController(object):
                 "high": value["high"]
             }
             self._processvalue[value['key']] = 0
-            self._setpoint[value['key']] = 0
-            
+            self._setpoint[value['key']] = 0            
     def _get_source(self):
         return self._source
+    # controller source by mode
     Source = property(fset=_set_source, fget=_get_source)
 
     def __init__(self, callback):
-        super().__init__()
-        self._callback = callback
+        super().__init__()    
+        self._callback = callback        
         self._task = Thread(target=self.compute)
         self._task.start()
 
@@ -246,6 +151,7 @@ class AM8111PidController(object):
             self._error[mode] = 0.0
             self._demand[mode] = 0.0
             self._integral[mode] = []
+            self._time[mode] = time.monotonic()
         self._mode = AM8111PidController.MODE_DEFAULT
 
     def compute(self):
@@ -282,9 +188,14 @@ class AM8111PidController(object):
 
                     params = self._params[mode]
 
+                    now = time.monotonic()
+                    dt = now - self._time[mode]
+                    dt = max(AM8111PidController.TIME_RANGE[0], min(AM8111PidController.TIME_RANGE[1], dt))
+                    self._time[mode] = now
+
                     kp = params[0] * err
-                    ki = params[1] * err * params[3]
-                    kd = params[2] * (err - self._error[mode]) / params[3]
+                    ki = params[1] * err * dt
+                    kd = params[2] * (err - self._error[mode]) / dt
 
                     self._integral[mode].append(ki)                    
                     while len(self._integral[mode]) > AM8111PidController.FRACTION:
@@ -292,13 +203,7 @@ class AM8111PidController(object):
                     ki = sum(self._integral[mode])
                     self._error[mode] = err
 
-                    dv = kp + ki + kd
-
-                    #kp, ki, kd = self.Tune._apply_self_tuning(sp, sum(self._integral[mode]), err, params)                    
-                    #params[0] = kp if kp is not None else params[0]
-                    #params[1] = ki if ki is not None else params[1]
-                    #params[2] = kd if kd is not None else params[2]
-                    
+                    dv = kp + ki + kd                  
                     dv = unscale(dv)
                     dv = limit(dv)
                 
@@ -1516,7 +1421,7 @@ class AM8111MotionController(BeckhoffMotionController):
         :param value: velocity inc/s
         :param mode: pid controller mode
         :param error: error py pid controller calc.
-        :param params: adaptive pid parameters
+        :param params: pid parameters
         """
         self._lock.acquire()
         try:  

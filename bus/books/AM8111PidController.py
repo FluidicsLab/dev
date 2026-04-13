@@ -7,7 +7,7 @@ import json
 
 class AM8111PidController(object):
 
-    TIMEOUT_CONTROL = 0.01
+    TIMEOUT_CONTROL = 0.02
     FRACTION = 20
     MODE_DEFAULT = 'p'
     MODES = ['d', 'p']
@@ -147,7 +147,8 @@ class AM8111PidController(object):
             'demandvalue': [],
             'error': [],
             'param': [],
-            'performance': []
+            'performance': [],
+            'adjusted': []
         })
             
     def compute(self):
@@ -200,8 +201,6 @@ class AM8111PidController(object):
                     self._error[mode] = err
 
                     dv = kp + ki + kd
-                    dv = unscale(dv)
-                    dv = limit(dv)
 
                     self._history.time.append(t)
                     self._history.setpoint.append(sp)
@@ -209,17 +208,20 @@ class AM8111PidController(object):
                     self._history.demandvalue.append(dv)
                     self._history.error.append(err)
                     self._history.param.append(params)
-                
+
+                    dv = unscale(dv)
+                    dv = limit(dv)
+
                     if self._callback is not None:
                         if self._demand[mode] != dv:                            
-                            self._callback(dv, mode, err, params)
-                            self._adjust()
+                            self._callback(dv, mode, err, params)                            
                             zero = False
                         else:
                             if dv == 0.0 and not zero:
-                                self._callback(dv, mode, err, params)
-                                self._adjust()
+                                self._callback(dv, mode, err, params)                                
                                 zero = True
+
+                    self._adjust()
 
                     self._demand[mode] = dv
 
@@ -237,7 +239,7 @@ class AM8111PidController(object):
         if len(self._history.error) < 5:
             return
         
-        adaptation_rate = 0.1
+        adaptation_rate = 0.01
             
         last_error = self._history.error[-1]
 
@@ -248,7 +250,8 @@ class AM8111PidController(object):
         performance = current_error + 0.5 * mean_error + 0.2 * error_std
         self._history.performance.append(performance)
 
-        adjusted = False
+        adjusted = 0
+
         params = self._params[self.Mode]
 
         if len(self._history.performance) > 10:
@@ -262,24 +265,26 @@ class AM8111PidController(object):
                 
                 params[0] *= (1 - adaptation_rate)
                 params[1] *= (1 - adaptation_rate)
-                params[2] *= (1 - adaptation_rate)
+                #params[2] *= (1 - adaptation_rate)
 
-                adjusted = True
+                adjusted = -1
 
             elif recent_performance < older_performance * 0.9:
                 
-                params[0] *= (1 + adaptation_rate * 0.5)
+                params[0] *= (1 + adaptation_rate * 0.4)
                 params[1] *= (1 + adaptation_rate * 0.5)
-                params[2] *= (1 + adaptation_rate * 0.5)
+                #params[2] *= (1 + adaptation_rate * 0.5)
 
-                adjusted = True
+                adjusted = +1
                         
-            params[0] = np.clip(params[0], 0.1, 20.0)
-            params[1] = np.clip(params[1], 0.01, 1.0)
-            params[2] = np.clip(params[2], 0.001, 1.0)
+            params[0] = np.clip(params[0], 0.1, 1.0)
+            #params[1] = np.clip(params[1], 0.01, 0.05)
+            #params[2] = np.clip(params[2], 0.001, 0.005)
 
-        if adjusted:
+        if adjusted != 0:
             self._params[self.Mode] = params.copy()
+
+        self._history.adjusted.append(adjusted)
 
 
 def func_(value, mode='', error=0, params=[]):
@@ -289,7 +294,7 @@ def func_(value, mode='', error=0, params=[]):
     global pvValue
     pvValue = pvValue - vp * 700
 
-    print(pvValue)
+    print(pvValue, params)
 
 def plot_(data):
 
@@ -298,7 +303,7 @@ def plot_(data):
     param = np.array(data.param)
 
     import matplotlib.pyplot as plt
-    fig, ax = plt.subplots(5, 1, figsize=(10, 15))
+    fig, ax = plt.subplots(6,1,figsize=(10, 18))
 
     ax[0].plot(t, data.setpoint, 'r--', label='sp', linewidth=2)
     ax[0].plot(t, data.demandvalue, 'b-', label='pv', linewidth=1)
@@ -328,6 +333,11 @@ def plot_(data):
     ax[4].legend()
     ax[4].grid(True)
 
+    ax[5].plot(t[4:], data.adjusted, 'r-', label='perf', linewidth=1)
+    ax[5].set_ylabel('')
+    ax[5].legend()
+    ax[5].grid(True)
+
     plt.tight_layout()
     plt.show()
 
@@ -335,28 +345,28 @@ if __name__ == "__main__":
     
     ctrl = AM8111PidController(func_)
 
-    simulation_time = 1
-    dt = 0.005    
+    simulation_time = 5.5
+    dt = 0.01    
     steps = range(int(simulation_time / dt))
 
     print(f"steps {len(steps)}")
-
-    sp = 300
     
     global pvValue
-    pvValue = 350
+    pvValue = 10
+
+    params = [0.5, 0.01, 0.001, 0.01]
     
-    ctrl.config({
-        'setpoint': sp, 
-        'mode': 'p', 
-        'enabled': 1, 
-        'params': [0.5, 0.01, 0.001, 0.01]
-        })
+    ctrl.config({ 'setpoint': 10, 'mode': 'p', 'enabled': 1, 'params': params })
+
+    toggle = 1
 
     for i,t in enumerate(steps):
 
-        if i % 100 == 0:
-            pvValue += sp * (np.random.normal(0.0, 1.0) * 2 - 1.0) * 0.7
+        if (i + 1) % 100 == 0:
+            ctrl.config({ 'setpoint': i + 1, 'params': params })
+            toggle *= -1
+        #    pvValue += sp * (np.random.normal(0.0, 1.0) * 2 - 1.0) * 0.7
+                    
         ctrl.update('p', pvValue)
 
         time.sleep(dt)

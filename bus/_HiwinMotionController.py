@@ -1,12 +1,9 @@
 from math import trunc
 import ctypes, time
-from typing import final
 import pysoem
 import numpy as np
 from threading import Lock,Event,Thread
 from types import SimpleNamespace
-
-from collections import deque
 
 from _EcatObject import EcatLogger
 
@@ -16,7 +13,9 @@ from _EcatStates import EcatStates
 
 class Ed1fPidController(object):
 
-    TIMEOUT_CONTROL = 0.1
+    TIMEOUT_CONTROL = 0.05
+    TIME_RANGE = (0.001, 1.0)
+
     FRACTION = 50
     MODE_DEFAULT = 'p'
     MODES = ['p','d']
@@ -29,8 +28,8 @@ class Ed1fPidController(object):
         'output': { "low": 0, "high": 838_633_324 }         # inc/s (velocity)
     }
 
-    _limit = {
-        'output': { "low": -838_633_324 * 5/9, "high": 838_633_324 * 5/9 }  # inc/s (velocity)
+    _limit = {                                              # inc/s (velocity)
+        'output': { "low": -838_633_324 * 5/9, "high": 838_633_324 * 5/9 }  
     }
 
     _lock: Lock = Lock()
@@ -59,11 +58,12 @@ class Ed1fPidController(object):
     _error = { 'p': 0.0, 'd': 0.0 }
     _demand = { 'p': 0.0, 'd': 0.0 }
     _integral = { 'p': [], 'd': [] }
+    _time = { 'p': time.monotonic(), 'd': time.monotonic() }
 
     # Kp, Ki, Kd, dt
     _params = {
-        'p': [0.5, 0.001, 0.0001, 0.1],
-        'd': [10.0, 0.001, 0.0001, 0.1]
+        'p': [0.5, 0.001, 0.0001],
+        'd': [10.0, 0.001, 0.0001]
     }
 
     _factor = { 'p': +1, 'd': -1 }
@@ -144,6 +144,7 @@ class Ed1fPidController(object):
             self._error[mode] = 0.0
             self._demand[mode] = 0.0
             self._integral[mode] = []
+            self._time[mode] = time.monotonic()
         self._mode = Ed1fPidController.MODE_DEFAULT
 
     def compute(self):
@@ -171,22 +172,29 @@ class Ed1fPidController(object):
                 self._lock.acquire()
                 try:
 
-                    sp = scale(self._setpoint[self.Mode])
-                    pv = scale(max(0, self._processvalue[self.Mode]))
+                    mode = self.Mode
 
-                    err = (pv - sp) * self._factor[self.Mode]
+                    sp = scale(self._setpoint[mode])
+                    pv = scale(max(0, self._processvalue[mode]))
 
-                    params = self._params[self.Mode].copy()
+                    err = (pv - sp) * self._factor[mode]
+
+                    params = self._params[mode].copy()
+
+                    now = time.monotonic()
+                    dt = now - self._time[mode]
+                    dt = max(Ed1fPidController.TIME_RANGE[0], min(Ed1fPidController.TIME_RANGE[1], dt))
+                    self._time[mode] = now
 
                     kp = params[0] * err
-                    ki = params[1] * err * params[3]
-                    kd = params[2] * (err - self._error[self.Mode]) / params[3]
+                    ki = params[1] * err * dt
+                    kd = params[2] * (err - self._error[mode]) / dt
 
                     self._integral[self.Mode].append(ki)                    
-                    while len(self._integral[self.Mode]) > Ed1fPidController.FRACTION:
-                        self._integral[self.Mode].pop(0)
-                    ki = sum(self._integral[self.Mode])
-                    self._error[self.Mode] = err
+                    while len(self._integral[mode]) > Ed1fPidController.FRACTION:
+                        self._integral[mode].pop(0)
+                    ki = sum(self._integral[mode])
+                    self._error[mode] = err
 
                     dv = kp + ki + kd
 
@@ -202,7 +210,7 @@ class Ed1fPidController(object):
                                 self._callback(dv, err, params)
                                 zero = True
 
-                    self._demand[self.Mode] = dv
+                    self._demand[mode] = dv
 
                 except Exception as ex:
                     EcatLogger.error(f"pid compute {ex}")
