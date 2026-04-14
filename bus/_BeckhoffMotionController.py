@@ -1,4 +1,5 @@
 
+from sqlite3 import adapt
 import ctypes, time, struct
 from types import SimpleNamespace
 
@@ -10,6 +11,8 @@ from _EcatObject import EcatLogger
 
 from _EcatSeverity import SEVERITY_VERBOSE, EcatSeverityController, SeverityLogger
 from _EcatStates import EcatStates
+
+from collections import deque
 
 
 class AM8111PidController(object):
@@ -62,6 +65,7 @@ class AM8111PidController(object):
     _target = 0
 
     _error = { 'p': 0.0, 'd': 0.0 }
+
     _demand = { 'p': 0.0, 'd': 0.0 }
     _integral = { 'p': [], 'd': [] }
     _time = { 'p': time.monotonic(), 'd': time.monotonic() }
@@ -148,10 +152,12 @@ class AM8111PidController(object):
 
     def reset(self):
         for mode in AM8111PidController.MODES:
+            
             self._error[mode] = 0.0
             self._demand[mode] = 0.0
             self._integral[mode] = []
             self._time[mode] = time.monotonic()
+            
         self._mode = AM8111PidController.MODE_DEFAULT
 
     def compute(self):
@@ -164,6 +170,45 @@ class AM8111PidController(object):
 
         def limit(value): 
             return max(self._limit['output']['low'], min(self._limit['output']['high'], value))
+        
+        def adapt(mode, dt, dv, params):
+
+            adaption_rate = 0.01
+            adaption_mode = 'mit'
+
+            kp, ki, kd = params
+
+            errors = self._errors[mode]
+
+            if adaption_mode == 'mit':
+
+                if len(errors) > 5:                    
+                    
+                    err = errors[-1]
+
+                    error_rate = (err - errors[-2]) / dt                    
+                    
+                    kp += adaption_rate * err * dv
+                    ki += adaption_rate * err * sum(self._integral[mode])
+                    kd += adaption_rate * err * error_rate
+
+                    kp = np.clip(kp, 0.01, 10.0)
+                    ki = np.clip(ki, 0.0, 5.0)
+                    kd = np.clip(kd, 0.0, 2.0)
+
+            elif adaption_mode == 'grad':
+
+                if len(errors) > 10:                    
+
+                    err = errors[-1]
+                    
+                    error_gradient = (err - errors[-10]) / (10 * dt)
+                    
+                    kp -= adaption_rate * err * error_gradient
+                    
+                    kp = np.clip(self.kp, 0.01, 10.0)
+
+            return [kp, ki, kd]
         
         enabled = False
         zero = False        # zero quick stop
@@ -203,7 +248,13 @@ class AM8111PidController(object):
                     ki = sum(self._integral[mode])
                     self._error[mode] = err
 
-                    dv = kp + ki + kd                  
+                    dv = kp + ki + kd      
+
+                    #self._errors[mode].append(err)
+                    #self._params[mode] = adapt(mode, dt, dv, params)
+                                        
+                    EcatLogger.debug(f"{err:0.8f} {self._processvalue[mode]} {self._setpoint[mode]}")
+
                     dv = unscale(dv)
                     dv = limit(dv)
                 
@@ -639,8 +690,8 @@ class AM8111MotionController(BeckhoffMotionController):
     SHIFT_TIME = 250_000        # ns
     CYCLE_TIME = 10_000_000     # ns
 
-    ENCODER_TURNBITS = [16, 16]              # multiturn, singleturn; default 12,20
-    POSITION_OFFSET = [55_538, 0]           # [57_548, 0]  # 0x17 uint32
+    ENCODER_TURNBITS = [16, 16]             # multiturn, singleturn; default 12,20
+    POSITION_OFFSET = [0, 0]                # [57_548, 0]  # 0x17 uint32
 
     POSITION_OFFSET_DISABLED = 0x00
     POSITION_OFFSET_DRIVE_MEMORY = 0x02
@@ -824,7 +875,7 @@ class AM8111MotionController(BeckhoffMotionController):
     def _set_positionOffset(self, value):
         try:
             value = AM8111ProfilePosition.merge(value, AM8111MotionController.ENCODER_TURNBITS[1])
-            self.Device.sdo_write(0x8000, 0x17, bytes(ctypes.c_uint32(value)), True)
+            self.Device.sdo_write(0x8000, 0x17, bytes(ctypes.c_uint32(value)))
             self._positionOffset = None
         except Exception as ex:
             EcatLogger.error(f"PositionOffset {EcatStates.desc(self.Device.state, desc=True)}; {ex}")
@@ -1009,11 +1060,13 @@ class AM8111MotionController(BeckhoffMotionController):
     def hasState(self, state):
         return self.Device.state & state == state
     
-    def updateOffset(self, value, enabled):
+    def updateOffset(self, value=None, enabled=None):
         try:
-
-            self.PositionOffset = value            
-            self.PositionOffsetEnabled = enabled
+            
+            if value is not None:
+                self.PositionOffset = value            
+            if enabled is not None:
+                self.PositionOffsetEnabled = enabled
 
             _ = self.PositionOffset    
             _ = self.PositionOffsetEnabled
@@ -1143,8 +1196,6 @@ class AM8111MotionController(BeckhoffMotionController):
         self._initialized = False
         try:
             self.Mode = AM8111ProfileMode.MODE_NONE
-            self.updateOffset(AM8111MotionController.POSITION_OFFSET, AM8111MotionController.POSITION_OFFSET_DRIVE_MEMORY)
-            
             self._initialized = True
         except pysoem.SdoError as se:
             EcatLogger.error(f"SdoError {se}")  
@@ -1166,7 +1217,7 @@ class AM8111MotionController(BeckhoffMotionController):
         try:
 
             if not self._initialized:      
-                self.init()          
+                self.init()  
 
             buff =  AM8111MotionController.TxMap.from_buffer_copy(self.Device.input)
             
@@ -1349,8 +1400,8 @@ class AM8111MotionController(BeckhoffMotionController):
 
                 if 'offset' in self._data.keys() and self._data['offset'] is not None:   
                     self.updateOffset(
-                        self._data['offset']['value'], 
-                        self._data['offset']['enabled']
+                        value=self._data['offset']['value'] if 'value' in self._data['offset'].keys() else None, 
+                        enabled=self._data['offset']['enabled'] if 'enabled' in self._data['offset'].keys() else None
                     )
                     self._data['offset'] = None
 

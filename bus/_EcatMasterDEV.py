@@ -162,7 +162,8 @@ class EcatMasterDEV(EcatMaster):
                     severity = self.severityEL3124(source, data, severity, config._raw[alias][pos])
                 case "EL7201":
                     # +/- 0.01 ml
-                    severity = self.severityEL7201(source, data, severity, config._raw[alias][pos])
+                    #severity = self.severityEL7201(source, data, severity, config._raw[alias][pos])
+                    pass
                 case _:
                     pass
         

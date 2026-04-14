@@ -780,9 +780,9 @@ class EcatMaster(EcatObject):
         pass    
     
     def configFunc(self, pos): 
-
+    
         slave = self.Master.slaves[pos]
-
+        
         if EcatStates.has(pysoem.STATE_ERROR, slave.state):
             try:
                 _ = slave.mbx_receive()
@@ -867,7 +867,7 @@ class EcatMaster(EcatObject):
                 self.configEM3702(pos, slave)
 
             case _:
-                pass    
+                pass 
 
     _severityLimit = None
     def _get_severityLimit(self):
@@ -931,7 +931,8 @@ class EcatMaster(EcatObject):
                 if (slave.name != term.name) or (slave.man != term.vendor_id) or (slave.id != term.product_code):
                     raise EcatLayoutError(f"unexpected layout at position {n} {slave.name}")
                 
-                slave.config_func = self.configFunc                
+                slave.config_func = self.configFunc         # PREOP -> OP
+                # slave.setup_func = self.configFunc        # PREOP -> SAVEOP
                 slave.is_lost = False
 
             EcatLogger.debug("done")
