@@ -20,16 +20,18 @@ class Ed1fPidController(object):
     MODE_DEFAULT = 'p'
     MODES = ['p','d']
 
+    INCS_MAX = 838_633_324
+
     _scaler = {
         'input': {
             'p': { "low": 0, "high": 700 },                 # bar   (pressure)
             'd': { "low": 0, "high": 4_294_967_295_000 }    # cycle (distance)         
         },
-        'output': { "low": 0, "high": 838_633_324 }         # inc/s (velocity)
+        'output': { "low": 0, "high": INCS_MAX }         # inc/s (velocity)
     }
 
     _limit = {                                              # inc/s (velocity)
-        'output': { "low": -838_633_324 * 5/9, "high": 838_633_324 * 5/9 }  
+        'output': { "low": -INCS_MAX * 5/9, "high": INCS_MAX * 5/9 }  
     }
 
     _lock: Lock = Lock()
@@ -150,13 +152,15 @@ class Ed1fPidController(object):
     def compute(self):
 
         def scale(value):
-            return (value - self._scaler['input'][self.Mode]['low']) / (self._scaler['input'][self.Mode]['high'] - self._scaler['input'][self.Mode]['low'])
+            low = self._scaler['input'][self.Mode]['low']
+            high = self._scaler['input'][self.Mode]['high']
+            return (value - low) / (high - low)
         
         def unscale(value):
-            return self._scaler['output']['low'] + (self._scaler['output']['high'] - self._scaler['output']['low']) * value
-
-        def limit(value): 
-            return max(self._limit['output']['low'], min(self._limit['output']['high'], value))
+            low = self._scaler['output']['low']
+            high = self._scaler['output']['high']
+            rc = low + (high - low) * value
+            return max(low, min(high, rc))
         
         enabled = False
         zero = False
@@ -174,10 +178,10 @@ class Ed1fPidController(object):
 
                     mode = self.Mode
 
-                    sp = scale(self._setpoint[mode])
-                    pv = scale(max(0, self._processvalue[mode]))
+                    sp = self._setpoint[mode]
+                    pv = max(0, self._processvalue[mode])
 
-                    err = (pv - sp) * self._factor[mode]
+                    err = scale(pv - sp) * self._factor[mode]
 
                     params = self._params[mode].copy()
 
@@ -199,7 +203,6 @@ class Ed1fPidController(object):
                     dv = kp + ki + kd
 
                     dv = unscale(dv)
-                    dv = limit(dv)
 
                     if self._callback is not None:
                         if self._demand[self.Mode] != dv:

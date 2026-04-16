@@ -40,7 +40,7 @@ from _CouplerController import BeckhoffCouplerController
 
 from _IOLinkController import ifmIOLinkController
 
-from _BeckhoffMotionController import AM8111MotionController
+from _BeckhoffMotionController import AM81111MotionController
 from _BeckhoffMemoryController import NOVRAMMemoryController
 
 """

@@ -1,5 +1,4 @@
-from _BeckhoffMotionController import AM8111ProfilePosition
-from _EcatMaster import EcatMaster, EcatLogger, AM8111MotionController, BeckhoffCouplerController, KellerModbusController
+from _EcatMaster import EcatMaster, EcatLogger, AM81111MotionController, BeckhoffCouplerController, KellerModbusController
 from _EcatSeverity import SEVERITY_VERBOSE, SEVERITY_CRITICAL, SEVERITY_REASON_SYSTEM, \
     SEVERITY_REASON_PRESSURE, SEVERITY_REASON_TEMPERATURE, SEVERITY_REASON_TIME, SEVERITY_REASON_DISTANCE, SeverityLogger
 from _EcatStates import EcatStates
@@ -204,7 +203,7 @@ class EcatMasterDEV(EcatMaster):
 
             if self.isSlot("drive", (1, pos)):
 
-                self._beckhoffMotionController[pos] = AM8111MotionController(pos, slave, self.ProcessLock)
+                self._beckhoffMotionController[pos] = AM81111MotionController(pos, slave, self.ProcessLock)
 
                 self._beckhoffMotionController[pos].initEx(source=[
                     { "key": "p", "name": "EL6021.3", "addr": 0x0B, "low": 0, "high": 700 },
