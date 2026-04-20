@@ -1,5 +1,4 @@
 
-
 import ctypes, time, struct
 from types import SimpleNamespace
 
@@ -33,7 +32,7 @@ class AM81111PidController(object):
             'p': { "low": 0, "high": 700 },             # bar   (pressure)         
             'd': { "low": 0, "high": 1_306_460_160 }    # cycle (distance)         
         },
-        'output': { "low": 0, "high": INCS_MAX }      # inc/s (velocity)
+        'output': { "low": 0, "high": INCS_MAX }        # inc/s (velocity)
     }
 
     _limit = {                                          # inc/s (velocity)
@@ -175,8 +174,12 @@ class AM81111PidController(object):
         def unscale(value):
             low = self._scaler['output']['low']
             high = self._scaler['output']['high']
-            rc = low + (high - low) * value
-            return max(low, min(high, rc))
+            return low + (high - low) * value
+        
+        def limit(value):
+            low = self._limit['output']['low']
+            high = self._limit['output']['high']
+            return max(low, min(high, value))
         
         def adapt(mode, dt, dv, params):
 
@@ -262,6 +265,7 @@ class AM81111PidController(object):
                     #EcatLogger.debug(f"{err:0.8f} {self._processvalue[mode]} {self._setpoint[mode]}")
 
                     dv = unscale(dv)
+                    dv = limit(dv)
                 
                     if self._callback is not None:
                         if self._demand[mode] != dv:

@@ -1,21 +1,11 @@
 ﻿
-$user = "norman"
-$location = "C:\Users\$user\.node-red"
+$dev = "C:\Develop\py\fluidxlab\dev\bus\util\"
+$item = 'drive.broker.py'
 
-$cmd = "node.exe" 
-$a = "C:\Users\$user\AppData\Roaming\npm\node_modules\node-red\red.js"
+$cmd = "Scripts\python.exe" 
+$venv = "C:\Environment\venv-hot\"
 
-Set-Location $location
-$location = Get-Location 
+$title = 'broker'
 
-$item = 'develop'
-$title = "develop"
-
-$folder = "$location\$item"
-$f = "$folder\flows.json"
-$arg = "$a --userDir $folder --settings $folder\settings.js --title $title $f"
-
-Write-Host "--- $item startup $folder"
-
-$query = "$cmd $arg"
+$query = "$venv$cmd $dev$item"
 Start-Process wt -ArgumentList "-w hot -p hot-nred --title $title $query"
