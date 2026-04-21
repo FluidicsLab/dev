@@ -325,12 +325,24 @@ class AM81111ProfileMode:
 
 class AM81111ProfilePosition:
 
+    """
+    precision:  360°/2^bits
+    cycles:     2^(32-bits)
+    """
+    @staticmethod
+    def precision(bits, range=32):
+        return 360 / (2**bits - 1) if bits > 0 else 360
+
+    @staticmethod
+    def cycles(bits, range=32):
+        return 2**(range - bits - 1)  
+
     @staticmethod
     def split(value, bits, range=32):            
         value = bin(value)[2:].zfill(range)
         return [
-            int(value[:bits].zfill(range),2), 
-            int(value[bits:].zfill(range),2)
+            int(value[:range-bits].zfill(range),2), 
+            int(value[range-bits:].zfill(range),2)
             ]
     
     @staticmethod
@@ -632,7 +644,7 @@ class BeckhoffMotionController(object):
 class AM81111:
 
     encoderUnit = SimpleNamespace(**{ 
-        'bits': [16, 16] # multiturn, singleturn
+        'bits': [26, 6] # multiturn, singleturn
     })
 
     driveUnit = SimpleNamespace(**{ 
@@ -653,6 +665,16 @@ class AM81111:
             'high': 131.1   # mm top
         }
     })
+    
+    """
+    precision:  360°/2^bits
+    cycles:     2^(32-bits)
+    """    
+    def precision(self):
+        return 360 / (2**self.encoderUnit.bits[1] - 1) if self.encoderUnit.bits[1] > 0 else 360
+    
+    def cycles(self):
+        return 2**(self.encoderUnit.bits[0] - 1)
 
     def gearRatio(self):
         return self.driveUnit.timingBeltTransmissionGearRatio * self.driveUnit.gearBoxGearRatio
@@ -679,15 +701,15 @@ class AM81111:
         return value * self.cylinderArea() * 60 # mm³/s ~ µl/s
     
     def turn2ml(self, value):
-        bitRange = 2 ** self.encoderUnit.bits[1] -1        
+        bitRange = 2** self.encoderUnit.bits[1] -1        
         mtb = value[0] * self.pitchVolume() / self.gearRatio()
-        stb = value[1] / bitRange * self.pitchVolume() / self.gearRatio()        
+        stb = value[1] / bitRange * self.pitchVolume() / self.gearRatio() if bitRange > 0 else 0
         return (mtb + stb) / 1000
 
     def ml2turn(self, value):
-        bitRange = 2 ** self.encoderUnit.bits[1] -1
+        bitRange = 2** self.encoderUnit.bits[1] -1
         mtb = round(np.trunc(value / self.pitchVolume() * self.gearRatio() * 1000), 0)
-        stb = round(bitRange * (value - self.turn2ml([mtb, 0])) / self.pitchVolume() * self.gearRatio() * 1000, 0)
+        stb = round(bitRange * (value - self.turn2ml([mtb, 0])) / self.pitchVolume() * self.gearRatio() * 1000, 0) if bitRange > 0 else 0
         return [mtb, stb]
 
 
@@ -699,11 +721,13 @@ class AM81111MotionController(BeckhoffMotionController):
     SHIFT_TIME = 250_000        # ns
     CYCLE_TIME = 10_000_000     # ns
 
-    ENCODER_TURNBITS = [16, 16]             # multiturn, singleturn; default 12,20
-    POSITION_OFFSET = [0, 0]                # [57_548, 0]  # 0x17 uint32
+    ENCODER_TURNBITS = [26, 6]  # multiturn, singleturn; default 12, 20
+    POSITION_OFFSET = [0, 0]    # [57_548, 0]  # 0x17 uint32
 
     POSITION_OFFSET_DISABLED = 0x00
     POSITION_OFFSET_DRIVE_MEMORY = 0x02
+
+    POSITION_OFFSET_ENABLED = POSITION_OFFSET_DISABLED
         
     class RxMapEx:
         register = 0x1C12
@@ -1226,7 +1250,11 @@ class AM81111MotionController(BeckhoffMotionController):
     def init(self):
         self._initialized = False
         try:
+            
             self.Mode = AM81111ProfileMode.MODE_NONE
+            self.PositionOffset = AM81111MotionController.POSITION_OFFSET
+            self.PositionOffsetEnabled = AM81111MotionController.POSITION_OFFSET_ENABLED
+
             self._initialized = True
         except pysoem.SdoError as se:
             EcatLogger.error(f"SdoError {se}")  

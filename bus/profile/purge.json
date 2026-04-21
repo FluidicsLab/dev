@@ -1,6 +1,6 @@
 {	
 	"ctl": {
-		"id": "003",
+		"id": "001",
 		"item": [-1, -1],
 		"step": [-1, -1],
 		"len": [0, 0],
@@ -9,9 +9,9 @@
 		"continuous": -1,
 		"key": "purge",
 		"title": "purge",
-		"version": "2025.12(08)",
+		"version": "2026.04(20)",
 		"author": "fluidXlab.com",
-		"index": 2,
+		"index": 1,
 		"active": true,
 		"param": { 
 
@@ -20,14 +20,11 @@
 				"title": "stroke(s) to purge"
 			},
 
-			"exaggeration": {
-				"setpoint": 5,
-				"title": "exaggeration to pressurize",
-				"unit": "%"
-			},
-
 			"mode": "purge"
-		}		
+		},
+
+		"channel": [ "6021.3.11", "6021.3.12" ],
+		"target": [ null, "7201.1" ]
 	},
 	"items": {
 		"0": {
