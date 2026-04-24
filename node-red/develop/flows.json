@@ -883,7 +883,7 @@
         "type": "debug",
         "z": "b5a6b1728e41b187",
         "name": "debug.local",
-        "active": true,
+        "active": false,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
@@ -891,8 +891,8 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 745,
-        "y": 970,
+        "x": 475,
+        "y": 100,
         "wires": [],
         "l": false
     },
@@ -2260,7 +2260,7 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "fxl",
-        "func": "\nlet fxl = {\n\n    encoderUnit: {\n        bits: [26, 6]\n    },\n\n    laserUnit: {\n        mba: 5,         // cm Messbereichsanfang\n        mb: 10,         // cm Messbereich\n        mbe: 15,        // cm Messbereichsende\n        ampRange: 16\n    },\n\n    driveUnit: {\n        mode: 'AM81111',                                            // AM81111, ED1F\n        gearBoxGearRatio: 1000.0,\n        spindlePitch: 5.0,\n        timingBeltTransmissionGearRatio: 2.0,\n        motorIncrementPositions: 262144,                            // AM81111: 262144; ED1F: 8388608\n        cylinderDiameter: 15.0,\n        cylinderVolume: 10.0\n    },\n\n    position: {\n\n        limit: {\n            max: 13.108,     // cm top\n            min: 8.015,      // cm bottom\n            dev: 0.050\n        },\n\n        unit: \"cm\",\n        digits: 3,\n\n        valid: function (value, direction) {\n            if (direction == -1 && value < this.limit.min - this.limit.dev)\n                return false;\n            if (direction == 1 && value > this.limit.max + this.limit.dev)\n                return false;\n            return true;\n        }\n    },\n\n    volume: {\n        limit: {\n            min: 0.0,   // top (~0ml)\n            max: 9.0    // bottom (~0ml+9ml) \n        },\n        unit: \"ml\",\n        digits: 6,\n        valid: function (value) {\n            return value >= this.limit.min && value <= this.limit.max;\n        }\n    },\n\n    speed: {\n        unit: \"µl/min\",\n        digits: 3\n    },\n\n    cylinderArea: function () {\n        return this.driveUnit.cylinderDiameter ** 2 * Math.PI / 4.\n    },\n\n    pitchVolume: function () {\n        return this.driveUnit.spindlePitch * this.cylinderArea();\n    },\n\n    gearRatio: function () {\n        return this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio;\n    },\n   \n    amp2cm: function (value) {\n        return this.laserUnit.mba + this.laserUnit.mb * value / this.laserUnit.ampRange;\n    },\n\n    amp2ml: function (value) {\n        return this.volume.limit.min + (this.position.limit.max - this.amp2cm(value)) * this.cylinderArea() / 100.0;\n    },\n\n    incs2mulmin: function (value) {\n        // mm/r\n        let transmission = this.driveUnit.spindlePitch / (this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio);\n        // mm³/r ~ µl/r\n        let injectionRateRotation = transmission * this.cylinderArea();\n        // µl/inc\n        let injectionRateIncrement = injectionRateRotation / this.driveUnit.motorIncrementPositions;\n        return parseFloat(Number(value * injectionRateIncrement * 60.0).toFixed(6));\n    },\n\n    incs2nalmin: function (value) {\n        return this.incs2mulmin(value) * 1000;\n    },\n\n    mulmin2incs: function (value) {\n        // mm/r\n        let transmission = this.driveUnit.spindlePitch / (this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio);\n        // µl/r\n        let injectionRateRotation = transmission * this.cylinderArea();\n        // µl/inc\n        let injectionRateIncrement = injectionRateRotation / this.driveUnit.motorIncrementPositions;\n        // µl/min\n        return value / (injectionRateIncrement * 60);\n    },\n\n    nalmin2incs: function (value) {\n        return this.mulmin2incs(value / 1000.0);\n    },\n\n    turn2ml: function (value) {\n        let bitRange = (2 ** this.encoderUnit.bits[1]) - 1;\n        let mtb = value[0] * this.pitchVolume() / this.gearRatio();\n        let stb = bitRange > 0 ? value[1] / bitRange * this.pitchVolume() / this.gearRatio() : 0;\n        return (mtb + stb) / 1000;\n    },\n\n    ml2turn: function (value) {     \n        let bitRange = (2 ** this.encoderUnit.bits[1]) - 1;        \n        let mtb = Math.trunc(value / this.pitchVolume() * this.gearRatio() * 1000);\n        let stb = bitRange * (value - this.turn2ml([mtb, 0])) / this.pitchVolume() * this.gearRatio() * 1000;\n        return [\n            parseInt(Number(mtb).toFixed(0)), \n            parseInt(Number(stb).toFixed(0))\n            ];\n    },\n    \n    severity2string: function (value, sep=\" \") {\n\n        let severity = value.slice(0, 4);\n        let reason = value.slice(4, 8);\n\n        let ignore = parseInt(reason, 2) & 1;\n\n        severity = parseInt(severity, 2);\n        reason = parseInt(reason, 2) & ~1;\n\n        let payload = [];\n\n        let severities = ['INFORMATION', 'WARNING', 'ERROR', 'CRITICAL'];\n        ['1000', '0100', '0010', '0001'].forEach(function (s, i) {\n            let a = parseInt(s, 2);\n            let b = severity;\n            if (a == b) {\n                payload.push(severities[i]);\n            }\n        });\n\n        let reasons = ['TEMPERATURE', 'LOCK', 'PRESSURE', 'TIME', 'DISTANCE', 'SYSTEM'];\n\n        ['1100', '1010', '1000', '0110', '0100', '0010'].forEach(function (r, i) {\n            let a = parseInt(r, 2)\n            let b = reason;\n            if (a == b) {\n                payload.push(reasons[i]);\n            }\n        });\n\n        if (ignore) {\n            payload.push(\"IGNORE\");\n        }\n\n        if (payload.length == 0) {\n            payload.push(\"NONE\");\n        }\n\n        return payload.join(sep).toLowerCase();\n\n    },\n\n    profile: {\n\n        bits: [26, 6],\n\n        value: function(value, range=32) {\n            return value < 0 ? 2 ** range - 1 + value : value;\n        },\n\n        merge: function(value, bits, range=32) {\n            return this.value(parseInt(\n                value[0].toString(2).padStart(range - bits, '0') + \n                value[1].toString(2).padStart(bits, '0'), 2)\n            );\n        },\n\n        split: function(value, bits, range = 32) {\n            value = value.toString(2).padStart(range, '0');\n            return [\n                parseInt(value.slice(0, range - bits), 2), \n                parseInt(value.slice(range - bits, range), 2)\n            ];\n        }\n\n    }\n\n}\n\nflow.set(\"fxl\", fxl);",
+        "func": "\nlet fxl = {\n\n    encoderUnit: {\n        bits: [26, 6]   // multiturn, singleturn\n    },\n\n    laserUnit: {\n        mba: 5,         // cm Messbereichsanfang\n        mb: 10,         // cm Messbereich\n        mbe: 15,        // cm Messbereichsende\n        ampRange: 16\n    },\n\n    driveUnit: {\n        mode: 'AM81111',                                            // AM81111, ED1F\n        gearBoxGearRatio: 1000.0,\n        spindlePitch: 5.0,\n        timingBeltTransmissionGearRatio: 2.0,\n        motorIncrementPositions: 262144,                            // AM81111: 262144; ED1F: 8388608\n        cylinderDiameter: 15.0,\n        cylinderVolume: 10.0\n    },\n\n    position: {\n\n        limit: {\n            max: 13.108,     // cm top\n            min: 8.015,      // cm bottom\n            dev: 0.050\n        },\n\n        unit: \"cm\",\n        digits: 3,\n\n        valid: function (value, direction) {\n            if (direction == -1 && value < this.limit.min - this.limit.dev)\n                return false;\n            if (direction == 1 && value > this.limit.max + this.limit.dev)\n                return false;\n            return true;\n        }\n    },\n\n    volume: {\n        limit: {\n            min: 0.0,   // top (~0ml)\n            max: 9.0    // bottom (~0ml+9ml) \n        },\n        unit: \"ml\",\n        digits: 6,\n        valid: function (value) {\n            return value >= this.limit.min && value <= this.limit.max;\n        }\n    },\n\n    speed: {\n        unit: \"µl/min\",\n        digits: 3\n    },\n\n    cylinderArea: function () {\n        return this.driveUnit.cylinderDiameter ** 2 * Math.PI / 4.\n    },\n\n    pitchVolume: function () {\n        return this.driveUnit.spindlePitch * this.cylinderArea();\n    },\n\n    gearRatio: function () {\n        return this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio;\n    },\n   \n    amp2cm: function (value) {\n        return this.laserUnit.mba + this.laserUnit.mb * value / this.laserUnit.ampRange;\n    },\n\n    amp2ml: function (value) {\n        return this.volume.limit.min + (this.position.limit.max - this.amp2cm(value)) * this.cylinderArea() / 100.0;\n    },\n\n    incs2mulmin: function (value) {\n        // mm/r\n        let transmission = this.driveUnit.spindlePitch / (this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio);\n        // mm³/r ~ µl/r\n        let injectionRateRotation = transmission * this.cylinderArea();\n        // µl/inc\n        let injectionRateIncrement = injectionRateRotation / this.driveUnit.motorIncrementPositions;\n        return parseFloat(Number(value * injectionRateIncrement * 60.0).toFixed(6));\n    },\n\n    incs2nalmin: function (value) {\n        return this.incs2mulmin(value) * 1000;\n    },\n\n    mulmin2incs: function (value) {\n        // mm/r\n        let transmission = this.driveUnit.spindlePitch / (this.driveUnit.timingBeltTransmissionGearRatio * this.driveUnit.gearBoxGearRatio);\n        // µl/r\n        let injectionRateRotation = transmission * this.cylinderArea();\n        // µl/inc\n        let injectionRateIncrement = injectionRateRotation / this.driveUnit.motorIncrementPositions;\n        // µl/min\n        return value / (injectionRateIncrement * 60);\n    },\n\n    nalmin2incs: function (value) {\n        return this.mulmin2incs(value / 1000.0);\n    },\n\n    turn2ml: function (value) {\n        let bitRange = (2 ** this.encoderUnit.bits[1]) - 1;\n        let mtb = value[0] * this.pitchVolume() / this.gearRatio();\n        let stb = bitRange > 0 ? value[1] / bitRange * this.pitchVolume() / this.gearRatio() : 0;\n        return (mtb + stb) / 1000;\n    },\n\n    ml2turn: function (value) {     \n        let bitRange = (2 ** this.encoderUnit.bits[1]) - 1;        \n        let mtb = Math.trunc(value / this.pitchVolume() * this.gearRatio() * 1000);\n        let stb = bitRange * (value - this.turn2ml([mtb, 0])) / this.pitchVolume() * this.gearRatio() * 1000;\n        return [\n            parseInt(Number(mtb).toFixed(0)), \n            parseInt(Number(stb).toFixed(0))\n            ];\n    },\n    \n    severity2string: function (value, sep=\" \") {\n\n        let severity = value.slice(0, 4);\n        let reason = value.slice(4, 8);\n\n        let ignore = parseInt(reason, 2) & 1;\n\n        severity = parseInt(severity, 2);\n        reason = parseInt(reason, 2) & ~1;\n\n        let payload = [];\n\n        let severities = ['INFORMATION', 'WARNING', 'ERROR', 'CRITICAL'];\n        ['1000', '0100', '0010', '0001'].forEach(function (s, i) {\n            let a = parseInt(s, 2);\n            let b = severity;\n            if (a == b) {\n                payload.push(severities[i]);\n            }\n        });\n\n        let reasons = ['TEMPERATURE', 'LOCK', 'PRESSURE', 'TIME', 'DISTANCE', 'SYSTEM'];\n\n        ['1100', '1010', '1000', '0110', '0100', '0010'].forEach(function (r, i) {\n            let a = parseInt(r, 2)\n            let b = reason;\n            if (a == b) {\n                payload.push(reasons[i]);\n            }\n        });\n\n        if (ignore) {\n            payload.push(\"IGNORE\");\n        }\n\n        if (payload.length == 0) {\n            payload.push(\"NONE\");\n        }\n\n        return payload.join(sep).toLowerCase();\n\n    },\n\n    profile: {\n\n        bits: [26, 6],  // multiturn, singleturn\n\n        value: function(value, range=32) {\n            return value < 0 ? 2 ** range - 1 + value : value;\n        },\n\n        merge: function(value, bits, range=32) {\n            return this.value(parseInt(\n                value[0].toString(2).padStart(range - bits, '0') + \n                value[1].toString(2).padStart(bits, '0'), 2)\n            );\n        },\n\n        split: function(value, bits, range = 32) {\n            value = value.toString(2).padStart(range, '0');\n            return [\n                parseInt(value.slice(0, range - bits), 2), \n                parseInt(value.slice(range - bits, range), 2)\n            ];\n        }\n\n    }\n\n}\n\nflow.set(\"fxl\", fxl);",
         "outputs": 0,
         "noerr": 0,
         "initialize": "",
@@ -2919,14 +2919,14 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "control.position",
-        "func": "\nflow.set(\"control.\" + msg.topic, msg.payload);\n\nlet mode = 'd';\n\nlet ctrl = flow.get(\"control.\"+mode);\nctrl['mode'] = mode;\nctrl['params'] = [10.0, 0.001, 0.0001];\n\nnode.status({fill:\"red\",shape:\"ring\",text:\" \" + ctrl['params']});\n\nlet keys = Object.keys(ctrl);\nif (keys.includes('enabled') && keys.includes('setpoint')) {\n    msg.payload = '{ \"control\": ' + JSON.stringify(ctrl) + (!ctrl['enabled'] ? ', \"velocity\": 0' : '') + ' }';\n    return msg;\n}\n\n\n\nreturn null;",
+        "func": "\nflow.set(\"control.\" + msg.topic, msg.payload);\n\nlet mode = 'd';\n\nlet ctrl = flow.get(\"control.\"+mode);\nctrl['mode'] = mode;\nctrl['params'] = [10000.0, 0.01, 0.001];\n\nnode.status({fill:\"red\",shape:\"ring\",text:\" \" + ctrl['params']});\n\nlet keys = Object.keys(ctrl);\nif (keys.includes('enabled') && keys.includes('setpoint')) {\n    msg.payload = '{ \"control\": ' + JSON.stringify(ctrl) + (!ctrl['enabled'] ? ', \"velocity\": 0' : '') + ' }';\n    return msg;\n}\n\n\n\nreturn null;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 525,
-        "y": 950,
+        "x": 625,
+        "y": 940,
         "wires": [
             [
                 "85bd718958dd9639"
@@ -2973,7 +2973,7 @@
         "once": true,
         "onceDelay": 0.1,
         "topic": "",
-        "x": 375,
+        "x": 365,
         "y": 970,
         "wires": [
             [
@@ -3142,8 +3142,8 @@
         "once": true,
         "onceDelay": 0.1,
         "topic": "",
-        "x": 375,
-        "y": 1180,
+        "x": 345,
+        "y": 1160,
         "wires": [
             [
                 "197746479582e293"
@@ -3203,13 +3203,13 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "control.position",
-        "func": "\nlet out = Array(node.outputCount).fill(null);\n\nlet fxl = flow.get(\"fxl\");\nlet payload = fxl.profile.split(msg.payload, 16);   \n\npayload.forEach(function(p, i) {\n    out[i] = {\n        topic: 'turn.' + i,\n        payload: p,\n        enabled: msg.enabled\n    }\n});\n\nreturn out;",
+        "func": "\nlet out = Array(node.outputCount).fill(null);\n\nlet fxl = flow.get(\"fxl\");\nlet payload = fxl.profile.split(msg.payload, fxl.profile.bits[1]);   \n\npayload.forEach(function(p, i) {\n    out[i] = {\n        topic: 'turn.' + i,\n        payload: p,\n        enabled: msg.enabled\n    }\n});\n\nreturn out;",
         "outputs": 2,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 425,
+        "x": 365,
         "y": 1040,
         "wires": [
             [
@@ -4384,7 +4384,7 @@
         "type": "function",
         "z": "b5a6b1728e41b187",
         "name": "offset",
-        "func": "\nlet position = flow.get(\"7201.1.value.position\");\n\nconst ENABLED_OFF = 0;\nconst ENABLED_MEM = 2;\n\nlet enabled = position.offset.enabled == ENABLED_MEM ? ENABLED_OFF : ENABLED_MEM;\nlet value = ENABLED_OFF == enabled ? [0, 0] : position.value;\n\n[\n    {\n        topic: \"/hot/ecat/value\",\n        payload: JSON.parse('{ \"source\": \"el7201Worker\", \"target\": 1, \"value\": { \"offset\": { \"enabled\": ' + enabled + ' } } }'),\n        delay: 0\n    }/*,\n    {\n        topic: \"/hot/ecat/value\",\n        payload: JSON.parse('{ \"source\": \"el7201Worker\", \"target\": 1, \"value\": { \"offset\": { \"value\": ' + JSON.stringify(value) + ', \"enabled\": ' + enabled + ' } } }'),\n        delay: 0\n    }*/,\n    {\n        topic: \"/hot/ecat/value\",\n        payload: JSON.parse('{ \"source\": \"el7201Worker\", \"target\": 1, \"value\": { \"command\": \"00000110\" } }'),\n        delay: 500\n    },\n    {\n        topic: \"/hot/ecat/value\",\n        payload: JSON.parse('{ \"source\": \"el7201Worker\", \"target\": 1, \"value\": { \"command\": \"10000000\" } }'),\n        delay: 1000\n    }\n].forEach(function(msg) {\n    node.send(msg);\n});\n\nnode.done();\n  ",
+        "func": "\nlet position = flow.get(\"7201.1.value.position\");\n\nconst ENABLED_OFF = 0;\nconst ENABLED_MEM = 2;\n\nlet enabled = position.offset.enabled == ENABLED_MEM ? ENABLED_OFF : ENABLED_MEM;\nlet value = ENABLED_OFF == enabled ? [0, 0] : position.value;\n\n[\n   \n    {\n        topic: \"/hot/ecat/value\",\n        payload: JSON.parse('{ \"source\": \"el7201Worker\", \"target\": 1, \"value\": { \"offset\": { \"value\": ' + JSON.stringify(value) + ', \"enabled\": ' + enabled + ' } } }'),\n        delay: 0\n    },\n\n    {\n        topic: \"/hot/ecat/value\",\n        payload: JSON.parse('{ \"source\": \"el7201Worker\", \"target\": 1, \"value\": { \"command\": \"00000110\" } }'),\n        delay: 500\n    },\n\n    {\n        topic: \"/hot/ecat/value\",\n        payload: JSON.parse('{ \"source\": \"el7201Worker\", \"target\": 1, \"value\": { \"command\": \"10000000\" } }'),\n        delay: 1000\n    }\n    \n].forEach(function(msg) {\n    node.send(msg);\n});\n\nnode.done();\n  ",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
