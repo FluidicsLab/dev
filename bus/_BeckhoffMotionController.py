@@ -130,7 +130,7 @@ class AM81111PidController(object):
             if 'enabled' in config.keys() and config['enabled'] is not None:
                 self._enabled = config['enabled']
 
-            if 'reset' in config.keys():
+            if 'reset' in config.keys():                
                 self.reset()
                 
             if 'updatable' in config.keys() and config['updatable'] is not None:
@@ -717,9 +717,12 @@ class AM81111MotionController(BeckhoffMotionController):
 
     TIMEOUT_SLAVE_STATE = 5.0
     TIMEOUT_STATE_CHECK = 50_000
-
-    SHIFT_TIME = 250_000        # ns
-    CYCLE_TIME = 10_000_000     # ns
+    
+    SYNC_MODE = 0x0002
+    # ns   
+    SYNC_SHIFT_TIME = 0
+    SYNC0_CYCLE_TIME = 10_000_000
+    SYNC1_CYCLE_TIME = 0
 
     ENCODER_TURNBITS = [26, 6]  # multiturn, singleturn; default 12, 20
     POSITION_OFFSET = [63, 29]  # 0x17 uint32
@@ -1137,7 +1140,7 @@ class AM81111MotionController(BeckhoffMotionController):
         except Exception as ex:
             EcatLogger.error(f"Exception {ex}")  
 
-    def initConfig(self): 
+    def initConfig(self, dc_time=None): 
 
         """                
         :param self: 
@@ -1209,14 +1212,23 @@ class AM81111MotionController(BeckhoffMotionController):
             # enable input cycle counter
             self.Device.sdo_write(0x8010, 0x02, bytes(ctypes.c_bool(1)))
 
-            shift_time = AM81111MotionController.SHIFT_TIME
-            cycle_time = AM81111MotionController.CYCLE_TIME
-            EcatLogger.debug(f"cycle time {cycle_time}; shift time {shift_time}")
+            shift_time = AM81111MotionController.SYNC_SHIFT_TIME
+            cycle_time_0 = AM81111MotionController.SYNC0_CYCLE_TIME
+            cycle_time_1 = AM81111MotionController.SYNC1_CYCLE_TIME
+
+
+            if dc_time is not None and dc_time > 0:
+                cycle_time_0 = dc_time
+
+            EcatLogger.debug(f"setup cycle time 1 | 2 {cycle_time_0} | {cycle_time_1}; shift time {shift_time}")
             
             self.Device.dc_sync(act=True, 
-                                sync0_cycle_time=cycle_time, sync0_shift_time=shift_time, 
-                                sync1_cycle_time=cycle_time
+                                sync0_cycle_time=cycle_time_0, sync0_shift_time=shift_time, 
+                                sync1_cycle_time=cycle_time_1
                                 )
+            
+            self.debugCycleTime()
+            self.debugWatchDog()
     
             # info data
             self.Device.sdo_write(0x8010, 0x39, bytes(ctypes.c_uint16(0x05)), ca)   # errors
@@ -1275,6 +1287,63 @@ class AM81111MotionController(BeckhoffMotionController):
     _detected = False
     _watchTime = 0
 
+    def debugCycleTime(self):
+        
+        v = ctypes.c_uint16.from_buffer_copy(self.Device.sdo_read(0x1c32, 0x01)).value
+        EcatLogger.info(f"{v} current sync. mode")
+
+        v = ctypes.c_uint32.from_buffer_copy(self.Device.sdo_read(0x1c32, 0x02)).value
+        EcatLogger.info(f"{v} cycle time [ns] SYNC0/SYNC1")
+
+        v = ctypes.c_uint32.from_buffer_copy(self.Device.sdo_read(0x1c32, 0x03)).value
+        EcatLogger.info(f"{v} time between SYNC0 event and output of the outputs")
+
+
+    def debugWatchDog(self):     
+
+        for (a, s) in [(0x1c32, "input"), (0x1c33, "output")]:
+            
+            EcatLogger.warning(f"0x{hex(a)} sm {s}")
+
+            # 16 bit
+            for (b, s) in [
+                (0x01, "sync mode"),
+                (0x04, "modes"),
+                (0x0b, "num. of missed SM events in OP"),
+                (0x0c, "num. of occasions the cycle time was exceeded in OP; cycle was not compl. in time or next cycle began to early"),
+                (0x0d, "num. of occasions that the interval between SYNC0 and SYNC1 event was to shoort")
+            ]:
+                EcatLogger.debug(f"{ctypes.c_uint16.from_buffer_copy(self.Device.sdo_read(a, b)).value} {s}")
+
+            # 32 bit
+            for (b, s) in [
+                (0x02, "cycle time"),
+                (0x03, "shift time"),
+                (0x05, "min. cycle time"),
+                (0x06, "calc and copy time"),
+                (0x07, "min. delay time"),
+                (0x09, "max. delay time"),
+            ]:
+                EcatLogger.debug(f"{ctypes.c_uint32.from_buffer_copy(self.Device.sdo_read(a, b)).value} {s}")
+
+            # bool
+            for (b, s) in [
+                (0x20, "the sync. was not correct in the last cycle; outputs where output to late")
+            ]:
+                EcatLogger.debug(f"{ctypes.c_bool.from_buffer_copy(self.Device.sdo_read(a, b)).value} {s}")
+
+    def debugDiagnostics(self):
+        
+        a = 0x10f3   
+
+        count = ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(a, 0x01)).value
+        EcatLogger.info(f"{count} information and diagnostics")
+             
+        for n in range(count):
+            pass
+            #s = bytes(self.Device.sdo_read(a, 0x06 + n, 'utf-8'))
+            #EcatLogger.debug(f"{n:5d} {s}")
+
     def input(self):
 
         # pdo read
@@ -1301,14 +1370,20 @@ class AM81111MotionController(BeckhoffMotionController):
             error_text = AM81111Profile.__info__(error, 'e')
 
             if "WATCHDOG" in error_text.split(","):
+                
                 if not self._detected:
+
                     watchdog = 1
                     watchdog_time = (time.time_ns() - self._watchTime) / 1e9
-                    EcatLogger.warning(f"watchdog {error_text} {status_text} {watchdog_time:.3f}")                    
+                    EcatLogger.warning(f"watchdog {error_text} {status_text} {watchdog_time:.9f}") 
+                    
+                    self.debugWatchDog() 
+                    self.debugDiagnostics()   
+
                 self._detected = True
             else:
                 self._detected = False
-            
+                            
             data  = {
                 'mode': {
                     'raw': buff.mode,
@@ -1444,13 +1519,15 @@ class AM81111MotionController(BeckhoffMotionController):
 
         try:            
 
-            data = self.input()
+            data = self.input()           
 
             if self._data is not None:
 
-                if 'command' in self._data.keys() and self._data['command'] is not None:                    
-                    self.ControlWord = self._data['command']
-                    self._watchTime = time.time_ns()
+                if 'command' in self._data.keys() and self._data['command'] is not None:
+
+                    self.debugWatchDog() 
+
+                    self.ControlWord = self._data['command']                    
                     self._data['command'] = None
 
                 if 'mode' in self._data.keys() and self._data['mode'] is not None:   
@@ -1482,7 +1559,7 @@ class AM81111MotionController(BeckhoffMotionController):
                     self._data['controller'] = None
 
                 # pid controller
-                if 'control' in self._data.keys() and self._data['control'] is not None:
+                if 'control' in self._data.keys() and self._data['control'] is not None:                    
                     if self._controller is not None: 
                         enabled = self._controller.Enabled
                         self._controller.config(self._data['control'])   
@@ -1498,6 +1575,8 @@ class AM81111MotionController(BeckhoffMotionController):
         
         finally:
             self._lock.release()
+
+        self._watchTime = time.time_ns()
 
         return data
 

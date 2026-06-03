@@ -128,9 +128,10 @@ class EcatConfig:
                 platform=EcatSettings(self._name).value('master/platform','STD',str),
                 ports=list(map(int,filter(None,list(map(str,EcatSettings(self._name).value("master/ports",[],list)))))),
                 hosts=list(map(str,filter(None,list(map(str,EcatSettings(self._name).value("master/hosts",[],list)))))),
-                affinity=list(map(int,filter(None,list(map(int,EcatSettings(self._name).value("master/affinity",[],list)))))) 
+                affinity=list(map(int,filter(None,list(map(str,EcatSettings(self._name).value("master/affinity",[],list)))))) 
                                 if EcatSettings(self._name).value("master/affinity") != "" 
                                 else [],
+                realtime=EcatSettings(self._name).value('master/realtime',0,int),
                 ))
         return self._master
     Master = property(fget=_get_master)
@@ -143,6 +144,7 @@ class EcatConfig:
                 fc=EcatSettings(self._name).value('watchdog/fc',1000.0,float),
                 sm=EcatSettings(self._name).value('watchdog/sm',0.0,float),
                 pd=EcatSettings(self._name).value('watchdog/pd',0.0,float),
+                enabled=EcatSettings(self._name).value('watchdog/enabled',0,int),
                 ))
         return self._watchdog
     Watchdog = property(fget=_get_watchdog)    

@@ -185,7 +185,7 @@ class EcatMasterDEV(EcatMaster):
         if rc:
             if self.isSlot("drive", (0, pos)):  
 
-                self._beckhoffCouplerController[pos] = BeckhoffCouplerController(pos, slave, self.ProcessLock)           
+                self._beckhoffCouplerController[pos] = BeckhoffCouplerController(pos, slave, self.ProcessLock, enabled=False)           
                 self.SeverityController.register(f"EK1100.{pos}")
                 EcatLogger.debug(f"init BeckhoffCouplerController @ {pos}")
             

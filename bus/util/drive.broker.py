@@ -10,11 +10,11 @@ logging.basicConfig(
     # format='%(levelname)-8s %(asctime)s %(threadName)-15s %(message)s'
     format='%(message)s'
     )
-baumBrokerLogger = logging.getLogger(__name__)
-baumBrokerLogger.setLevel(logging.DEBUG)
-baumBrokerLogger.name = "__baumBrokerLogger__"
+brokerLogger = logging.getLogger(__name__)
+brokerLogger.setLevel(logging.DEBUG)
+brokerLogger.name = "__brokerLogger__"
 def loggingFilter(record: logging.Filter): return True
-baumBrokerLogger.addFilter(loggingFilter)
+brokerLogger.addFilter(loggingFilter)
 
 BROKER = [('localhost',10097),
           ('localhost',10098)]
@@ -36,7 +36,7 @@ class BrokerWorker(threading.Thread):
         try:
             self._loop.run_until_complete(self._broker_task)
         except Exception as ex:
-            baumBrokerLogger.debug(ex)
+            brokerLogger.debug(ex)
         finally:
             self._loop.close()
 
@@ -55,15 +55,15 @@ class BrokerWorker(threading.Thread):
 
         try:
 
-            baumBrokerLogger.debug('start serving at ' + ":".join(list(map(str,self._addresses))))
+            brokerLogger.debug('start serving at ' + ":".join(list(map(str,self._addresses))))
             await broker.serve_forever()
 
         except asyncio.CancelledError as ce:
-            baumBrokerLogger.debug(ce)
+            brokerLogger.debug(ce)
         except Exception as ex:
-            baumBrokerLogger.debug(ex)
+            brokerLogger.debug(ex)
         finally:
-            baumBrokerLogger.debug('stopped')
+            brokerLogger.debug('stopped')
 
 def main():     
 
@@ -86,7 +86,7 @@ def main():
             b.join()
 
     except Exception as ex:
-        baumBrokerLogger.debug(ex)
+        brokerLogger.debug(ex)
 
     finally:
         pass

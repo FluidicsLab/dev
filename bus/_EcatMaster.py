@@ -57,23 +57,23 @@ from _BeckhoffMemoryController import NOVRAMMemoryController
 
 """
 
-TIMEOUT_RECEIVE         = 4_000
-TIMEOUT_FPWR            = 4_000
+TIMEOUT_RECEIVE         = 10_000
+TIMEOUT_FPWR            = 10_000
 TIMEOUT_STATE_CHECK     = 50_000
 
 TIMEOUT_MASTER_STATE    = 2.0       # s
 TIMEOUT_SLAVE_STATE     = 2.0       # s
 
-DELAY_RUNNING_LOOP      = 0.10
-DELAY_ALIVE_LOOP        = 1.0
+DELAY_RUNNING_LOOP      = 0.001
+
+DELAY_ALIVE_LOOP        = 1.000
 DELAY_INPUT_LOOP        = 0.1
 DELAY_OUTPUT_LOOP       = 0.1
 
 DELAY_PROCESS_LOOP      = 0.010      # 0.01
+
 DELAY_CHECK_LOOP        = 0.125      # 0.01
-
 DELAY_TOGGLE_LOOP       = 0.005
-
 DELAY_DEBUG_LOOP        = 0.125
 
 ENABLE_TOGGLE           = False
@@ -83,6 +83,7 @@ VERBOSE = 1
 
 PYSOEM_VERSION = [int(v) for v in pysoem.__version__.split('.')]
 
+WATCHDOG_ENABLED = False
 WATCHDOG_MP = 2498
 WATCHDOG_SM = 0.0
 WATCHDOG_PD = 0.0
@@ -127,8 +128,7 @@ class EcatMaster(EcatObject):
                 power = consumption if consumption >0 else power +consumption
                 alias = row[1]
                 valid = power >0 or (power == 0 and alias == 'ED1F')
-                prio = int(row[5])
-                self._layout[i] = EcatSlaveSet(row[0], alias, int(row[2],16), int(row[3],16), consumption, power, valid, prio)
+                self._layout[i] = EcatSlaveSet(row[0], alias, int(row[2],16), int(row[3],16), consumption, power, valid, int(row[5]), int(row[6]))
         return self._layout
     Layout = property(fget=_get_layout)
 
@@ -159,7 +159,7 @@ class EcatMaster(EcatObject):
         return self._master
     Master:pysoem.Master = property(fget=_get_master)
 
-    _watchdog = { "mp": WATCHDOG_MP, "fc": WATCHDOG_FC, "sm": WATCHDOG_SM, "pd": WATCHDOG_PD }
+    _watchdog = { "mp": WATCHDOG_MP, "fc": WATCHDOG_FC, "sm": WATCHDOG_SM, "pd": WATCHDOG_PD, "enabled": WATCHDOG_ENABLED }
     def _get_watchdog(self):
         return self._watchdog
     Watchdog = property(fget=_get_watchdog)
@@ -248,7 +248,7 @@ class EcatMaster(EcatObject):
             else:          
                 
                 EcatLogger.info(f"{slave.name:10s} SM-watchdog  {slave.get_watchdog('processdata')} <-- {sm:.2f}ms")
-                EcatLogger.info(f"{slave.name:10s} PDI-watchdog {slave.get_watchdog('pdi')} <-- {pd:.2f}ms")
+                EcatLogger.info(f"{slave.name:10s} PD-watchdog {slave.get_watchdog('pdi')} <-- {pd:.2f}ms")
 
                 # process data
                 if pd is not None:
@@ -263,7 +263,9 @@ class EcatMaster(EcatObject):
             EcatLogger.error(f"set watchdog failed {sm} {pd} {ex} @ {slave.name}")
         
         finally:
-            return rc
+            pass
+
+        return rc
 
     def getWatchDog(self, slave):
         # multiplier, process data, sync manager
@@ -879,14 +881,21 @@ class EcatMaster(EcatObject):
     def severityFunc(self, source, data, current):        
         return current
 
-    def config_watchdog(self):
-        EcatLogger.debug("config watchdog")        
-        for i,slave in enumerate(self.Master.slaves):            
-            wd = self.setWatchDog(slave, 
-                                  sm=self.Watchdog["sm"]*self.Watchdog["fc"], 
-                                  pd=self.Watchdog["pd"]*self.Watchdog["fc"]
-                                  )
-            EcatLogger.debug(f"{(i):03d} {slave.name} WD {wd}")     
+    def config_watchdog(self):        
+        EcatLogger.debug(f"config watchdog {self.Watchdog['enabled']}")        
+        if self.Watchdog['enabled']:        
+            for n,slave in enumerate(self.Master.slaves):
+                term = self.Layout[n]
+                if term.watchdog != 0:
+                    wd = self.setWatchDog(slave, 
+                                        sm=self.Watchdog["sm"]*self.Watchdog["fc"], 
+                                        pd=self.Watchdog["pd"]*self.Watchdog["fc"]
+                                        )
+                    EcatLogger.debug(f"{(n):03d} {slave.name} watchdog {wd} set")
+                else:                    
+                    EcatLogger.debug(f"{(n):03d} {slave.name} wathcdog NOT set")                
+                EcatLogger.debug(f"{(n):03d} {self.getWatchDog(slave)}")
+
         EcatLogger.debug(f"done")
     
     def config_mailbox(self):
@@ -911,8 +920,8 @@ class EcatMaster(EcatObject):
         EcatLogger.debug(f"layout check by {self._template}")
         try:    
 
-            hh = ['no','name','alias','power',' ', 'prio', 'vld', 'state', 'rev']
-            EcatLogger.debug(f"{hh[0]:>3} {hh[1]:<15} {hh[2]:<11} {hh[7]:>4} {hh[3]:>6} {hh[4]:>6} {hh[5]:>6}   {hh[6]:<5} {hh[7]:<8}")
+            hh = ['no','name','alias','power',' ', 'prio', 'wd', 'vld', 'state', 'rev']
+            EcatLogger.debug(f"{hh[0]:>3} {hh[1]:<15} {hh[2]:<11} {hh[7]:>4} {hh[3]:>6} {hh[4]:>6} {hh[5]:>6} {hh[6]:>6}   {hh[6]:<5} {hh[7]:<8}")
 
             for n,slave in enumerate(self.Master.slaves):                
                 
@@ -922,11 +931,12 @@ class EcatMaster(EcatObject):
                 power = str(term.power)
                 valid = term.valid
                 prio = term.priority
+                wd = term.watchdog
                 state = EcatStates.desc(slave.state)
 
                 rev = int(hex(slave.rev)[:4],16)
                 
-                EcatLogger.debug(f"{n:03d} {slave.name:<15} {term.alias:<11} {rev:>4} {power:>6} {consumption:>6} {prio:>6}   {str(valid):<5} {state:<8}")
+                EcatLogger.debug(f"{n:03d} {slave.name:<15} {term.alias:<11} {rev:>4} {power:>6} {consumption:>6} {prio:>6} {wd:>6}   {str(valid):<5} {state:<8}")
 
                 if (slave.name != term.name) or (slave.man != term.vendor_id) or (slave.id != term.product_code):
                     raise EcatLayoutError(f"unexpected layout at position {n} {slave.name}")
@@ -1004,7 +1014,7 @@ class EcatMaster(EcatObject):
         
         :param self: 
         """
-        EcatLogger.debug("--- run")
+        EcatLogger.debug("run")
 
         if not self.layoutCheck():
             return False
@@ -1028,13 +1038,12 @@ class EcatMaster(EcatObject):
 
         # config dc
         self.config_dc()
-        EcatLogger.debug(f"master dc time {self.Master.dc_time}") 
 
         #self.writeSlaveState(pysoem.SAFEOP_STATE) 
         #self.writeMasterState(pysoem.SAFEOP_STATE)       
-                
-        self.writeSlaveState(pysoem.OP_STATE) 
+         
         self._running = self.writeMasterState(pysoem.OP_STATE)
+        self.writeSlaveState(pysoem.OP_STATE)
         
         #
         #
@@ -1543,7 +1552,7 @@ class EcatMaster(EcatObject):
                     if len(data) == 16:
                         
                         ch = 4
-                        fact = (20.-4.)/0x7fff                                
+                        fact = (20. - 4.) / 0x7fff                                
                         
                         raw = struct.unpack(f'{2*ch}h', data)
                         data = [raw[2*i+1]*fact for i in range(ch)]
@@ -1671,9 +1680,10 @@ class EcatMaster(EcatObject):
     _processEvent = Event()
     _processThread = None
 
+    """
     def _processLoop(self, enabled=True):
 
-        EcatLogger.debug("start process loop")
+        EcatLogger.debug(f"start process loop")
 
         while not self._processEvent.is_set():
 
@@ -1681,7 +1691,9 @@ class EcatMaster(EcatObject):
             try:
 
                 self.send()    
-                self._wkc = self.receive()                       
+                self._wkc = self.receive()   
+
+                EcatLogger.debug(f"{self.Master.dc_time}")                    
                         
                 if (self._wkc != self.Master.expected_wkc) and self._wkc != -1:
                     EcatLogger.critical(f'WKC {self._wkc} != {self.Master.expected_wkc} (expected)')
@@ -1694,6 +1706,58 @@ class EcatMaster(EcatObject):
             self._processEvent.wait(DELAY_PROCESS_LOOP)
 
         EcatLogger.debug("end process loop")
+    """
+
+    def _processLoop(self, enabled=True):
+
+        cycle_time_ns = DELAY_PROCESS_LOOP * 1e9
+        self.Master.send_processdata()        
+        self._wkc = self.Master.receive_processdata(timeout=TIMEOUT_RECEIVE)
+                
+        EcatLogger.info(f"start process loop (v2) with {cycle_time_ns} ns")
+
+        while not self._processEvent.is_set():
+                               
+            cycle_start_ns = self.Master.dc_time
+
+            self.ProcessLock.acquire()
+            try:
+
+                #self.send()    
+                #self._wkc = self.receive()                       
+                
+                self.Master.send_processdata()        
+                self._wkc = self.Master.receive_processdata(timeout=TIMEOUT_RECEIVE)
+                        
+                if (self._wkc != self.Master.expected_wkc) and self._wkc != -1:
+
+                    EcatLogger.critical(f'WKC {self._wkc} != {self.Master.expected_wkc} (expected)')
+
+                    for slave in self.Master.slaves:
+                        EcatLogger.error(f'{slave.name} {slave.al_status} {slave.state} {slave.is_lost}')
+
+            finally:
+                self.ProcessLock.release()
+
+            cycle_end_ns = self.Master.dc_time
+
+            elapsed_ns = cycle_end_ns - cycle_start_ns
+            sleep_ns = cycle_time_ns - elapsed_ns
+
+            #if sleep_ns <= 0:
+            #    EcatLogger.critical(f"process loop delayed {elapsed_ns / 1e9} ")
+
+            sleep_ns = max(0, sleep_ns)
+            
+            #next_cycle_ns += cycle_time_ns    
+            # jitter test
+            #if self.Master.dc_time > next_cycle_ns + cycle_time_ns:
+            #    next_cycle_ns = self.Master.dc_time + cycle_time_ns
+
+            self._processEvent.wait(sleep_ns * 1e-9)
+
+
+        EcatLogger.debug("end process loop")        
     
     _checkEvent = Event()
     _checkThread = None
@@ -1811,7 +1875,7 @@ class EcatMaster(EcatObject):
         EcatLogger.info("config dc")
         rc = -1,0
         try:
-            rc = self.Master.config_dc()            
+            rc = self.Master.config_dc()       
         except Exception as ex:
             EcatError.error(ex)
         finally:
@@ -1830,7 +1894,9 @@ class EcatMaster(EcatObject):
             EcatError.error(ex)
             rc = -1        
         finally:
-            return rc
+            pass
+
+        return rc
         
     def open(self):
         EcatLogger.debug("open master")
@@ -1976,12 +2042,13 @@ class EcatMaster(EcatObject):
         self._topic = topic
         self._ports = ports
 
-    def watchdog(self, mp:int, fc:float, sm:float, pd:float):
+    def watchdog(self, mp:int, fc:float, sm:float, pd:float, enabled:int):
         self._watchdog = {
             "mp": mp,
             "fc": fc,
             "sm": sm,
-            "pd": pd
+            "pd": pd,
+            "enabled": enabled
         }
 
     def _get_names(self):
@@ -2063,7 +2130,6 @@ def main():
         EcatLogger.error(f"cannot start") 
         rc = -1
      
-
     if rc == 0:
 
         adapterNo = 0
@@ -2076,8 +2142,7 @@ def main():
         EcatLogger.debug(f"{'done' if rc == 0 else 'failed'}")
 
     # cpu affinity
-    if rc == 0:
-        
+    if rc == 0:        
         
         pid = os.getpid()
         process = psutil.Process(pid)        
@@ -2085,7 +2150,13 @@ def main():
         if len(config.Master.affinity) > 0:
             process.cpu_affinity(config.Master.affinity)
         
-        EcatLogger.debug(f"affinity {pid} {process.cpu_affinity()}")
+        EcatLogger.warning(f"cpu affinity for process {pid} @ {process.cpu_affinity()}")
+
+        if 1 == config.Master.realtime:
+            import win32process
+            import win32api, win32con
+            handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, os.getpid())            
+            win32process.SetPriorityClass(handle, win32process.REALTIME_PRIORITY_CLASS)
         
     if rc == 0:
 
@@ -2096,7 +2167,7 @@ def main():
         if rc == 0:
 
             master.setup(adapter, config.Master.platform, config.Master.mandant, config.Master.template, config.Master.topic, config.Master.ports)
-            master.watchdog(config.Watchdog.mp, config.Watchdog.fc, config.Watchdog.sm, config.Watchdog.pd)
+            master.watchdog(config.Watchdog.mp, config.Watchdog.fc, config.Watchdog.sm, config.Watchdog.pd, config.Watchdog.enabled)
             master.startup()
 
             if master.config_init() >0:

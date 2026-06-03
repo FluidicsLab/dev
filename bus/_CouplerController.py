@@ -77,12 +77,15 @@ class CouplerController(object):
     
 class BeckhoffCouplerController(CouplerController):
 
+    _enabled = True
+
     _severity = None
     _reader: Thread = None
 
-    def __init__(self, index, device, lock, debug=False) -> None:
+    def __init__(self, index, device, lock, enabled=True, debug=False) -> None:
         super().__init__(index, device, lock, debug)   
         self._severity = [SEVERITY_VERBOSE]
+        self._enabled = enabled
 
     _initialized = False          
     def init(self):
@@ -128,15 +131,20 @@ class BeckhoffCouplerController(CouplerController):
 
     
     def read(self):
+
         self.DeviceLock.acquire()
+        
         try:
 
-            # non-blocking
-            self._data["cpu"] = { 
-                'p': psutil.cpu_percent(interval=None) ,
-                'pp': psutil.cpu_percent(interval=None, percpu=True),
-                'count': psutil.cpu_count()
-                }
+            if self._enabled:
+                # non-blocking
+                self._data["cpu"] = { 
+                    'p': psutil.cpu_percent(interval=None),
+                    'pp': psutil.cpu_percent(interval=None, percpu=True),
+                    'count': psutil.cpu_count()
+                    }
+            else:
+                self._data["cpu"] = { 'p': 0, 'pp': [0], 'count': 0 }
 
         except Exception as ex:
             EcatLogger.error(f"BeckhoffCouplerController.read {ex}")
