@@ -23,7 +23,7 @@ from _EcatSeverity import EcatSeverityLimit, EcatSeverityController, SEVERITY_VE
 
 from _EcatBrokerController import EcatBrokerController, EcatCallbackController
 
-from _ModbusController import KellerModbusController, Sth01ModbusController, Wt901cModbusController
+from _ModbusController import KellerModbusController, Sth01ModbusController, Wt901cModbusController, EsiModbusController
 from _SerialController import GscSerialController
 from _HiwinMotionController import Ed1fMotionController
 from _LightController import CcsLightController
@@ -285,6 +285,7 @@ class EcatMaster(EcatObject):
     #
 
     _kellerModbusController = {}
+    _esiModbusController = {}
     _sht01ModbusController = {}
     _wt901cModbusController = {}
     
@@ -428,29 +429,6 @@ class EcatMaster(EcatObject):
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
             EcatLogger.error(f"failed")
             return False
-        
-        for (a,o,v) in [
-            
-            (0x8000,0x11,6),    # baud rate 9600
-            
-            (0x8000,0x15,3),    # data frame 8N1
-            
-            (0x8000,0x06,1),    # half duplex
-            (0x8000,0x05,0),    # rate optimization
-            
-            (0x8000,0x04,0),    # fifo continuous
-            (0x8000,0x07,0),    # point to point
-            
-        ]:  
-            try:
-                c = slave.sdo_read(a,o)        
-                s = len(c)                                                                                                                
-                slave.sdo_write(a,o,struct.pack(f'{s}B',v))
-            except Exception as ex:
-                EcatError.error(f'{a}{o} {ex}')
-
-        # explicit baudrate
-        slave.sdo_write(0x8000, 0x1B, bytes(ctypes.c_uint32(9600)))
         
         # config by derived class
                 
@@ -712,13 +690,7 @@ class EcatMaster(EcatObject):
             EcatLogger.error(f"failed")
             return False
         
-        """
-        if pos == 21:
-            # interface; 15: 0..5V        
-            slave.sdo_write(0x8000, 0x01, bytes(ctypes.c_uint16(15)))
-            # RTD; none
-            slave.sdo_write(0x8000, 0x14, bytes(ctypes.c_uint16(0)))
-        """
+        # config by derived class
 
         return True    
     
@@ -893,7 +865,7 @@ class EcatMaster(EcatObject):
                                         )
                     EcatLogger.debug(f"{(n):03d} {slave.name} watchdog {wd} set")
                 else:                    
-                    EcatLogger.debug(f"{(n):03d} {slave.name} wathcdog NOT set")                
+                    EcatLogger.debug(f"{(n):03d} {slave.name} wathcdog NOT set")
                 EcatLogger.debug(f"{(n):03d} {self.getWatchDog(slave)}")
 
         EcatLogger.debug(f"done")
@@ -1066,7 +1038,7 @@ class EcatMaster(EcatObject):
         self._toggleThread = Thread(target=self._toggleLoop)
         self._toggleThread.start()
 
-        EcatLogger.debug(f"done")
+        EcatLogger.debug("done")
             
         self._runningLoop()
 
@@ -1087,7 +1059,7 @@ class EcatMaster(EcatObject):
 
         self._toggleThread.join()
 
-        EcatLogger.debug(f"done")
+        EcatLogger.debug("done")
 
         self._aliveEvent.set()
         EcatLogger.debug("stop alive threading")
@@ -1097,7 +1069,7 @@ class EcatMaster(EcatObject):
         EcatLogger.debug("stop debug threading")
         self._debugThread.join()
 
-        EcatLogger.debug(f"done")
+        EcatLogger.debug("done")
 
         self.Master.state = pysoem.INIT_STATE
         self.Master.write_state()
@@ -1455,6 +1427,9 @@ class EcatMaster(EcatObject):
                     # pressure/temperature values pumps
                     if n in self._kellerModbusController.keys(): 
                         data = self._kellerModbusController[n].run() 
+                    # pressure/temperature values pumps
+                    if n in self._esiModbusController.keys(): 
+                        data = self._esiModbusController[n].run() 
                     # temperature and humidity
                     if n in self._sht01ModbusController.keys(): 
                         data = self._sht01ModbusController[n].run()                    
@@ -1575,23 +1550,12 @@ class EcatMaster(EcatObject):
 
                     else:
                         data = None
-
+                
+                    
                 elif 'EL3751' in keys and n in self.Indizes.EL3751:
-
-                    try:
-
-                        data = [                        
-                            # adc raw value
-                            ctypes.c_int32.from_buffer_copy(slave.sdo_read(0x9000,0x02)).value, 
-                            # calibration value
-                            ctypes.c_int32.from_buffer_copy(slave.sdo_read(0x9000,0x03)).value, 
-                            # temperature value
-                            ctypes.c_int16.from_buffer_copy(slave.sdo_read(0x9000,0x01)).value, 
-                            # proper timestamp
-                            time.time_ns() // 1_000_000
-                        ]
-                    except Exception as ex:
-                        EcatLogger.debug(f"{ex}")
+                    
+                    if n in self._beckhoffMultimeterController.keys():
+                        data = self._beckhoffMultimeterController[n].run()                    
 
                 # digital in
 
@@ -1953,6 +1917,11 @@ class EcatMaster(EcatObject):
             if self._kellerModbusController[key] is not None:
                 self._kellerModbusController[key].release()
                 self._kellerModbusController[key] = None
+
+        for key in self._esiModbusController.keys():
+            if self._esiModbusController[key] is not None:
+                self._esiModbusController[key].release()
+                self._esiModbusController[key] = None
 
         for key in self._sht01ModbusController.keys():
             if self._sht01ModbusController[key] is not None:

@@ -19,6 +19,7 @@ brokerLogger.addFilter(loggingFilter)
 BROKER = [('localhost',10097),
           ('localhost',10098)]
 
+
 class BrokerWorker(threading.Thread):
     
     def __init__(self, addresses):
@@ -65,11 +66,11 @@ class BrokerWorker(threading.Thread):
         finally:
             brokerLogger.debug('stopped')
 
+
 def main():     
 
     os.system('cls')
-    
-    
+        
     try:
 
         bb = [BrokerWorker(b) for b in BROKER]

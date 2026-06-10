@@ -4,11 +4,9 @@ import struct,time
 import numpy as np
 import ctypes
 from threading import Lock, Event, Thread
-
+import re
 import pysoem
-
 from _EcatUtils import EcatDeviceUtils
-
 from _EcatObject import EcatLogger
 
 
@@ -61,21 +59,76 @@ class ModbusController(object):
         self._deviceLock = lock
         self._debug = debug
 
-    def status(self, input):
-        value = input
-        status = list(map(int,list(f'{value[0]:08b}')))[::-1] + list(map(int,list(f'{value[1]:08b}')))[::-1]
-        statusInfo = {
-            'TA': status[0], # transmit accepted
-            'RR': status[1], # receive request
-            'IA': status[2], # init accepted
-            'BF': status[3], # buffer full
-            'PE': status[4], # parity error
-            'FE': status[5], # frame error 
-            'OE': status[6], # overrun error
-                             # input length
-            'IL': int("".join(list(map(str,status[8:16]))[::-1]),2),
+    def status(self, value):        
+        stat = list(map(int,list(f'{value[0]:08b}')))[::-1] + list(map(int,list(f'{value[1]:08b}')))[::-1]
+        statInfo = {
+            'TA': stat[0], # transmit accepted
+            'RR': stat[1], # receive request
+            'IA': stat[2], # init accepted
+            'BF': stat[3], # buffer full
+            'PE': stat[4], # parity error
+            'FE': stat[5], # frame error 
+            'OE': stat[6], # overrun error
+                           # input length
+            'IL': int("".join(list(map(str,stat[8:16]))[::-1]),2),
         }
-        return status, statusInfo
+        return stat, statInfo
+    
+    def control(self, value):
+        ctrl = list(map(int,list(f'{value[0]:08b}')))[::-1] + list(map(int,list(f'{value[1]:08b}')))[::-1]
+        ctrlInfo = {
+            'TR': ctrl[0], # transmit request
+            'RA': ctrl[1], # receive accepted
+            'IR': ctrl[2], # init request
+            'SC': ctrl[3], # send cont.
+                        # output length
+            'OL': int("".join(list(map(str,ctrl[8:16]))[::-1]),2),
+        }
+        return ctrl, ctrlInfo
+    
+    def initConfig(self):
+
+        """                
+        :param self: 
+        """
+        try:
+
+            for (a,o,v) in [                
+                (0x8000,0x11,6),    # baud rate 9600
+                
+                (0x8000,0x15,3),    # data frame 8N1
+                
+                (0x8000,0x06,1),    # half duplex
+                (0x8000,0x05,0),    # rate optimization
+                
+                (0x8000,0x04,0),    # fifo continuous
+                (0x8000,0x07,0),    # point to point                
+            ]:  
+                try:
+                    c = self.Device.sdo_read(a,o)        
+                    s = len(c)                                                                                                                
+                    self.Device.sdo_write(a,o,struct.pack(f'{s}B',v))
+                except Exception as ex:
+                    EcatLogger.error(f'{a}{o} {ex}')
+
+            # explicit baudrate
+            self.Device.sdo_write(0x8000, 0x1B, bytes(ctypes.c_uint32(9600)))
+
+        except pysoem.SdoError as se:
+            self._initialized = False
+            EcatLogger.error(f"SdoError {se}")  
+        except pysoem.PacketError as pe:
+            self._initialized = False
+            EcatLogger.error(f"PacketError {pe}")  
+        except pysoem.MailboxError as me:
+            self._initialized = False
+            EcatLogger.error(f"MailboxError {me}")  
+        except pysoem.WkcError as we:
+            self._initialized = False
+            EcatLogger.error(f"WkcError {we}")  
+        except Exception as ex:
+            self._initialized = False
+            EcatLogger.error(f"Exception {ex}")      
 
     def release(self):
         self._exit.set()
@@ -628,4 +681,227 @@ class KellerModbusController(ModbusController):
             self._lock.release()
 
         return self.Data
+    
+
+class EsiModbusController(ModbusController):
+
+    _key = "P1TOB1"
+
+    class RxMapEx:
+        register = 0x1C12
+        address = [0x1606]    
+
+    class TxMapEx:
+        register = 0x1C13
+        address = [0x1A06]
+    
+    _reader: Thread = None
+        
+    _addr = [(0x00, "0")]
+    def _get_addr(self): 
+        return self._addr
+    Addr:list[(int,int)] = property(fget=_get_addr)
+
+    def __init__(self, index, device, lock, addr=[0x00], debug=False) -> None:
+        super().__init__(index, device, lock, debug)
+        self._addr = addr
+
+    def _enablePdoAssignment(self, enable=False):
+        try:
+            if not enable:
+                # DISABLE pdo mapping assignment
+                self.Device.sdo_write(EsiModbusController.TxMapEx.register, 0, bytes(ctypes.c_uint8(0)))
+                self.Device.sdo_write(EsiModbusController.RxMapEx.register, 0, bytes(ctypes.c_uint8(0))) 
+            else:
+                # ENABLE pdo mapping assignment
+                self.Device.sdo_write(EsiModbusController.TxMapEx.register, 0, 
+                                    bytes(ctypes.c_uint8(len(EsiModbusController.TxMapEx.address))))
+                self.Device.sdo_write(EsiModbusController.RxMapEx.register, 0, 
+                                    bytes(ctypes.c_uint8(len(EsiModbusController.RxMapEx.address)))) 
+        except Exception as ex:
+            EcatLogger.error(f"{ex}")
+
+    def input(self):
+        raw = self.Device.input
+        rlen = len(raw)
+        rc = struct.unpack(f'{rlen}B',raw) 
+        return rc
+                    
+    def write(self, data):
+        self.DeviceLock.acquire()
+        try:
+            self.Device.output = bytes(bytearray(data))
+        finally:
+            self.DeviceLock.release()
+    
+    def subscribe(self, data):
+        pass
+
+    def publish(self, key, value):        
+        self.DeviceLock.acquire()
+        try:
+            self.Data[key] = value
+        finally:
+            self.DeviceLock.release()        
+
+    def initConfig(self):
+
+        """                
+        :param self: 
+        """
+
+        try:
+
+            self._enablePdoAssignment(False)
+        
+            addr = EsiModbusController.TxMapEx.register            
+            for i,value in enumerate(EsiModbusController.TxMapEx.address):
+                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)))
+
+            # outputs; write; master-slave  
+            addr = EsiModbusController.RxMapEx.register            
+            for i,value in enumerate(EsiModbusController.RxMapEx.address): 
+                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)))  
+
+            self._enablePdoAssignment(True)
+                        
+            self.Device.sdo_write(0x8000, 0x02, bytes(ctypes.c_bool(0))) # xon/xoff tx            
+            self.Device.sdo_write(0x8000, 0x03, bytes(ctypes.c_bool(0))) # xon/xoff rx
+            self.Device.sdo_write(0x8000, 0x04, bytes(ctypes.c_bool(0))) # fifo contin.
+            self.Device.sdo_write(0x8000, 0x05, bytes(ctypes.c_bool(0))) # rate optim.
+            self.Device.sdo_write(0x8000, 0x07, bytes(ctypes.c_bool(0))) # ptp
+
+            self.Device.sdo_write(0x8000, 0x06, bytes(ctypes.c_bool(1))) # half duplex
+            self.Device.sdo_write(0x8000, 0x11, bytes(ctypes.c_uint8(9))) # baud rate 9 ~ 57600, 6 ~ 9600
+            self.Device.sdo_write(0x8000, 0x15, bytes(ctypes.c_uint8(3))) # data frame 3 ~ 8N1
+            self.Device.sdo_write(0x8000, 0x1A, bytes(ctypes.c_uint16(864))) # rx buf. full
+
+        except pysoem.SdoError as se:
+            self._initialized = False
+            EcatLogger.error(f"SdoError {se}")  
+        except pysoem.PacketError as pe:
+            self._initialized = False
+            EcatLogger.error(f"PacketError {pe}")  
+        except pysoem.MailboxError as me:
+            self._initialized = False
+            EcatLogger.error(f"MailboxError {me}")  
+        except pysoem.WkcError as we:
+            self._initialized = False
+            EcatLogger.error(f"WkcError {we}")  
+        except Exception as ex:
+            self._initialized = False
+            EcatLogger.error(f"Exception {ex}") 
+
+    _initialized = False
+    def init(self):        
+        rc = False
+        try:
+            while not rc and not self._exit.is_set():
+                self.write([int(f"00000100", 2), 0x00])
+                _, si = self.status(self.input())
+                rc = si['IA'] == 1
+            rc = False
+            while not rc and not self._exit.is_set():          
+                self.write([int(f"00000000", 2), 0x00])
+                _, si = self.status(self.input())
+                rc = si['IA'] == 0
+        except Exception as ex:
+            EcatLogger.debug(f"{ex}")
+        finally:
+            return rc  
+
+    def data_(self, xmd):        
+        xmd = ("#"+":".join(xmd)+"\r\n").encode("ASCII")
+        return len(xmd), list(xmd)
+    
+    _toggle = 0
+        
+    def compute(self):
+
+        EcatLogger.debug(f"start computing {self.__class__.__name__}")
+        
+        delay = 0.02
+
+        noData = {}
+        for a, no in self.Addr:
+            noData[no] = { "p": None, "T": None, "addr": a }
+
+        while not self._exit.is_set():
+
+            for a, no in self.Addr:
+
+                for n, cmd in [
+                    (25, [no, "RP", "Bar"]),
+                    (24, [no, "RT", "C"])
+                ]:
+
+                    num, xmd = self.data_(cmd)
+                   
+                    #                 
+                    cw = int(self._toggle)
+                    data = [cw, num] + xmd
+                    self.write(data)
+
+                    data = self.input()
+                    sw, si = self.status(data)
+                    rmd = ""
+                   
+                    try:
+
+                        if si["IL"] == n:
+
+                            rmd = ''.join(map(chr,data[2:si["IL"]]))
+                            rmd = re.sub(f"\\$|{cmd[2]}:|\r\n", "", rmd)
+                            rno, cmd, val = re.split(":", rmd)
+                            val = float(val)
+                            if cmd == "RP":
+                                noData[rno]["p"] = val
+                            elif cmd == "RT":
+                                noData[rno]["T"] = val
+                    
+                    except Exception as ex:
+                        EcatLogger.error(f"{ex}")
+                    
+                    data = [cw|int(self._toggle)<<1, num]
+                    self.write(data)                
+
+                    self._toggle ^= 1                
+                                    
+                    self._exit.wait(delay)
+
+                valid = noData[no]["p"] is not None and noData[no]["T"] is not None
+
+                if valid:                    
+                    t = time.time_ns()                    
+                    self.publish(a, {            
+                        'key': self._key,
+                        'addr': a,
+                        'p': noData[no]["p"],
+                        'T': noData[no]["T"],
+                        't': t,
+                        "no": no
+                    })
+            
+        EcatLogger.debug(f"stop computing {self.__class__.__name__}")
+
+    def run(self):
+        
+        if not self.Enabled:
+            return None
+
+        if (self.Device.state & pysoem.OP_STATE) != self.Device.state:
+            return None
+
+        self._lock.acquire()
+        try:
+            if not self._initialized:
+                self._initialized = self.init()                
+                if self._initialized:
+                    self._reader = Thread(target=self.compute)
+                    self._reader.start()
+            
+        finally:
+            self._lock.release()
+
+        return self.Data    
     

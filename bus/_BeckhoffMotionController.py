@@ -1628,9 +1628,6 @@ class AM81111MotionController(BeckhoffMotionController):
         """
         self._lock.acquire()
         try:  
-            
-            EcatLogger.debug(f"{round(value):20d} {error}")
-
             self._data.update({
                 'velocity': round(value),
                 'controller': {

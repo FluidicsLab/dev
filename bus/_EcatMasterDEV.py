@@ -1,9 +1,12 @@
-from _EcatMaster import EcatMaster, EcatLogger, AM81111MotionController, BeckhoffCouplerController, KellerModbusController
+from _AnalogController import BeckhoffAnalogController
+from _EcatMaster import EcatMaster, EcatLogger, AM81111MotionController, BeckhoffCouplerController, EsiModbusController, BeckhoffMultimeterController
 from _EcatSeverity import SEVERITY_VERBOSE, SEVERITY_CRITICAL, SEVERITY_REASON_SYSTEM, \
     SEVERITY_REASON_PRESSURE, SEVERITY_REASON_TEMPERATURE, SEVERITY_REASON_TIME, SEVERITY_REASON_DISTANCE, SeverityLogger
 from _EcatStates import EcatStates
 
 import pysoem, time, ctypes
+
+from _MultimeterController import MultimeterController
 
 
 class EcatMasterDEV(EcatMaster):
@@ -223,28 +226,6 @@ class EcatMasterDEV(EcatMaster):
         
         return rc      
     
-    # pressure by modbus
-     
-    def configEL6021(self, pos, slave):
-
-        rc = super().configEL6021(pos, slave)
-
-        if rc:
-
-            slot = 3
-            if self.isSlot("drive", (slot, pos)):
-                
-                addr = [0x0B]
-
-                self._kellerModbusController[pos] = KellerModbusController(pos, slave, self.ProcessLock, addr)                
-                self.SeverityController.register(f"EL6021.{slot}")
-                
-                EcatLogger.debug(f"init KellerModbusController @ {addr}")
-
-        EcatLogger.debug(f"done")
-
-        return rc
-    
     # position by laser
     
     def configEL3124(self, pos, slave):
@@ -273,17 +254,60 @@ class EcatMasterDEV(EcatMaster):
     def configEL2008(self, pos, slave):
 
         rc = super().configEL2008(pos, slave)
-
         if rc:
-
             slot = 5
             if self.isSlot("drive", (slot, pos)):
                 pass
+        EcatLogger.debug(f"done")
+
+        return rc
+
+    # pressure by modbus
+     
+    def configEL6021(self, pos, slave):
+
+        rc = super().configEL6021(pos, slave)
+
+        if rc:
+
+            slots = [1]
+            for slot in slots:
+                if self.isSlot("drive", (slot, pos)):
+                    
+                    addr = [
+                        (0x11, "743513"),
+                        (0x12, "743522")
+                            ]
+
+                    self._esiModbusController[pos] = EsiModbusController(pos, slave, self.ProcessLock, addr)
+                    self._esiModbusController[pos].initConfig()
+
+                    self.SeverityController.register(f"EL6021.{slot}")
+                    
+                    EcatLogger.debug(f"init EsiModbusController @ {slot} with {addr}")
 
         EcatLogger.debug(f"done")
 
         return rc
-    
+
+    def configEL3751(self, pos, slave):
+
+        rc = super().configEL3751(pos, slave)
+        if rc:
+            slots = [2,3]
+            for slot in slots:
+
+                if self.isSlot("drive", (slot, pos)):
+
+                    self._beckhoffMultimeterController[pos] = BeckhoffMultimeterController(pos, slave, self.ProcessLock)
+                    self._beckhoffMultimeterController[pos].initConfig()
+
+                    EcatLogger.debug(f"init BeckhoffMultimeterController @ {slot}")
+        
+        EcatLogger.debug(f"done")
+
+        return rc
+
     def configSeverity(self):
         if self.SeverityLimit.enabled == 1:
             config = self.SeverityLimit.config
