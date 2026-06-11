@@ -28,7 +28,7 @@ from _SerialController import GscSerialController
 from _HiwinMotionController import Ed1fMotionController
 from _LightController import CcsLightController
 
-from _DisplayController import BeckhoffDisplayController
+from _BeckhoffDisplayController import BeckhoffDisplayController
 from _SwitchController import Beckhoff8SwitchController
 from _PressureController import BeckhoffPressureController
 from _MultimeterController import BeckhoffMultimeterController
@@ -42,6 +42,8 @@ from _IOLinkController import ifmIOLinkController
 
 from _BeckhoffMotionController import AM81111MotionController
 from _BeckhoffMemoryController import NOVRAMMemoryController
+
+from _NanotecMotionController import NanotecMotionController
 
 """
 
@@ -505,12 +507,7 @@ class EcatMaster(EcatObject):
             EcatLogger.error(f"failed")
             return False
 
-        """
-        EcatLogger.debug(f"** init BeckhoffDisplayController")
-        self._beckhoffDisplayController[pos] = BeckhoffDisplayController(pos, slave, self.ProcessLock)
-        for item in ["EL7041.3"]:
-            self.CallbackController.register(BeckhoffDisplayController.CTRL[0], item, self._beckhoffDisplayController[pos].callback)
-        """
+        #config by derived class
 
         return True        
     
@@ -591,69 +588,7 @@ class EcatMaster(EcatObject):
         if (slave.state & pysoem.PREOP_STATE) != slave.state:
             EcatLogger.error(f"failed")
             return False
-             
-        """
-
-        self._nanotecMotionController[pos] = NanotecMotionController(pos, slave, self.ProcessLock)
-
-        if 1 == pos:
-
-            '''
-            rotation unit
-            '''
-
-            # max. current mA
-            slave.sdo_write(0x8010, 0x01, bytes(ctypes.c_int16(710)))
-            # nominal voltage mV
-            slave.sdo_write(0x8010, 0x03, bytes(ctypes.c_int16(6600)))
-
-            # operation mode 0 automatic            
-            slave.sdo_write(0x8012, 0x01, bytes(ctypes.c_uint8(0)))
-            # speed range 1000 fullsteps/s
-            slave.sdo_write(0x8012, 0x05, bytes(ctypes.c_uint8(0)))
-            
-            # velocity min
-            slave.sdo_write(0x8020, 0x01, bytes(ctypes.c_int16(100)))
-            # velocity max
-            slave.sdo_write(0x8020, 0x02, bytes(ctypes.c_int16(10_000)))
-            # calib. position
-            slave.sdo_write(0x8020, 0x08, bytes(ctypes.c_uint32(0)))
-
-            # configure PDO register
-            self._nanotecMotionController[pos].PdoInput = [0x1a03, 0x1a06]
-            self._nanotecMotionController[pos].PdoOutput = [0x1602, 0x1606]
-
-        elif 3 == pos:
-
-            '''
-            beam splitter
-            '''
-
-            # max. current mA
-            slave.sdo_write(0x8010, 0x01, bytes(ctypes.c_int16(500)))
-            # nominal voltage mV
-            slave.sdo_write(0x8010, 0x03, bytes(ctypes.c_int16(1850)))
-
-            # operation mode 0 automatic            
-            slave.sdo_write(0x8012, 0x01, bytes(ctypes.c_uint8(0)))
-            # speed range 1000 fullsteps/s
-            slave.sdo_write(0x8012, 0x05, bytes(ctypes.c_uint8(0)))
-            
-            # velocity min
-            slave.sdo_write(0x8020, 0x01, bytes(ctypes.c_int16(50)))
-            # velocity max
-            slave.sdo_write(0x8020, 0x02, bytes(ctypes.c_int16(500)))
-            # calib. position
-            slave.sdo_write(0x8020, 0x08, bytes(ctypes.c_uint32(0)))
-
-            # configure PDO register
-            self._nanotecMotionController[pos].PdoInput = [0x1a03, 0x1a06]
-            self._nanotecMotionController[pos].PdoOutput = [0x1602, 0x1606]
-
-        EcatLogger.debug(f"    -- done")
-
-        """
-
+        
         # derived class
 
         return True

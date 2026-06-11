@@ -9,13 +9,14 @@ import numpy as np
 from _EcatObject import EcatLogger
 from _EcatSeverity import SEVERITY_VERBOSE, EcatSeverityController
 
-class cStrokeMap(ctypes.Structure):
+
+class DataMap(ctypes.Structure):
     _pack_ = 1
     _fields_ = [
-        ('multiturn', ctypes.c_int32),
-        ('singleturn', ctypes.c_int32),
-        ('velocity', ctypes.c_int32),
-        ('modified', ctypes.c_uint32)
+        ('i1', ctypes.c_int32),
+        ('i2', ctypes.c_int32),
+        ('i3', ctypes.c_int32),
+        ('u1', ctypes.c_uint32)
     ]
 
 
@@ -55,9 +56,6 @@ class NOVRAMProfile:
         
 
 class BeckhoffMemoryController(object):
-
-    RxPDO_MAP_ADDRESS = 0x1C12
-    TxPDO_MAP_ADDRESS = 0x1C13
 
     _debug = False    
     _lock = Lock()
@@ -189,8 +187,7 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         _pack_ = 1
         _fields_ = [
             ('control', ctypes.c_uint16),            
-            ('stroke1', cStrokeMap),
-            ('stroke2', cStrokeMap)
+            ('data', DataMap)
         ]
 
     #
@@ -212,8 +209,7 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         _pack_ = 1
         _fields_ = [
             ('status', ctypes.c_uint16),
-            ('stroke1', cStrokeMap),
-            ('stroke2', cStrokeMap)
+            ('data', DataMap)
         ]  
     
     def __init__(self, index, device, lock, debug=False) -> None:
@@ -253,11 +249,9 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
     
     def hasState(self, state):
         return self.Device.state & state == state
-    
-    _multiturn = None
-    _singleturn = None
-    _velocity = None
-    
+        
+    _data = [0] * 3
+
     def _get_controlWord(self):
         try:
             buff =  NOVRAMMemoryController.RxMap.from_buffer_copy(self.Device.output)                
@@ -267,19 +261,12 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
             return None
     def _set_controlWord(self, value):
         try:
-            out = NOVRAMMemoryController.RxMap()   
-
-            out.stroke1.multiturn = ctypes.c_int32(self._multiturn[0])
-            out.stroke1.singleturn = ctypes.c_int32(self._singleturn[0])
-            out.stroke1.velocity = ctypes.c_int32(self._velocity[0])
-            out.stroke1.modified = time.time_ns()
-
-            out.stroke2.multiturn = ctypes.c_int32(self._multiturn[1])
-            out.stroke2.singleturn = ctypes.c_int32(self._singleturn[1])
-            out.stroke2.velocity = ctypes.c_int32(self._velocity[1])
-            out.stroke2.modified = time.time_ns()
-
-            out.control = ctypes.c_uint16(value)
+            out = NOVRAMMemoryController.RxMap()
+            out.data.i1 = ctypes.c_int32(self._data[0])
+            out.data.i2 = ctypes.c_int32(self._data[1])
+            out.data.i3 = ctypes.c_int32(self._data[2])
+            out.data.u1 = time.time_ns()
+            out.control = ctypes.c_uint16(value)            
             self.write(out)   
         except Exception as ex:
             EcatLogger.error(f"{ex}")
@@ -475,12 +462,7 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
                 buff =  NOVRAMMemoryController.TxMap.from_buffer_copy(self.Device.input)
 
-                if self._multiturn is None:
-                    self._multiturn = [buff.stroke1.multiturn, buff.stroke2.multiturn]
-                if self._singleturn is None:
-                    self._singleturn = [buff.stroke1.singleturn, buff.stroke2.singleturn]
-                if self._velocity is None:
-                    self._velocity = [buff.stroke1.velocity, buff.stroke2.velocity]
+                # TODO buff.data
                 
                 status = bin(buff.status)[2:].zfill(16)  
                 status_text = NOVRAMProfile.__status__(int(status,2))
@@ -494,15 +476,7 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
                     'mode': NOVRAMMemoryController.MODE,
                     
-                    'target': [
-                        { 'multiturn': buff.stroke1.multiturn, 'singleturn': buff.stroke1.singleturn, 'velocity': buff.stroke1.velocity, },
-                        { 'multiturn': buff.stroke2.multiturn, 'singleturn': buff.stroke2.singleturn, 'velocity': buff.stroke2.velocity, }
-                    ],
-
-                    'data': [buff.stroke1.multiturn, buff.stroke1.singleturn, buff.stroke1.velocity,
-                             buff.stroke2.multiturn, buff.stroke2.singleturn, buff.stroke2.velocity],
-
-                    'modified': [buff.stroke1.modified, buff.stroke2.modified]
+                    'modified': buff.u1
                 }
 
             return data
@@ -543,26 +517,12 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
                 target = 0
 
                 if 'data' in self._data.keys() and self._data['data'] is not None:
-                    self._multiturn[target] = self._data['data'][0]
-                    self._singleturn[target] = self._data['data'][1]
-                    self._velocity[target] = self._data['data'][2]
+
+                    # TODO
+                    
                     self._update = True               
                     self._data['data'] = None
                 
-                if 'multiturn' in self._data.keys() and self._data['multiturn'] is not None:
-                    self._multiturn[target] = self._data['multiturn']
-                    self._update = True
-                    self._data['multiturn'] = None
-
-                if 'singleturn' in self._data.keys() and self._data['singleturn'] is not None:
-                    self._singleturn[target] = self._data['singleturn']                    
-                    self._update = True
-                    self._data['singleturn'] = None
-
-                if 'velocity' in self._data.keys() and self._data['velocity'] is not None: 
-                    self._velocity[target] = self._data['velocity']                    
-                    self._update = True                 
-                    self._data['velocity'] = None
                                     
         except Exception as ex:
             EcatLogger.error(f"run {ex}")
@@ -617,18 +577,7 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
                 if int(status, 2) != 0:
 
-                    target = 0
-                
-                    position = value['position']['raw']
-                    velocity = value['velocity']['raw']
-
-                    sgn = np.sign(velocity)
-                    if (np.sign(position) == -1 and np.sign(self._singleturn[target]) == 1 and sgn == 1) or \
-                        (np.sign(position) == 1 and np.sign(self._singleturn[target]) == -1 and sgn == -1):
-                        self._multiturn[target] += sgn
-
-                    self._singleturn[target] = position
-                    self._velocity[target] = velocity
+                    # TODO value to data
 
                     self._update = True
 

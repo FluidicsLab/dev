@@ -16,7 +16,7 @@
 
             "EL7201": { 
 
-                "1": { "topic": [ "p", "d" ], "channel": [0], "severity": [0] }
+                "1": { "topic": [ "p" ], "channel": [0], "severity": [0] }
 
             }
 
@@ -38,45 +38,33 @@
                 "p": { "low": 0.0, "high": 100.0, "def": null, "topic": "p", "channel": [ 0,1, 8,9 ] }
             }
         }
-    },
-
-    "EL7201": { 
-        "1": {
-            
-            "1" : { "d": { "low": 14834, "high": 1335103263, "def": 0.0, "topic": "d", "channel": [0] } }                                                
-                                                
-        }
-    },
+    },   
 
     "EL6021": { 
 
-        "3": { 
+        "1": { 
             "11": { 
-                "p": { "low": -0.9, "high": 710.0, "def": null, "topic": "p", "channel": [0] }, 
+                "p": { "low": -0.9, "high": 2000.0, "def": null, "topic": "p", "channel": [0] }, 
                 "T": { "low": 10.0, "high": 40.0, "def": null, "topic": "T", "channel": [0] } 
-            }            
+            },
+            "12": { 
+                "p": { "low": -0.9, "high": 2000.0, "def": null, "topic": "p", "channel": [1] }, 
+                "T": { "low": 10.0, "high": 40.0, "def": null, "topic": "T", "channel": [1] } 
+            }
         } 
-    },
-
-    "EL3124": {
-
-        "4": {
-            "0": { "d": { "low": 4.8, "high": 13.0, "def": 0.0, "topic": "d", "channel": [0] } }      
-        }
-
     },
 
     "EL3751": { 
 
-        "6": {
+        "2": {
             "0": { "p": { "low": 0, "high": 5, "def": 0.0, "topic": "p", "channel": [0] } }
-        }      
+        },
+        "3": {
+            "0": { "p": { "low": 0, "high": 5, "def": 0.0, "topic": "p", "channel": [1] } }
+        }
 
     },
     
-    "ED1F": {},
-
-    "EL2008": {},
     "SEVERITY": { }
 
 }

@@ -4,11 +4,12 @@ import ctypes
 import struct
 import datetime 
 
-from threading import Lock,Event
+from threading import Lock,Event,Thread
 
 from _EcatObject import EcatLogger
 
 ULONG_MAX = 4294967295
+INT16_MAX = 0x7fff
 
 class DisplayController(object):
 
@@ -74,7 +75,29 @@ class DisplayController(object):
     
 class BeckhoffDisplayController(DisplayController):
 
-    CTRL = ["EL6090.5"]
+    class RxMapEx:
+        register = 0x1C12
+        address = [0x1600
+                   ]
+      
+    class RxMap(ctypes.Structure):
+        _pack_ = 1
+        _fields_ = [
+            ('row1', ctypes.c_int16),
+            ('row2', ctypes.c_int16)
+        ]    
+
+    class TxMapEx:
+        register = 0x1C13
+        address = [
+            0x1A00
+            ]
+
+    class TxMap(ctypes.Structure):
+        _pack_ = 1
+        _fields_ = [
+            ('status', ctypes.c_uint16)
+        ]  
 
     '''
     2 lines;
@@ -113,6 +136,24 @@ class BeckhoffDisplayController(DisplayController):
 
     def __init__(self, index, device, lock, debug=False) -> None:
         super().__init__(index, device, lock, debug)
+
+    def _disablePdoAssignment(self):
+        self._enablePdoAssignment(False)
+
+    def _enablePdoAssignment(self, enable=True):
+        try:
+            if not enable:
+                # DISABLE pdo mapping assignment
+                self.Device.sdo_write(BeckhoffDisplayController.TxMapEx.register, 0, bytes(ctypes.c_uint8(0)))
+                self.Device.sdo_write(BeckhoffDisplayController.RxMapEx.register, 0, bytes(ctypes.c_uint8(0))) 
+            else:
+                # ENABLE pdo mapping assignment
+                self.Device.sdo_write(BeckhoffDisplayController.TxMapEx.register, 0, 
+                                      bytes(ctypes.c_uint8(len(BeckhoffDisplayController.TxMapEx.address))))
+                self.Device.sdo_write(BeckhoffDisplayController.RxMapEx.register, 0, 
+                                      bytes(ctypes.c_uint8(len(BeckhoffDisplayController.RxMapEx.address)))) 
+        except Exception as ex:
+            EcatLogger.error(f"{ex}")
 
     def _get_data(self): 
         if self._data is None:
@@ -155,6 +196,52 @@ class BeckhoffDisplayController(DisplayController):
         return self._button
     Button = property(fget=_get_button)
 
+    def initConfig(self):
+        
+        try:
+
+            #
+            # PDO
+            #
+
+            self._disablePdoAssignment()
+
+            # RxPDO
+            # outputs; write; master-slave  
+
+            addr = BeckhoffDisplayController.RxMapEx.register            
+            for i,value in enumerate(BeckhoffDisplayController.RxMapEx.address): 
+                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)), True)
+
+            # TxPDO
+            # inputs; read; slave-master
+
+            addr = BeckhoffDisplayController.TxMapEx.register            
+            for i,value in enumerate(BeckhoffDisplayController.TxMapEx.address):
+                self.Device.sdo_write(addr, i +1, bytes(ctypes.c_uint16(value)), True)  
+
+            self._enablePdoAssignment()
+            # ESM PREOP -> SAFEOP RxPDO effective
+            # ESM SAFEOP -> OP TxPDO effective
+
+
+
+        except pysoem.SdoError as se:
+            self._initialized = False
+            EcatLogger.error(f"SdoError {se}")  
+        except pysoem.PacketError as pe:
+            self._initialized = False
+            EcatLogger.error(f"PacketError {pe}")  
+        except pysoem.MailboxError as me:
+            self._initialized = False
+            EcatLogger.error(f"MailboxError {me}")  
+        except pysoem.WkcError as we:
+            self._initialized = False
+            EcatLogger.error(f"WkcError {we}")  
+        except Exception as ex:
+            self._initialized = False
+            EcatLogger.error(f"Exception {ex}")  
+
     _initialized = False          
     def init(self):
 
@@ -173,7 +260,7 @@ class BeckhoffDisplayController(DisplayController):
 
         except Exception as ex:
             self._diagnostic["error"] = { "source": "BeckhofDisplayController.init", "class": str(ex.__class__), "doc": str(ex.__doc__), "time": datetime.datetime.now() }
-            EcatLogger.debug(f"{self._diagnostic}")
+            EcatLogger.critical(f"{self._diagnostic}")
             
         finally:
             return rc
@@ -216,14 +303,16 @@ class BeckhoffDisplayController(DisplayController):
         }
         
     def compute(self):
+
+        #EcatLogger.debug(f"start computing {self.__class__.__name__}")
+        #delay = 0.1
                     
         if not self._exit.is_set():
             
+            #self._lock.acquire()
             try:
 
                 self.archive()
-
-                changed = False
                 
                 keys = list(self.ButtonMap.keys())
                 values = list(self.ButtonMap.values())
@@ -255,12 +344,27 @@ class BeckhoffDisplayController(DisplayController):
                 a, o = 0xf600, 0x11               
                 self._operatingTime = ctypes.c_uint32.from_buffer_copy(self.Device.sdo_read(a,o)).value
 
-                if (len(self.Data) == 2):
+                if (len(self.Data) == 2 and np.all([np.abs(d) < INT16_MAX for d in self.Data])):
                     self.write(struct.pack(f'2h', *(self.Data)))
                                 
             except Exception as ex:
-                self._diagnostic["error"] = { "source": "BeckhofDisplayController.compute", "class": str(ex.__class__), "doc": str(ex.__doc__), "time": self._diagnostic["time"] - datetime.datetime.now() }
-                EcatLogger.debug(f"{self._diagnostic}")
+                self._diagnostic["error"] = { 
+                    "source": "BeckhofDisplayController.compute", 
+                    "class": str(ex.__class__), 
+                    "doc": str(ex.__doc__), 
+                    "time": self._diagnostic["time"] - datetime.datetime.now(),
+                    "data": self.Data 
+                    }
+                EcatLogger.critical(f"{self._diagnostic}")
+
+            #finally:
+            #    self._lock.release()
+
+            #self._exit.wait(delay)
+
+        #EcatLogger.debug(f"stop computing {self.__class__.__name__}")
+
+    #_reader: Thread = None
 
     def run(self):
         
@@ -271,12 +375,23 @@ class BeckhoffDisplayController(DisplayController):
             return None
 
         self._lock.acquire()
-        try:            
+        try:  
+
             if not self._initialized:
-                self._initialized = self.init()
+                self._initialized = self.init()            
+                #if self._initialized:
+                #    self._reader = Thread(target=self.compute)
+                #    self._reader.start()
             
             if self._initialized:
                 self.compute()
+
+            rc = {
+                "data": self.Data,
+                "button": self.Button,
+                "moving": self.Moving,
+                "operatingTime": self.OperatingTime
+            }    
 
         except Exception as ex:
             self._diagnostic["error"] = { "source": "BeckhofDisplayController.run", "class": str(ex.__class__), "doc": str(ex.__doc__), "time": self._diagnostic["time"] - datetime.datetime.now() }
@@ -285,12 +400,7 @@ class BeckhoffDisplayController(DisplayController):
         finally:
             self._lock.release()
 
-        return {
-            "data": self.Data,
-            "button": self.Button,
-            "moving": self.Moving,
-            "operatingTime": self.OperatingTime
-        }    
+        return rc
     
     def write(self, data):
         self.DeviceLock.acquire()
@@ -329,6 +439,7 @@ class BeckhoffDisplayController(DisplayController):
         except Exception as ex:
             self._diagnostic["error"] = { "source": "BeckhofDisplayController.output", "class": str(ex.__class__), "doc": str(ex.__doc__), "time": self._diagnostic["time"] - datetime.datetime.now() }
             EcatLogger.debug(f"{self._diagnostic}")
+
         finally:
             self._lock.release()
         
@@ -340,63 +451,5 @@ class BeckhoffDisplayController(DisplayController):
     Moving = property(fget=_get_moving)
 
     def callback(self, *args):
-
-        arg = args[0]        
-        name = arg["name"]
-
-        if 'value' in list(arg['value'].keys()):
-            pass
-
-            '''
-            if name == "EL7041":
-
-                code = self.Code.copy()
-                code[0]["value"] = self.CodeMap['DEGREE']
-                code[0]["digit"] = 0
-                self.Code = code.copy()
-
-                val = arg['value']['value']
-
-                pos = val['position']
-
-                steps = 12800 # 360°
-                ratio = 50
-
-                sign = -1 if pos >ratio * steps else +1
-                pos = ULONG_MAX - pos if sign <0 else pos
-
-                data = self.Data.copy()
-                data[0] = sign * int(100 * 360 * pos / ratio / steps)
-                
-                self.Data = data.copy()
-
-            if name == "EL3164":
-
-                val = [int(v/10.0) for v in arg['value']['value']]
-
-                self._moving = sum(val) == 3
-                if self._moving:
-
-                    code = self.Code.copy()
-                    code[0]["value"] = self.CodeMap['MOVING']
-                    code[0]["digit"] = 0
-                    self.Code = code.copy()
-
-            if name == "EL6021":
-
-                val = arg['value']['value']
-
-                if isinstance(val, dict):
-
-                    if '0x11.RPY' in list(val.keys()):
-
-                        axis = 0
-
-                        val = val['0x11.RPY']['value']
-
-                        data = self.Data.copy()
-                        data[1] =  int((val[axis])*100)
-                        self.Data = data.copy()
-            '''
-
-
+       pass
+          

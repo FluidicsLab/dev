@@ -1,5 +1,5 @@
 from _AnalogController import BeckhoffAnalogController
-from _EcatMaster import EcatMaster, EcatLogger, AM81111MotionController, BeckhoffCouplerController, KellerModbusController, BeckhoffMultimeterController
+from _EcatMaster import EcatMaster, EcatLogger, AM81111MotionController, BeckhoffCouplerController, EsiModbusController, BeckhoffMultimeterController
 from _EcatSeverity import SEVERITY_VERBOSE, SEVERITY_CRITICAL, SEVERITY_REASON_SYSTEM, \
     SEVERITY_REASON_PRESSURE, SEVERITY_REASON_TEMPERATURE, SEVERITY_REASON_TIME, SEVERITY_REASON_DISTANCE, SeverityLogger
 from _EcatStates import EcatStates
@@ -9,7 +9,7 @@ import pysoem, time, ctypes
 from _MultimeterController import MultimeterController
 
 
-class EcatMasterDEV(EcatMaster):
+class EcatMasterESI(EcatMaster):
 
     def describe(self):
 
@@ -78,68 +78,6 @@ class EcatMasterDEV(EcatMaster):
                                     SeverityLogger.debug(f"6021.{target} {addr} {key} {value[addr][key]}")  
 
         return severity
-
-    # position
-
-    def severityEL3124(self, source, data, current, config: dict):
-        severity = current.copy()
-        if EcatMaster._find_(data, 'value.value') is not None:            
-            for addr in map(int, list(config.keys())):
-                raw = data['value']['value'][addr]
-                key = "d"
-                targets = config[f"{addr}"][key]["channel"]            
-                limit = self.SeverityLimit.find(f"{source}.{addr}.{key}")
-                if limit is not None:
-                    critical = (raw < limit["low"] or raw > limit["high"]) and \
-                        1 == (1 if raw is None or (limit["def"] is not None and raw != limit["def"]) else 0)
-                    if critical:
-                        for target in targets:
-                            severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_DISTANCE
-
-                            SeverityLogger.debug(f"3124.{target} {addr} {key} {raw}")                            
-
-        return severity
-    
-    # motion control
-
-    def severityEL7201(self, source, data, current, config: dict):
-        severity = current.copy()
-        if EcatMaster._find_(data, 'value.value') is not None:            
-            for addr in map(int, list(config.keys())):
-                key = "d"
-                targets = config[f"{addr}"][key]["channel"]            
-                limit = self.SeverityLimit.find(f"{source}.{addr}.{key}")
-                if limit is not None:
-                    raw = data['value']['value']['position']['raw']                                                   
-                    critical = (raw < limit["low"] or raw > limit["high"]) and \
-                        1 == (1 if raw is None or (limit["def"] is not None and raw != limit["def"]) else 0)                    
-                    if critical:
-                        for target in targets:
-                            severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_DISTANCE
-
-                            SeverityLogger.debug(f"7201.{target} {addr} {key} {raw}")
-
-        return severity
-
-    # coupler; several external
-    
-    def severityEK1100(self, source, data, current, config: dict):        
-        severity = current.copy()
-        value = data['value']['value']
-        if value:
-            for addr in list(config.keys()):
-                key = "p"
-                targets = config[f"{addr}"][key]["channel"]
-                limit = self.SeverityLimit.find(f"{source}.{addr}.{key}")
-                if limit is not None:
-                    critical = (value[addr][key] < limit["low"] or value[addr][key] > limit["high"])
-                    if critical:
-                        for target in targets:
-                            severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_SYSTEM
-
-                            SeverityLogger.debug(f"1100.{target} {addr} {key} {value[addr][key]}")                               
-
-        return severity
     
     def severityEL3751(self, source, data, current, config: dict):
         severity = current.copy()
@@ -157,6 +95,26 @@ class EcatMasterDEV(EcatMaster):
                                 severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_PRESSURE
                                 
                                 SeverityLogger.debug(f"3751.{target} {addr} {key} {value[addr][key]}")
+
+        return severity
+ 
+    # coupler; several external
+    
+    def severityEK1100(self, source, data, current, config: dict):        
+        severity = current.copy()
+        value = data['value']['value']
+        if value:
+            for addr in list(config.keys()):
+                key = "p"
+                targets = config[f"{addr}"][key]["channel"]
+                limit = self.SeverityLimit.find(f"{source}.{addr}.{key}")
+                if limit is not None:
+                    critical = (value[addr][key] < limit["low"] or value[addr][key] > limit["high"])
+                    if critical:
+                        for target in targets:
+                            severity[target] = severity[target] | SEVERITY_CRITICAL | SEVERITY_REASON_SYSTEM
+
+                            SeverityLogger.debug(f"1100.{target} {addr} {key} {value[addr][key]}")                               
 
         return severity
 
@@ -178,15 +136,9 @@ class EcatMasterDEV(EcatMaster):
                 case "EK1100":
                     severity = self.severityEK1100(source, data, severity, config._raw[alias][pos])
                 case "EL6021":
-                    severity = self.severityEL6021(source, data, severity, config._raw[alias][pos])
-                case "EL3124":
-                    severity = self.severityEL3124(source, data, severity, config._raw[alias][pos])
+                    severity = self.severityEL6021(source, data, severity, config._raw[alias][pos])                
                 case "EL3751":
-                    severity = self.severityEL3751(source, data, severity, config._raw[alias][pos])  
-                case "EL7201":
-                    # +/- 0.01 ml
-                    #severity = self.severityEL7201(source, data, severity, config._raw[alias][pos])
-                    pass
+                    severity = self.severityEL3751(source, data, severity, config._raw[alias][pos])                
                 case _:
                     pass
         
@@ -216,37 +168,7 @@ class EcatMasterDEV(EcatMaster):
         EcatLogger.debug(f"done with {rc}")
 
         return rc    
-
-    # motion controller; AM8111 
-
-    def configEL7201(self, pos, slave):
-
-        rc = super().configEL7201(pos, slave)
-
-        if rc:
-
-            if self.isSlot("drive", (1, pos)):
-
-                self._beckhoffMotionController[pos] = AM81111MotionController(pos, slave, self.ProcessLock)
-
-                self._beckhoffMotionController[pos].initEx(source=[
-                    { "key": "p", "name": "EL6021.3", "addr": 0x0B, "low": 0, "high": 700 },
-                    { "key": "d", "name": "EL7201.1", "addr": '0x01', "low": 0, "high": 1306460160 }
-                    ])
-                self._beckhoffMotionController[pos].initConfig()
-
-                self.SeverityController.register(f"EL7201.{pos}", self._beckhoffMotionController[pos].severityFunc) 
-                # pressure controller               
-                self.CallbackController.register(f"EL7201.{pos}", "EL6021.3", self._beckhoffMotionController[pos].callback)
-                # position controller
-                self.CallbackController.register(f"EL7201.{pos}", f"EL7201.{pos}", self._beckhoffMotionController[pos].callback)
-
-                EcatLogger.debug(f"init EL7201 MotionController @ {pos}")
-        
-        EcatLogger.debug(f"done with {rc}")
-        
-        return rc      
-    
+   
     # pressure by modbus
      
     def configEL6021(self, pos, slave):
@@ -255,69 +177,43 @@ class EcatMasterDEV(EcatMaster):
 
         if rc:
 
-            slot = 3
-            if self.isSlot("drive", (slot, pos)):
-                
-                addr = [0x0B]
-
-                self._kellerModbusController[pos] = KellerModbusController(pos, slave, self.ProcessLock, addr)
-                self.SeverityController.register(f"EL6021.{slot}")
-                
-                EcatLogger.debug(f"init KellerModbusController @ {addr}")
-
-        EcatLogger.debug(f"done")
-
-        return rc
-    
-    # position by laser
-    
-    def configEL3124(self, pos, slave):
-
-        rc = super().configEL3124(pos, slave)
-
-        if rc:
-            slot = 4
-            if self.isSlot("drive", (slot, pos)):
+            slots = [1]
+            for slot in slots:
+                if self.isSlot("drive", (slot, pos)):
                     
-                # filter setting FIR 60Hz
-                slave.sdo_write(0x8000, 0x15, bytes(ctypes.c_uint16(0)))                    
-                # enable filter (all channels)
-                slave.sdo_write(0x8000, 0x06, bytes(ctypes.c_bool(1)))
+                    addr = [
+                        (0x11, "743513"),
+                        (0x12, "743522")
+                            ]
 
-                self.SeverityController.register(f"EL3124.{slot}")
+                    self._esiModbusController[pos] = EsiModbusController(pos, slave, self.ProcessLock, addr)
+                    self._esiModbusController[pos].initConfig()
 
-                # presentation
-                for i, a in enumerate([0x8000, 0x8010, 0x8020, 0x8030]):
-                    slave.sdo_write(a, 0x02, bytes(ctypes.c_uint8(0)))
+                    self.SeverityController.register(f"EL6021.{slot}")
+                    
+                    EcatLogger.debug(f"init EsiModbusController @ {slot} with {addr}")
 
-        EcatLogger.debug(f"done")
-
-        return rc     
-    
-    def configEL2008(self, pos, slave):
-
-        rc = super().configEL2008(pos, slave)
-        if rc:
-            slot = 5
-            if self.isSlot("drive", (slot, pos)):
-                pass
         EcatLogger.debug(f"done")
 
         return rc
+    
+    # analog measurement
 
     def configEL3751(self, pos, slave):
 
         rc = super().configEL3751(pos, slave)
         if rc:
-            slot = 6
-            if self.isSlot("drive", (slot, pos)):
+            slots = [2,3]
+            for slot in slots:
 
-                self._beckhoffMultimeterController[pos] = BeckhoffMultimeterController(pos, slave, self.ProcessLock)
-                self._beckhoffMultimeterController[pos].initConfig()
+                if self.isSlot("drive", (slot, pos)):
 
-                self.SeverityController.register(f"EL3751.{slot}")
+                    self._beckhoffMultimeterController[pos] = BeckhoffMultimeterController(pos, slave, self.ProcessLock)
+                    self._beckhoffMultimeterController[pos].initConfig()
 
-                EcatLogger.debug(f"init BeckhoffMultimeterController @ {slot}")
+                    self.SeverityController.register(f"EL3751.{slot}")
+
+                    EcatLogger.debug(f"init BeckhoffMultimeterController @ {slot}")
         
         EcatLogger.debug(f"done")
 
