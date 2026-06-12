@@ -1,3 +1,8 @@
 {
-    "python.analysis.autoImportCompletions": true
+    "python.analysis.autoImportCompletions": true,    
+    "python.linting.flake8Args": [
+        "--max-line-length=120",
+        "--ignore=E402,F841,F401,E302,E305,E231,E201",
+    ],
+    "flake8.enabled": false,
 }

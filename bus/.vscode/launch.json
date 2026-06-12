@@ -5,6 +5,26 @@
     "configurations": [
 
         {
+            "name": "NOT-drive",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "_EcatMaster.py",
+            "console": "integratedTerminal",
+            "args": ["_EcatSettingsNOT"],
+            "justMyCode": false
+        },
+
+        {
+            "name": "ESI-drive",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "_EcatMaster.py",
+            "console": "integratedTerminal",
+            "args": ["_EcatSettingsESI"],
+            "justMyCode": false
+        },
+
+        {
             "name": "DEV-drive",
             "type": "debugpy",
             "request": "launch",
