@@ -1,2 +1,4 @@
+
 __pycache__/
-bus/__pycache__/
+*.py[codz]
+*$py.class
