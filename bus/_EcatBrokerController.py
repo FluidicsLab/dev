@@ -139,7 +139,8 @@ class subscribeWorker(scheduleWorker):
                 client.messages.task_done()
 
             except Exception as ex:
-                EcatLogger.debug(ex)
+                EcatLogger.critical(f"{self.__class__.__name__} {ex}")
+                EcatLogger.critical(message.message)
                 return -1
             finally:
                 await client.stop()

@@ -558,7 +558,11 @@ class NanotecMotionController(NanotecMotionControllerBase):
             #       
             #      D
 
-            steps = 200 * 64 # 360°; 200 full steps / rotation; 64 micro steps ~ 200 * 64 = 12800
+            # 360°
+            # 200 full steps / rotation
+            # 64 micro steps / full step ~ 200 * 64 = 12800
+
+            steps = 200 * 64 
             offset = 0 # 45°
                         
             position = {                
@@ -570,23 +574,32 @@ class NanotecMotionController(NanotecMotionControllerBase):
             
             velocity = 500
 
+            telegram = {}
+
             # up
             if button[0]:
-                self.output({ "motion": { "position": int(position["U"]), "velocity": velocity, "type": 0 } })
+                telegram = { "motion": { "position": int(position["U"]), "velocity": velocity, "type": 0 } }
+            
             # down
             if button[1]:
-                self.output({ "motion": { "position": int(position["D"]), "velocity": velocity, "type": 0 } })
+                telegram = { "motion": { "position": int(position["D"]), "velocity": velocity, "type": 0 } }
+            
             # left
-            elif button[2]:
-                self.output({ "motion": { "position": int(position["L"]), "velocity": velocity, "type": 0 } })
+            if button[2]:
+                telegram = { "motion": { "position": int(position["L"]), "velocity": velocity, "type": 0 } }
+
             # right
-            elif button[3]:
-                self.output({ "motion": { "position": int(position["R"]), "velocity": velocity, "type": 0 } })
+            if button[3]:
+                telegram = { "motion": { "position": int(position["R"]), "velocity": velocity, "type": 0 } }
             
             # enter
             if button[4]:                
                 if not self.Moving:                    
-                    self.output({ "execute": 1 })
+                    telegram.update({ "execute": 1 })
                 else:
-                    self.output({ "halt": 1 })
+                    telegram.update({ "halt": 1 })
+
+            if len(list(telegram.keys())) >0:
+                EcatLogger.warning(telegram)
+                self.output(telegram)
        
