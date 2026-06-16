@@ -10,6 +10,9 @@ from _EcatObject import EcatLogger
 from _EcatSeverity import SEVERITY_VERBOSE, EcatSeverityController
 
 
+# to configure and reset by TC
+
+
 class DataMap(ctypes.Structure):
     _pack_ = 1
     _fields_ = [
