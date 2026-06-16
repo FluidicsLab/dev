@@ -15,19 +15,13 @@ class DataMap(ctypes.Structure):
     _fields_ = [
         ('i1', ctypes.c_int32),
         ('i2', ctypes.c_int32),
-        ('i3', ctypes.c_int32),
-        ('u1', ctypes.c_uint32)
-    ]
+        ('i3', ctypes.c_int32)    ]
 
 
 class NOVRAMProfile:
     
-    control = ['0x0001',
-               '0x0002',
-               '0x0004']    
-    control_name = ['STORE',
-                    'LOCK',
-                    'UNLOCK']
+    control = ['0x0001','0x0002','0x0004']    
+    control_name = ['STORE','LOCK','UNLOCK']
 
     @staticmethod
     def __control__(value):
@@ -78,32 +72,6 @@ class BeckhoffMemoryController(object):
     _data = {}
     def _get_data(self): return self._data
     Data = property(fget=_get_data)    
-
-    def _get_pdoInput(self):        
-        num = ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(BeckhoffMemoryController.TxPDO_MAP_ADDRESS, 0)).value
-        return [hex(ctypes.c_uint16.from_buffer_copy(self.Device.sdo_read(BeckhoffMemoryController.TxPDO_MAP_ADDRESS, i + 1)).value).replace("0x","").zfill(4) for i in  range(num)]
-    
-    def _set_pdoInput(self, values):
-        self.Device.sdo_write(BeckhoffMemoryController.TxPDO_MAP_ADDRESS, 0, bytes(ctypes.c_uint8(0)))
-        for i,value in enumerate(values):
-            self.Device.sdo_write(BeckhoffMemoryController.TxPDO_MAP_ADDRESS, i+1, bytes(ctypes.c_uint16(value)))
-        num = len(values)
-        self.Device.sdo_write(BeckhoffMemoryController.TxPDO_MAP_ADDRESS, 0, bytes(ctypes.c_uint8(num)))
-    
-    PdoInput = property(fget=_get_pdoInput,fset=_set_pdoInput)
-        
-    def _get_pdoOutput(self):        
-        num = ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(BeckhoffMemoryController.RxPDO_MAP_ADDRESS, 0)).value
-        return [hex(ctypes.c_uint16.from_buffer_copy(self.Device.sdo_read(BeckhoffMemoryController.RxPDO_MAP_ADDRESS, i + 1)).value).replace("0x","").zfill(4) for i in  range(num)]
-
-    def _set_pdoOutput(self, values):        
-        self.Device.sdo_write(BeckhoffMemoryController.RxPDO_MAP_ADDRESS, 0, bytes(ctypes.c_uint8(0)))
-        for i,value in enumerate(values): 
-            self.Device.sdo_write(BeckhoffMemoryController.RxPDO_MAP_ADDRESS, i+1, bytes(ctypes.c_uint16(value)))
-        num = len(values)
-        self.Device.sdo_write(BeckhoffMemoryController.RxPDO_MAP_ADDRESS, 0, bytes(ctypes.c_uint8(num)))
-
-    PdoOutput = property(fget=_get_pdoOutput,fset=_set_pdoOutput)    
 
     _severity = SEVERITY_VERBOSE
     
@@ -168,7 +136,7 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
     UPLOAD_END = 0x0000
     UPLOAD_TIMEOUT = 0.05     # s
 
-    MODE = 'CYCLIC'
+    MODE = 'ACYCLIC'
 
     #
     # 
@@ -179,9 +147,10 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
     class RxMapEx:
         register = 0x1C12
-        address = [0x1601,
-                   0x1600
-                   ]
+        address = [
+            0x1601,
+            0x1600
+            ]
       
     class RxMap(ctypes.Structure):
         _pack_ = 1
@@ -201,9 +170,10 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
     class TxMapEx:
         register = 0x1C13
-        address = [0x1A01,
-                   0x1A00
-                   ]
+        address = [
+            0x1A01,
+            0x1A00
+            ]
 
     class TxMap(ctypes.Structure):
         _pack_ = 1
@@ -250,7 +220,7 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
     def hasState(self, state):
         return self.Device.state & state == state
         
-    _data = [0] * 3
+    _values = [None] * 3
 
     def _get_controlWord(self):
         try:
@@ -262,10 +232,9 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
     def _set_controlWord(self, value):
         try:
             out = NOVRAMMemoryController.RxMap()
-            out.data.i1 = ctypes.c_int32(self._data[0])
-            out.data.i2 = ctypes.c_int32(self._data[1])
-            out.data.i3 = ctypes.c_int32(self._data[2])
-            out.data.u1 = time.time_ns()
+            out.data.i1 = ctypes.c_int32(self._values[0])
+            out.data.i2 = ctypes.c_int32(self._values[1])
+            out.data.i3 = ctypes.c_int32(self._values[2])            
             out.control = ctypes.c_uint16(value)            
             self.write(out)   
         except Exception as ex:
@@ -311,6 +280,7 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
             # ESM PREOP -> SAFEOP RxPDO effective
             # ESM SAFEOP -> OP TxPDO effective
             
+            
             #
             # startup
             #
@@ -318,9 +288,10 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
             if NOVRAMMemoryController.MODE == 'ACYCLIC':
 
                 self.Device.sdo_write(0xF200, 0x02, bytes(ctypes.c_uint16(0)))              # unlock
-                # 3 items a 4 byte
-                self.Device.sdo_write(0x2F00, 0x00, bytes([0x03,0x00,0x04,0x00,0x04,0x00,0x04,0x00]), True)
+                # 4 items a 4 byte                
+                self.Device.sdo_write(0x2F00, 0x00, bytes([0x03,0x00, 0x04,0x00, 0x04,0x00, 0x04,0x00]), True)
                 self.Device.sdo_write(0xF200, 0x02, bytes(ctypes.c_uint16(1)))              # lock                
+
 
             #
             # timing
@@ -362,10 +333,12 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
                 self._reader = Thread(target=self.acyclicInput)
                 self._reader.start()
                 self._writer = Thread(target=self.acyclicOutput)
-                self._writer.start()      
+                self._writer.start() 
 
-            self._upload = Thread(target=self.upload)
-            self._upload.start()
+            else:
+
+                self._upload = Thread(target=self.upload)
+                self._upload.start()
 
             self._initialized = True
 
@@ -389,14 +362,31 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
             return None
     StatusWord = property(fget=_get_statusWord)
 
+    def _get_statusRegister(self):
+        try:            
+            return bin(ctypes.c_uint16.from_buffer_copy(self.Device.sdo_read(0xF100,0x01)).value)[2:].zfill(16)
+        except Exception as ex:
+            EcatLogger.error(f"{ex}")
+            return None
+    StatusRegister = property(fget=_get_statusRegister)
+
     _size = None
     def _get_size(self):
         if self._size is None:
             self._size = [0] * ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(0x2F00,0x00)).value
             for i in range(len(self._size)):
                 self._size[i] = ctypes.c_uint8.from_buffer_copy(self.Device.sdo_read(0x2F00,i+1)).value
-        return self._size
-    Size = property(fget=_get_size)
+        return self._size    
+    def _set_size(self, data):
+        self.Device.sdo_write(0xF200, 0x02, bytes(ctypes.c_uint16(0)))              # unlock        
+        # 3 items a 4 byte [0x03,0x00, 0x04,0x00, 0x04,0x00, 0x04,0x00]
+        size = [len(data), 0x00]
+        for d in data:
+            size += [d, 0x00] 
+        self.Device.sdo_write(0x2F00, 0x00, bytes(data), True)        
+        self.Device.sdo_write(0xF200, 0x02, bytes(ctypes.c_uint16(1)))              # lock    
+        self._size = None    
+    Size = property(fget=_get_size, fset=_set_size)
 
     _memoryLock = Lock()
 
@@ -458,26 +448,53 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
             data = None
 
-            if ctypes.sizeof(NOVRAMMemoryController.TxMap) == len(self.Device.input):
+            if NOVRAMMemoryController.MODE == 'CYCLIC':
 
-                buff =  NOVRAMMemoryController.TxMap.from_buffer_copy(self.Device.input)
+                if ctypes.sizeof(NOVRAMMemoryController.TxMap) == len(self.Device.input):
 
-                # TODO buff.data
-                
-                status = bin(buff.status)[2:].zfill(16)  
+                    buff =  NOVRAMMemoryController.TxMap.from_buffer_copy(self.Device.input)
+
+                    if self._values[0] is None:
+                        self._values[0] = buff.i1
+                    if self._values[1] is None:
+                        self._values[1] = buff.i2
+                    if self._values[2] is None:
+                        self._values[2] = buff.i3
+                    
+                    status = bin(buff.status)[2:].zfill(16)  
+                    status_text = NOVRAMProfile.__status__(int(status,2))
+                                                
+                    data  = {
+
+                        'status': {
+                            'value':status, 
+                            'text': status_text,
+                        },
+
+                        'mode': NOVRAMMemoryController.MODE,
+
+                        'values': self._values,
+                        
+                        'modified': time.time_ns()
+                    }
+            else:
+
+                status = self.StatusRegister
                 status_text = NOVRAMProfile.__status__(int(status,2))
-                                            
+
                 data  = {
 
-                    'status': {
-                        'value':status, 
-                        'text': status_text,
-                    },
+                        'status': {
+                            'value':status, 
+                            'text': status_text,
+                        },
 
-                    'mode': NOVRAMMemoryController.MODE,
-                    
-                    'modified': buff.u1
-                }
+                        'mode': NOVRAMMemoryController.MODE,
+
+                        'values': self._input,
+                        
+                        'modified': time.time_ns()
+                    }
 
             return data
 
@@ -495,9 +512,9 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         except Exception as ex:
             EcatLogger.error(f"write {ex}")
         finally:
-            self.DeviceLock.release()        
+            self.DeviceLock.release()     
 
-    _data = None
+    _data = None   
 
     def run(self):
 
@@ -514,15 +531,11 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
 
             if self._data is not None:
 
-                target = 0
-
                 if 'data' in self._data.keys() and self._data['data'] is not None:
-
-                    # TODO
-                    
+                    for i in range(len(self._values)):
+                        self._values[i] = self._data['data'][i]                    
                     self._update = True               
-                    self._data['data'] = None
-                
+                    self._data['data'] = None                
                                     
         except Exception as ex:
             EcatLogger.error(f"run {ex}")
@@ -551,7 +564,7 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
     _update = False
     def upload(self):
 
-        EcatLogger.debug(f"start computing cyclic write @ {self.__class__.__name__}")
+        EcatLogger.debug(f"start computing cyclic upload @ {self.__class__.__name__}")
 
         while not self._exit.is_set():
             
@@ -568,21 +581,12 @@ class NOVRAMMemoryController(BeckhoffMemoryController):
         self._lock.acquire()
         
         try:
-            name = f"{args[0]['name']}.{args[0]['index']}"
-            value = args[0]['value']['value'] if 'value' in args[0]['value'].keys() else None
             
-            if value is not None:
-
-                status = value['status']['value']
-
-                if int(status, 2) != 0:
-
-                    # TODO value to data
-
-                    self._update = True
+            pass
 
         except Exception as ex:
             EcatLogger.error(f"callback {ex}")
+        
         finally:
             self._lock.release()
                             
